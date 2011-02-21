@@ -1,10 +1,4 @@
 <?php
-
-#jesli nie zawiera id i jest tylko jedno to jest to tylko do odczytu badz pojedyncze menu
-#poprawic clear attrs. zeby lykal cala reszta (porownujac co jest minus to co sie ustawia) oprocz default
-# czy cos moze byc disabled czy enabled (glupota mikrotikowa
-
-
 require('routeros_api.class.php');
 class ukasz_api extends routeros_api {
 
