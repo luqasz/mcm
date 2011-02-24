@@ -19,8 +19,9 @@ class ukasz_api extends routeros_api {
 
 $API = new ukasz_api();
 $API->debug = true;
-$hostname='10.194.3.241';
-$user='admin';
+#$hostname='10.194.3.241';
+$hostname='172.30.30.60';
+$user='api';
 $pass='dupa';
 
 
@@ -63,12 +64,14 @@ $clear_attrs = array('prefix');
         $API->read();
       }
     }
-	if (isset($elem['.id'])) {
+	if (array_key_exists('.id', $elem)) {
 		$save[] = $elem['.id'];
 	}
   }
   foreach($has as $id => $value) {
-	$collect_ids[] = $value['.id'];
+	if (isset($value['.id'])) {
+		$collect_ids[] = $value['.id'];
+		}
 	}
     $remove = array_diff($collect_ids, $save);
 	if (!empty($remove)) {
