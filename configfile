@@ -3,7 +3,13 @@
 /system/logging		action=memory disabled=false topics=error
 /system/logging		action=echo disabled=false topics=critical
 /system/ntp/client	enabled=true mode=unicast mode=unicast primary-ntp=87.99.32.29 secondary-ntp=212.244.36.228
-/system/clock		time-zone-name=Europe/Warsaw
 /snmp/community		name=ziomale address=0.0.0.0/0 read-access=true
 /snmp			enabled=true contact=some_compasny
 /interface/bridge/settings use-ip-firewall=true
+#daudasdsa
+
+
+
+
+#asdasd
+/system/clock		time-zone-name=Europe/Warsaw
