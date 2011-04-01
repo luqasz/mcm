@@ -1,7 +1,7 @@
 <?php
 
 class routeros_api {
-	var $debug = false;			// Show debug information
+	var $debug = true;			// Show debug information
 	var $error = true;
 	var $info = true;
 	var $error_no;				// Variable for storing connection error number, if any

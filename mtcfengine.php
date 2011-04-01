@@ -49,7 +49,7 @@ class Parser {
 	public function parseFile() {
      	$data_from_file = file ( $this->_file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES );
 		$data_from_file = (preg_grep ( '/^#.*/', $data_from_file, PREG_GREP_INVERT ));
-
+		$tobeset = array();
 		foreach ( $data_from_file as $line ) {
 			$rows = preg_split ( "/[\s]+/", $line );
 			$where = trim ( array_shift ( $rows ), "/" );
@@ -227,6 +227,8 @@ if (!$configurator->connect()) {
 	show_connection_error();
 	exit();
 }
+
+print_r($parser->parseFile());
 
 $configurator->configure($parser->parseFile());
 $configurator->disconnect();
