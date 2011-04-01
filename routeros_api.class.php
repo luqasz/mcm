@@ -262,5 +262,17 @@ class routeros_api {
 		else
 			return false;
 	}
+	public function write_array(array $array) {
+		$count = count ( $array );
+		$is_last = 1 == $count;
+		$i = 1;
+		foreach ( $array as $name => $value ) {
+			$this->write ( '=' . $name . '=' . $value, $is_last );
+			$i ++;
+			if ($i == $count) {
+				$is_last = true;
+			}
+		}
+	}
 }
 ?>

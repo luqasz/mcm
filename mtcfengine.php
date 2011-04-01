@@ -1,19 +1,5 @@
 <?php
 require ('routeros_api.class.php');
-class ukasz_api extends routeros_api {
-	public function write_array(array $array) {
-		$count = count ( $array );
-		$is_last = 1 == $count;
-		$i = 1;
-		foreach ( $array as $name => $value ) {
-			$this->write ( '=' . $name . '=' . $value, $is_last );
-			$i ++;
-			if ($i == $count) {
-				$is_last = true;
-			}
-		}
-	}
-}
 
 function show_help() {
 ?>
@@ -70,7 +56,7 @@ class Mtcfengine {
 		$this->_address  = $address;
 		$this->_user     = $user;
 		$this->_password = $password;
-		$this->api       = new ukasz_api();
+		$this->api       = new routeros_api();
     }
 
 	public function connect() {
@@ -227,8 +213,6 @@ if (!$configurator->connect()) {
 	show_connection_error();
 	exit();
 }
-
-print_r($parser->parseFile());
 
 $configurator->configure($parser->parseFile());
 $configurator->disconnect();
