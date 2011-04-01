@@ -60,7 +60,7 @@ class Parser {
 				$tobeset [$where] [] = $tmp;
 				unset ( $tmp );
 		}
-		return array($tobeset);
+		return $tobeset;
     }
 }
 
