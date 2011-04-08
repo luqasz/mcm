@@ -1,36 +1,23 @@
 <?php
 class routeros_api {
-	var $debug = true;			// Show debug information
-	var $error = true;
-	var $info = true;
 	var $error_no;				// Variable for storing connection error number, if any
 	var $error_str;				// Variable for storing connection error text, if any
-	var $attempts = 2;			// Connection attempt count
+	var $attempts = 3;			// Connection attempt count
 	var $connected = false;		// Connection state
-	var $delay = 2;				// Delay between connection attempts in seconds
 	var $port = 8728;			// Port to connect to
-	var $timeout = 2;			// Connection attempt timeout and data read timeout
 	var $socket;				// Variable for storing socket resource
-	/**************************************************
-	 *
-	 *************************************************/
-	function debug($text) {
-		if ($this->debug)
-			echo $text . "\n";
-	}
 
-	function info($text) {
-		if ($this->info)
-			echo $text . "\n";
-	}
+	protected $params;
 
-	function error($text) {
-		if ($this->error)
-			echo $text . "\n";
-	}
-	/**************************************************
-	 *
-	 *************************************************/
+	public function setParams($params) {
+    $this->params = $params;
+		}
+
+    $timeout = $this->params->getTimeout();
+	$delay = $this->params->getDelay();
+
+
+
 	function encode_length($length) {
 		if ($length < 0x80) {
 			$length = chr($length);
@@ -61,7 +48,7 @@ class routeros_api {
 	function connect($ip, $login, $password) {
 		for ($ATTEMPT = 1; $ATTEMPT <= $this->attempts; $ATTEMPT++) {
 			$this->connected = false;
-			$this->info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->port . '...');
+			show_info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->port . '...');
 			if ($this->socket = @fsockopen($ip, $this->port, $this->error_no, $this->error_str, $this->timeout) ) {
 				socket_set_timeout($this->socket, $this->timeout);
 				$this->write('/login');
@@ -85,9 +72,9 @@ class routeros_api {
 			sleep($this->delay);
 		}
 		if ($this->connected)
-			$this->info('Connected...');
+			show_info('Connected...');
 		else
-			$this->error('Error...');
+			show_error('Error...');
 		return $this->connected;
 	}
 	/**************************************************
@@ -96,7 +83,7 @@ class routeros_api {
 	function disconnect() {
 		fclose($this->socket);
 		$this->connected = false;
-		$this->info('Disconnected...');
+		show_info('Disconnected...');
 	}
 	/**************************************************
 	 *
@@ -220,14 +207,14 @@ class routeros_api {
            $retlen = strlen($_);
          }
          $RESPONSE[] = $_ ;
-         $this->debug('>>> [' . $retlen . '/' . $LENGTH . ' bytes read.');
+         show_debug('>>> [' . $retlen . '/' . $LENGTH . ' bytes read.');
         }
         // If we get a !done, make a note of it.
          if ($_ == "!done")
          $receiveddone=true;
         $STATUS = socket_get_status($this->socket);
         if ($LENGTH > 0)
-        $this->debug('>>> [' . $LENGTH . ', ' . $STATUS['unread_bytes'] . '] ' . $_);
+        show_debug('>>> [' . $LENGTH . ', ' . $STATUS['unread_bytes'] . '] ' . $_);
        if ( (!$this->connected && !$STATUS['unread_bytes']) ||
         ($this->connected && !$STATUS['unread_bytes'] && $receiveddone) )
          break;
@@ -245,13 +232,13 @@ class routeros_api {
 			foreach ($data as $com) {
 			$com = trim($com);
 			        fwrite($this->socket, $this->encode_length(strlen($com) ) . $com);
-			        $this->debug('<<< [' . strlen($com) . '] ' . $com);
+			        show_debug('<<< [' . strlen($com) . '] ' . $com);
 			}
 			if (gettype($param2) == 'integer') {
 
 				fwrite($this->socket, $this->encode_length(strlen('.tag=' . $param2) ) . '.tag=' . $param2 . chr(0) );
 
-				$this->debug('<<< [' . strlen('.tag=' . $param2) . '] .tag=' . $param2);
+				show_debug('<<< [' . strlen('.tag=' . $param2) . '] .tag=' . $param2);
 			}
 			else
 			if (gettype($param2) == 'boolean')
@@ -274,31 +261,6 @@ class routeros_api {
 		}
 	}
 }
-
-function show_help() {
-?>
-You must specify -u -p -a
-	-a address. can be fqdn
-	-c configuration file for address. defaults to specified address.conf
-	-d delay between connection attempts in seconds (defaults to 2)
-	-h this help
-	-p password
-	-t connection attempt timeout and data read timeout (defaults to 2)
-	-u username
-	-v show debug information. be verbose what is going on
-<?php
-}
-
-function show_connection_error() {
-?>
-Connection fault
-<?php
-}
-
-function show_file_error($file) {
-echo "Specified file \"$file\" does not exist.\n";
-}
-
 
 class Parser {
 
@@ -400,13 +362,15 @@ class Mtcfengine {
 
 
 interface MtcfengineParams {
+	public function isValid();
+	public function isHelp();
+	public function isDebug();
+	public function isError();
+	public function isInfo();
+	public function emptyParams();
 	public function getUser();
 	public function getPassword();
 	public function getAddress();
-	public function isValid();
-	public function isHelp();
-	public function emptyParams();
-	public function getDebug();
 	public function getTimeout();
 	public function getDelay();
 	public function getConfigFile();
@@ -435,12 +399,24 @@ class MtcfengineCLIParams implements MtcfengineParams {
     	return $this->getOption('c', $this->getAddress() . '.conf');
     }
 
-    public function getDebug() {
+    public function isDebug() {
     	return $this->getOption('v');
 	}
 
     public function isHelp() {
 		return $this->getOption('h');
+	}
+
+	public function isQuiet() {
+		return $this->getOption('q');
+	}
+
+	public function isInfo() {
+		return $this->isQuiet();
+	}
+
+	public function isError() {
+		return true;
 	}
 
     public function getDelay() {
@@ -467,6 +443,36 @@ class MtcfengineCLIParams implements MtcfengineParams {
 	}
 }
 
+function show_help() {
+?>
+You must specify -u -p -a
+	-a address. can be fqdn
+	-c configuration file for address. defaults to specified address.conf
+	-d delay between connection attempts in seconds (defaults to 2)
+	-h this help
+	-p password
+	-t connection attempt timeout and data read timeout (defaults to 2)
+	-u username
+	-v show (api debug) information. be verbose what is going on
+	-q be quiet. this supresses info and errors
+<?php
+}
+
+function show_debug($text) {
+	if ($options->isDebug)
+		echo $text . "\n";
+}
+
+function show_info($text) {
+	if ($options->isInfo)
+		echo $text . "\n";
+}
+
+function show_error($text) {
+	if ($options->isError)
+		echo $text . "\n";
+}
+
 $options = new MtcfengineCLIParams();
 
 if (!$options->isValid() || $options->isHelp() || $options->emptyParams()) {
@@ -475,16 +481,21 @@ if (!$options->isValid() || $options->isHelp() || $options->emptyParams()) {
 }
 
 if (!file_exists($options->getConfigFile())) {
-	show_file_error($options->getConfigFile());
+	show_error("Specified file \"$options->getConfigFile()\" does not exist.\n");
 	exit;
 }
 
 $parser = new Parser($options->getConfigFile());
 
+
+$api = new routeros_api();
+$api->setParams($options);
+
+
 $configurator = new Mtcfengine($options->getAddress(), $options->getUser(), $options->getPassword());
 
 if (!$configurator->connect()) {
-	show_connection_error();
+	show_error("Connection to \"$options->getAddress()\" failed");
 	exit();
 }
 
