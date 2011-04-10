@@ -1,23 +1,44 @@
 <?php
 class routeros_api {
+	var $debug = true;			// Show debug information
+	var $error = true;
+	var $info = true;
 	var $error_no;				// Variable for storing connection error number, if any
 	var $error_str;				// Variable for storing connection error text, if any
-	var $attempts = 3;			// Connection attempt count
+	var $attempts = 2;			// Connection attempt count
 	var $connected = false;		// Connection state
 	var $port = 8728;			// Port to connect to
 	var $socket;				// Variable for storing socket resource
+	private $delay = 2;
+	private $timeout = 2;
 
-	protected $params;
-
-	public function setParams($params) {
+/*
+	public function setParams(MtcfengineCLIParams $params) {
     $this->params = $params;
-		}
-
     $timeout = $this->params->getTimeout();
 	$delay = $this->params->getDelay();
+	}
+*/
+	/**************************************************
+	 *
+	 *************************************************/
+	function debug($text) {
+		if ($this->debug)
+			echo $text . "\n";
+	}
 
+	function info($text) {
+		if ($this->info)
+			echo $text . "\n";
+	}
 
-
+	function error($text) {
+		if ($this->error)
+			echo $text . "\n";
+	}
+	/**************************************************
+	 *
+	 *************************************************/
 	function encode_length($length) {
 		if ($length < 0x80) {
 			$length = chr($length);
@@ -48,7 +69,7 @@ class routeros_api {
 	function connect($ip, $login, $password) {
 		for ($ATTEMPT = 1; $ATTEMPT <= $this->attempts; $ATTEMPT++) {
 			$this->connected = false;
-			show_info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->port . '...');
+			$this->info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->port . '...');
 			if ($this->socket = @fsockopen($ip, $this->port, $this->error_no, $this->error_str, $this->timeout) ) {
 				socket_set_timeout($this->socket, $this->timeout);
 				$this->write('/login');
@@ -72,9 +93,9 @@ class routeros_api {
 			sleep($this->delay);
 		}
 		if ($this->connected)
-			show_info('Connected...');
+			$this->info('Connected...');
 		else
-			show_error('Error...');
+			$this->error('Error...');
 		return $this->connected;
 	}
 	/**************************************************
@@ -83,7 +104,7 @@ class routeros_api {
 	function disconnect() {
 		fclose($this->socket);
 		$this->connected = false;
-		show_info('Disconnected...');
+		$this->info('Disconnected...');
 	}
 	/**************************************************
 	 *
@@ -207,14 +228,14 @@ class routeros_api {
            $retlen = strlen($_);
          }
          $RESPONSE[] = $_ ;
-         show_debug('>>> [' . $retlen . '/' . $LENGTH . ' bytes read.');
+         $this->debug('>>> [' . $retlen . '/' . $LENGTH . ' bytes read.');
         }
         // If we get a !done, make a note of it.
          if ($_ == "!done")
          $receiveddone=true;
         $STATUS = socket_get_status($this->socket);
         if ($LENGTH > 0)
-        show_debug('>>> [' . $LENGTH . ', ' . $STATUS['unread_bytes'] . '] ' . $_);
+        $this->debug('>>> [' . $LENGTH . ', ' . $STATUS['unread_bytes'] . '] ' . $_);
        if ( (!$this->connected && !$STATUS['unread_bytes']) ||
         ($this->connected && !$STATUS['unread_bytes'] && $receiveddone) )
          break;
@@ -232,13 +253,13 @@ class routeros_api {
 			foreach ($data as $com) {
 			$com = trim($com);
 			        fwrite($this->socket, $this->encode_length(strlen($com) ) . $com);
-			        show_debug('<<< [' . strlen($com) . '] ' . $com);
+			        $this->debug('<<< [' . strlen($com) . '] ' . $com);
 			}
 			if (gettype($param2) == 'integer') {
 
 				fwrite($this->socket, $this->encode_length(strlen('.tag=' . $param2) ) . '.tag=' . $param2 . chr(0) );
 
-				show_debug('<<< [' . strlen('.tag=' . $param2) . '] .tag=' . $param2);
+				$this->debug('<<< [' . strlen('.tag=' . $param2) . '] .tag=' . $param2);
 			}
 			else
 			if (gettype($param2) == 'boolean')
@@ -288,17 +309,11 @@ class Parser {
 
 class Mtcfengine {
 
-    public function __construct($address, $user, $password) {
-		$this->_address  = $address;
-		$this->_user     = $user;
-		$this->_password = $password;
-		$this->api       = new routeros_api();
+	protected $api;
+
+    public function __construct(routeros_api $api) {
+		$this->api = $api;
     }
-
-	public function connect() {
-	return $this->api->connect($this->_address, $this->_user, $this->_password);
-
-	}
 
     public function configure(array $parsedoptions) {
 		foreach ($parsedoptions as $tobesetid => $tobesetarray ) {
@@ -360,27 +375,11 @@ class Mtcfengine {
     }
 }
 
-
-interface MtcfengineParams {
-	public function isValid();
-	public function isHelp();
-	public function isDebug();
-	public function isError();
-	public function isInfo();
-	public function emptyParams();
-	public function getUser();
-	public function getPassword();
-	public function getAddress();
-	public function getTimeout();
-	public function getDelay();
-	public function getConfigFile();
-}
-
-class MtcfengineCLIParams implements MtcfengineParams {
+class MtcfengineCLIParams {
 	private $required = array('u' => '0', 'p' => '0', 'a' => '0');
 
 	public function __construct() {
-		$this->params = getopt("p:u:a:vhl:t:c:");
+		$this->params = getopt("p:u:a:vqhl:t:c:");
 	}
 
 	public function getUser() {
@@ -411,16 +410,12 @@ class MtcfengineCLIParams implements MtcfengineParams {
 		return $this->getOption('q');
 	}
 
-	public function isInfo() {
-		return $this->isQuiet();
-	}
-
 	public function isError() {
 		return true;
 	}
 
     public function getDelay() {
-    	return $this->getIntOption('l', $default = 2);
+    	return $this->getIntOption('d', $default = 2);
     }
     public function getTimeout() {
     	return $this->getIntOption('t', $default = 2);;
@@ -435,13 +430,19 @@ class MtcfengineCLIParams implements MtcfengineParams {
 	}
 
 	private function getIntOption($key, $default = 0) {
-		return is_int($key, $this->params) ? $this->params[$key] : $default;
+		if (array_key_exists($key, $this->params) && is_int($this->params[$key])) {
+			return $this->params[$key];
+		} else {
+			return $default;
+		}
 	}
 
 	private function getOption($key, $default = false) {
 		return array_key_exists($key, $this->params) ? $this->params[$key] : $default;
 	}
 }
+
+$options = new MtcfengineCLIParams();
 
 function show_help() {
 ?>
@@ -454,26 +455,25 @@ You must specify -u -p -a
 	-t connection attempt timeout and data read timeout (defaults to 2)
 	-u username
 	-v show (api debug) information. be verbose what is going on
-	-q be quiet. this supresses info and errors
+	-q be quiet. this supresses info messages
 <?php
 }
 
+function show_error($text) {
+	if ($options->isError())
+		echo $text . "\n";
+}
+
 function show_debug($text) {
-	if ($options->isDebug)
+	if ($options->isDebug())
 		echo $text . "\n";
 }
 
 function show_info($text) {
-	if ($options->isInfo)
+	if (!$options->isQuiet())
 		echo $text . "\n";
 }
 
-function show_error($text) {
-	if ($options->isError)
-		echo $text . "\n";
-}
-
-$options = new MtcfengineCLIParams();
 
 if (!$options->isValid() || $options->isHelp() || $options->emptyParams()) {
 	show_help();
@@ -481,25 +481,22 @@ if (!$options->isValid() || $options->isHelp() || $options->emptyParams()) {
 }
 
 if (!file_exists($options->getConfigFile())) {
-	show_error("Specified file \"$options->getConfigFile()\" does not exist.\n");
+	show_error("Specified file " . $options->getConfigFile() . " does not exist.\n");
 	exit;
 }
 
 $parser = new Parser($options->getConfigFile());
 
-
 $api = new routeros_api();
-$api->setParams($options);
+//$api->setParams($options);
 
-
-$configurator = new Mtcfengine($options->getAddress(), $options->getUser(), $options->getPassword());
-
-if (!$configurator->connect()) {
-	show_error("Connection to \"$options->getAddress()\" failed");
+if (!$api->connect($options->getAddress(), $options->getUser(), $options->getPassword())) {
+	show_error("Connection to " . $options->getAddress() . " failed");
 	exit();
 }
 
+$configurator = new Mtcfengine($api);
 $configurator->configure($parser->parseFile());
-$configurator->disconnect();
+$api->disconnect();
 
 ?>
