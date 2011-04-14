@@ -1,40 +1,14 @@
 <?php
 class routeros_api {
-	var $debug = true;			// Show debug information
-	var $error = true;
-	var $info = true;
-	var $error_no;				// Variable for storing connection error number, if any
-	var $error_str;				// Variable for storing connection error text, if any
-	var $attempts = 2;			// Connection attempt count
-	var $connected = false;		// Connection state
-	var $port = 8728;			// Port to connect to
-	var $socket;				// Variable for storing socket resource
-	private $delay = 2;
-	private $timeout = 2;
-
-/*
-	public function setParams(MtcfengineCLIParams $params) {
-    $this->params = $params;
-    $timeout = $this->params->getTimeout();
-	$delay = $this->params->getDelay();
-	}
-*/
-	/**************************************************
-	 *
-	 *************************************************/
-	function debug($text) {
-		if ($this->debug)
-			echo $text . "\n";
-	}
-
-	function info($text) {
-		if ($this->info)
-			echo $text . "\n";
-	}
-
-	function error($text) {
-		if ($this->error)
-			echo $text . "\n";
+	private $error_no;				// Variable for storing connection error number, if any
+	private $error_str;				// Variable for storing connection error text, if any
+	private $connected = false;		// Connection state
+	private $port = 8728;			// Port to connect to
+	private $socket;				// Variable for storing socket resource
+	private $attempts = 3;
+	public function __construct(MtcfengineCLIParams $params, monitorHandler $monitor) {
+	$this->params = $params;
+	$this->monitor = $monitor;
 	}
 	/**************************************************
 	 *
@@ -69,9 +43,9 @@ class routeros_api {
 	function connect($ip, $login, $password) {
 		for ($ATTEMPT = 1; $ATTEMPT <= $this->attempts; $ATTEMPT++) {
 			$this->connected = false;
-			$this->info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->port . '...');
-			if ($this->socket = @fsockopen($ip, $this->port, $this->error_no, $this->error_str, $this->timeout) ) {
-				socket_set_timeout($this->socket, $this->timeout);
+			$this->monitor->show_info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->port);
+			if ($this->socket = @fsockopen($ip, $this->port, $this->error_no, $this->error_str, $this->params->getTimeout()) ) {
+				socket_set_timeout($this->socket, $this->params->getTimeout());
 				$this->write('/login');
 				$RESPONSE = $this->read(false);
 				if ($RESPONSE[0] == '!done') {
@@ -90,12 +64,12 @@ class routeros_api {
 				}
 				fclose($this->socket);
 			}
-			sleep($this->delay);
+			sleep($this->params->getDelay());
 		}
 		if ($this->connected)
-			$this->info('Connected...');
+			$this->monitor->show_info('Connected...');
 		else
-			$this->error('Error...');
+			$this->monitor->show_error('Connection to ' . $this->options->getAddress() . ' failed');
 		return $this->connected;
 	}
 	/**************************************************
@@ -104,7 +78,7 @@ class routeros_api {
 	function disconnect() {
 		fclose($this->socket);
 		$this->connected = false;
-		$this->info('Disconnected...');
+		$this->monitor->show_info('Disconnected...');
 	}
 	/**************************************************
 	 *
@@ -228,14 +202,14 @@ class routeros_api {
            $retlen = strlen($_);
          }
          $RESPONSE[] = $_ ;
-         $this->debug('>>> [' . $retlen . '/' . $LENGTH . ' bytes read.');
+         $this->monitor->show_debug('>>> [' . $retlen . '/' . $LENGTH . ' bytes read.');
         }
         // If we get a !done, make a note of it.
          if ($_ == "!done")
          $receiveddone=true;
         $STATUS = socket_get_status($this->socket);
         if ($LENGTH > 0)
-        $this->debug('>>> [' . $LENGTH . ', ' . $STATUS['unread_bytes'] . '] ' . $_);
+        $this->monitor->show_debug('>>> [' . $LENGTH . ', ' . $STATUS['unread_bytes'] . '] ' . $_);
        if ( (!$this->connected && !$STATUS['unread_bytes']) ||
         ($this->connected && !$STATUS['unread_bytes'] && $receiveddone) )
          break;
@@ -253,13 +227,13 @@ class routeros_api {
 			foreach ($data as $com) {
 			$com = trim($com);
 			        fwrite($this->socket, $this->encode_length(strlen($com) ) . $com);
-			        $this->debug('<<< [' . strlen($com) . '] ' . $com);
+			        $this->monitor->show_debug('<<< [' . strlen($com) . '] ' . $com);
 			}
 			if (gettype($param2) == 'integer') {
 
 				fwrite($this->socket, $this->encode_length(strlen('.tag=' . $param2) ) . '.tag=' . $param2 . chr(0) );
 
-				$this->debug('<<< [' . strlen('.tag=' . $param2) . '] .tag=' . $param2);
+				$this->monitor->show_debug('<<< [' . strlen('.tag=' . $param2) . '] .tag=' . $param2);
 			}
 			else
 			if (gettype($param2) == 'boolean')
@@ -286,7 +260,7 @@ class routeros_api {
 class Parser {
 
 	public function __construct($file) {
-		$this->_file	= $file;
+		$this->_file = $file;
 	}
 
 	public function parseFile() {
@@ -311,11 +285,11 @@ class Mtcfengine {
 
 	protected $api;
 
-    public function __construct(routeros_api $api) {
+	public function __construct(routeros_api $api) {
 		$this->api = $api;
-    }
+	}
 
-    public function configure(array $parsedoptions) {
+	public function configure(array $parsedoptions) {
 		foreach ($parsedoptions as $tobesetid => $tobesetarray ) {
 			$this->api->write ( '/' . $tobesetid . '/print' );
 			$has = $this->api->read ( true );
@@ -379,47 +353,48 @@ class MtcfengineCLIParams {
 	private $required = array('u' => '0', 'p' => '0', 'a' => '0');
 
 	public function __construct() {
-		$this->params = getopt("p:u:a:vqhl:t:c:");
+		$this->params = getopt("p:u:a:d:vqhl:t:c:");
 	}
 
 	public function getUser() {
-		return $this->getOption('u');
+		return $this->getOptionValue('u');
 	}
 
 	public function getPassword() {
-		return $this->getOption('p');
+		return $this->getOptionValue('p');
 	}
 
 	public function getAddress() {
-		return $this->getOption('a');
+		return $this->getOptionValue('a');
 	}
 
 	public function getConfigFile() {
-    	return $this->getOption('c', $this->getAddress() . '.conf');
-    }
+		return $this->getOptionValue('c', $this->getAddress() . '.conf');
+	}
 
     public function isDebug() {
-    	return $this->getOption('v');
+		return $this->optionExists('v');
 	}
 
     public function isHelp() {
-		return $this->getOption('h');
+		return $this->optionExists('h');
 	}
 
 	public function isQuiet() {
-		return $this->getOption('q');
+		return $this->optionExists('q');
 	}
 
 	public function isError() {
 		return true;
 	}
 
-    public function getDelay() {
-    	return $this->getIntOption('d', $default = 2);
-    }
-    public function getTimeout() {
-    	return $this->getIntOption('t', $default = 2);;
-    }
+	public function getDelay() {
+		return $this->getIntOption('d', $default = 2);
+
+	}
+	public function getTimeout() {
+		return $this->getIntOption('t', $default = 2);;
+	}
 
 	public function emptyParams() {
 		return empty($this->params);
@@ -437,14 +412,21 @@ class MtcfengineCLIParams {
 		}
 	}
 
-	private function getOption($key, $default = false) {
+	private function optionExists($key) {
+		return array_key_exists($key, $this->params);
+	}
+
+	private function getOptionValue($key, $default = false) {
 		return array_key_exists($key, $this->params) ? $this->params[$key] : $default;
 	}
 }
 
-$options = new MtcfengineCLIParams();
+class monitorHandler {
 
-function show_help() {
+	function __construct(MtcfengineCLIParams $options) {
+		$this->options = $options;
+	}
+	function show_help() {
 ?>
 You must specify -u -p -a
 	-a address. can be fqdn
@@ -457,44 +439,39 @@ You must specify -u -p -a
 	-v show (api debug) information. be verbose what is going on
 	-q be quiet. this supresses info messages
 <?php
+	}
+
+	function show_error($text) {
+		if ($this->options->isError())
+			echo $text . "\n";
+	}
+
+	function show_debug($text) {
+		if ($this->options->isDebug())
+			echo $text . "\n";
+	}
+
+	function show_info($text) {
+		if (!$this->options->isQuiet())
+			echo $text . "\n";
+	}
 }
 
-function show_error($text) {
-	if ($options->isError())
-		echo $text . "\n";
-}
-
-function show_debug($text) {
-	if ($options->isDebug())
-		echo $text . "\n";
-}
-
-function show_info($text) {
-	if (!$options->isQuiet())
-		echo $text . "\n";
-}
-
+$options = new MtcfengineCLIParams();
+$monitor = new monitorHandler($options);
 
 if (!$options->isValid() || $options->isHelp() || $options->emptyParams()) {
-	show_help();
+	$monitor->show_help();
 	exit;
 }
 
 if (!file_exists($options->getConfigFile())) {
-	show_error("Specified file " . $options->getConfigFile() . " does not exist.\n");
+	$monitor->show_error("Specified file " . $options->getConfigFile() . " does not exist.\n");
 	exit;
 }
 
 $parser = new Parser($options->getConfigFile());
-
-$api = new routeros_api();
-//$api->setParams($options);
-
-if (!$api->connect($options->getAddress(), $options->getUser(), $options->getPassword())) {
-	show_error("Connection to " . $options->getAddress() . " failed");
-	exit();
-}
-
+$api = new routeros_api($options, $monitor);
 $configurator = new Mtcfengine($api);
 $configurator->configure($parser->parseFile());
 $api->disconnect();
