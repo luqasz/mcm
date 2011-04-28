@@ -3,7 +3,6 @@ class routeros_api {
 	private $error_no;				// Variable for storing connection error number, if any
 	private $error_str;				// Variable for storing connection error text, if any
 	private $connected = false;		// Connection state
-	private $port = 8728;			// Port to connect to
 	private $socket;				// Variable for storing socket resource
 	private $attempts = 3;
 	public function __construct(MtcfengineCLIParams $params, monitorHandler $monitor) {
@@ -43,8 +42,8 @@ class routeros_api {
 	function connect($ip, $login, $password) {
 		for ($ATTEMPT = 1; $ATTEMPT <= $this->attempts; $ATTEMPT++) {
 			$this->connected = false;
-			$this->monitor->show_info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->port);
-			if ($this->socket = @fsockopen($ip, $this->port, $this->error_no, $this->error_str, $this->params->getTimeout()) ) {
+			$this->monitor->show_info('Connection attempt #' . $ATTEMPT . ' to ' . $ip . ':' . $this->params->getPort());
+			if ($this->socket = @fsockopen($ip, $this->params->getPort(), $this->error_no, $this->error_str, $this->params->getTimeout()) ) {
 				socket_set_timeout($this->socket, $this->params->getTimeout());
 				$this->write('/login');
 				$RESPONSE = $this->read(false);
@@ -390,8 +389,12 @@ class MtcfengineCLIParams {
 
 	public function getDelay() {
 		return $this->getIntOption('d', $default = 2);
-
 	}
+
+	public function getPort() {
+		return $this->getIntOption('P', $default = 8728);
+	}
+
 	public function getTimeout() {
 		return $this->getIntOption('t', $default = 2);;
 	}
@@ -434,6 +437,7 @@ You must specify -u -p -a
 	-d delay between connection attempts in seconds (defaults to 2)
 	-h this help
 	-p password
+	-P port. defaults to 8728
 	-t connection attempt timeout and data read timeout (defaults to 2)
 	-u username
 	-v show (api debug) information. be verbose what is going on
