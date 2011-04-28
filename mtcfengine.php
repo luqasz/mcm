@@ -472,8 +472,9 @@ if (!file_exists($options->getConfigFile())) {
 
 $parser = new Parser($options->getConfigFile());
 $api = new routeros_api($options, $monitor);
+$api->connect($options->getAddress(), $options->getUser(), $options->getPassword());
 $configurator = new Mtcfengine($api);
 $configurator->configure($parser->parseFile());
-$api->disconnect();
+$configurator->disconnect();
 
 ?>
