@@ -2,7 +2,7 @@
 class routeros_api {
 	private $error_no;				// Variable for storing connection error number, if any
 	private $error_str;				// Variable for storing connection error text, if any
-	private $connected = false;		// Connection state
+	public $connected = false;		// Connection state
 	private $socket;				// Variable for storing socket resource
 	private $attempts = 3;
 	public function __construct(MtcfengineCLIParams $params, monitorHandler $monitor) {
@@ -65,10 +65,6 @@ class routeros_api {
 			}
 			sleep($this->params->getDelay());
 		}
-		if ($this->connected)
-			$this->monitor->show_info('Connected...');
-		else
-			$this->monitor->show_error('Connection to ' . $this->options->getAddress() . ' failed');
 		return $this->connected;
 	}
 	/**************************************************
@@ -77,7 +73,7 @@ class routeros_api {
 	function disconnect() {
 		fclose($this->socket);
 		$this->connected = false;
-		$this->monitor->show_info('Disconnected...');
+		$this->monitor->show_info('Disconnected');
 	}
 	/**************************************************
 	 *
@@ -342,17 +338,13 @@ class Mtcfengine {
 		$this->api->write ( $command );
 		$this->api->read ();
     }
-
-    public function disconnect() {
-  		$this->api->disconnect();
-    }
 }
 
 class MtcfengineCLIParams {
 	private $required = array('u' => '0', 'p' => '0', 'a' => '0');
 
 	public function __construct() {
-		$this->params = getopt("p:u:a:d:vqhl:t:c:");
+		$this->params = getopt("p:u:a:d:vqhl:t:c:P:");
 	}
 
 	public function getUser() {
@@ -477,6 +469,10 @@ if (!file_exists($options->getConfigFile())) {
 $parser = new Parser($options->getConfigFile());
 $api = new routeros_api($options, $monitor);
 $api->connect($options->getAddress(), $options->getUser(), $options->getPassword());
+if (!$api->connected) {
+	$monitor->show_error("Connection to " . $options->getAddress() . " failed.");
+	exit;
+}
 $configurator = new Mtcfengine($api);
 $configurator->configure($parser->parseFile());
 $configurator->disconnect();
