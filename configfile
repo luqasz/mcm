@@ -1,10 +1,3 @@
-/system/logging		action=memory disabled=false topics=info,!wireless,!debug,!route,!ospf
-/system/logging		action=memory disabled=false topics=warning
-/system/logging		action=memory disabled=false topics=error
-/system/logging		action=echo disabled=false topics=critical
-/system/ntp/client	enabled=true mode=unicast primary-ntp=87.99.32.29 secondary-ntp=217.17.34.82
-/snmp/community		name=ziomale address=0.0.0.0/0 read-access=true
-/snmp				enabled=true contact=some_compasny
-#this is a sample comment
-/interface/bridge/settings use-ip-firewall=true
+/snmp/community		name=zas address=0.0.0.0/0 read-access=true
+/snmp				enabled=true
 /system/clock		time-zone-name=Europe/Warsaw

@@ -475,6 +475,6 @@ if (!$api->connected) {
 }
 $configurator = new Mtcfengine($api);
 $configurator->configure($parser->parseFile());
-$configurator->disconnect();
+$api->disconnect();
 
 ?>
