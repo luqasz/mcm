@@ -1,3 +1,0 @@
-/snmp/community		name=zas address=0.0.0.0/0 read-access=true
-/snmp				enabled=true
-/system/clock		time-zone-name=Europe/Warsaw

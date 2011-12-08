@@ -256,21 +256,18 @@ class Parser {
 
 	public function __construct($file) {
 		$this->_file = $file;
+		$this->xml = new SimpleXMLElement($this->_file, NULL, TRUE);
 	}
 
 	public function parseFile() {
-     	$data_from_file = file ( $this->_file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES );
-		$data_from_file = (preg_grep ( '/^#.*/', $data_from_file, PREG_GREP_INVERT ));
-		$tobeset = array();
-		foreach ( $data_from_file as $line ) {
-			$rows = preg_split ( "/[\s]+/", $line );
-			$where = trim ( array_shift ( $rows ), "/" );
-			foreach ( $rows as $to_build ) {
-		  		list ( $key, $value ) = explode ( "=", $to_build );
-					$tmp [$key] = $value;
+		foreach ($this->xml->rules->menu as $menu) {
+			foreach ($menu->rule as $rule) {
+				foreach ($rule->children() as $child) {
+					$tmp [ (string) $child->getName()] =  (string) $child;
 				}
-				$tobeset [$where] [] = $tmp;
-				unset ( $tmp );
+			$tobeset [ trim ((string) $menu['level'], "/" )] []= $tmp;
+			unset ($tmp);
+			}
 		}
 		return $tobeset;
     }
@@ -284,39 +281,53 @@ class Mtcfengine {
 		$this->api = $api;
 	}
 
-	public function configure(array $parsedoptions) {
-		foreach ($parsedoptions as $tobesetid => $tobesetarray ) {
-			$this->api->write ( '/' . $tobesetid . '/print' );
+	public function configure(array $parsedconfigarray) {
+		print_r($parsedconfigarray);
+		//for every menulevel (witch may contain many rules) get array with rules
+		foreach ($parsedconfigarray as $menulevel => $tobesetarray ) {
+			$this->api->write ( '/' . $menulevel . '/print' );
+			//has = array containing all the rules from remote device in specified menulevel
 			$has = $this->api->read ( true );
+			// for every rule row. id = rule number  data = settings in id
 			foreach ( $tobesetarray as $id => $data ) {
+				//if we have a row (from remote device, doesn't matter what it contains), return the array containing all settings in specified row id (number), else return empty array
 				$elem = isset ( $has [$id] ) ? $has [$id] : array ();
+				//compare from data against elem. return array containing elements from data not present in elem. = what we want to set on remoe device
 				$diff = array_diff ( $data, $elem );
-				$this->save_diff($diff, $elem, $tobesetid, $data);
+				$this->save_diff($diff, $elem, $menulevel, $data);
+				//if key '.id' exists in elem array write '.id' values to array save. this is needet to know with rows in remote device are ment to be kept (do not remove)
+				$save = array();
 				if (array_key_exists ( '.id', $elem )) {
-					$save [] = $elem ['.id'];
+					$save[] = $elem ['.id'];
 				}
 			}
+			$collect_ids = array();
+			//get all '.id' from every rule in menulevel from table has (from existing rules on remote device)
 			foreach ( $has as $id => $value ) {
 				if (isset ( $value ['.id'] )) {
-					$collect_ids [] = $value ['.id'];
+					$collect_ids[] = $value ['.id'];
 				}
 			}
 			if (! empty ( $collect_ids ) && ! empty ( $save )) {
-				$this->remove(array_diff ( $collect_ids, $save ), $tobesetid);
+				$this->remove(array_diff ( $collect_ids, $save ), $menulevel);
 			}
 		}
     }
 
-    protected function save_diff($diff, $elem, $tobesetid, array $data) {
+    protected function save_diff($diff, $elem, $menulevel, array $data) {
+		// if there is no difference do not do anything = configuration on remote device is the same as in config file
     	if (!$diff) {
     		return;
     	}
+    	//if there is no setting in rule eg it does not exist add it. else, set everything in row from diff
 		if (empty ( $elem )) {
-			$this->api->write ( '/' . $tobesetid . '/add', false );
+			$this->api->write ( '/' . $menulevel . '/add', false );
+			//add settings from data
 			$this->api->write_array ( $data );
 			$this->api->read ();
 		} else {
-			$this->api->write ( '/' . $tobesetid . '/set', false );
+			$this->api->write ( '/' . $menulevel . '/set', false );
+			//if there is an .id key in elem array write it so taht program knows witch one to set. this also solves issue with no '.id' sections eg. /system/clock, or /system/ntp/client
 			if (array_key_exists ( '.id', $elem )) {
 				$this->api->write ( '=.id=' . $elem ['.id'], false );
 			}
@@ -325,11 +336,11 @@ class Mtcfengine {
 		}
     }
 
-    protected function remove($remove, $tobesetid) {
+    protected function remove($remove, $menulevel) {
     	if (empty($remove)) {
     		return;
     	}
-		$this->api->write ( '/' . $tobesetid . '/remove', false );
+		$this->api->write ( '/' . $menulevel . '/remove', false );
 		$tmp = array_shift ( $remove );
 		$command = '=.id=' . $tmp;
 		foreach ( $remove as $id => $value ) {
@@ -476,5 +487,6 @@ if (!$api->connected) {
 $configurator = new Mtcfengine($api);
 $configurator->configure($parser->parseFile());
 $api->disconnect();
+
 
 ?>
