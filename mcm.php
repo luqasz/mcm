@@ -282,7 +282,6 @@ class Mtcfengine {
 	}
 
 	public function configure(array $parsedconfigarray) {
-		print_r($parsedconfigarray);
 		//for every menulevel (witch may contain many rules) get array with rules
 		foreach ($parsedconfigarray as $menulevel => $tobesetarray ) {
 			$this->api->write ( '/' . $menulevel . '/print' );
