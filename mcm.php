@@ -152,6 +152,7 @@ class routeros_api {
 	 *
 	 *************************************************/
    function read($parse = true) {
+	   $receiveddone=false;
          $RESPONSE = array();
 	       while (true) {
 			// Read the first byte of input which gives us some or all of the length
@@ -287,19 +288,6 @@ class Mtcfengine {
 			$this->api->write ( '/' . $menulevel . '/print' );
 			//has = array containing all the rules from remote device in specified menulevel
 			$has = $this->api->read ( true );
-			// for every rule row. id = rule number  data = settings in id
-			foreach ( $tobesetarray as $id => $data ) {
-				//if we have a row (from remote device, doesn't matter what it contains), return the array containing all settings in specified row id (number), else return empty array
-				$elem = isset ( $has [$id] ) ? $has [$id] : array ();
-				//compare from data against elem. return array containing elements from data not present in elem. = what we want to set on remoe device
-				$diff = array_diff ( $data, $elem );
-				$this->save_diff($diff, $elem, $menulevel, $data);
-				//if key '.id' exists in elem array write '.id' values to array save. this is needet to know with rows in remote device are ment to be kept (do not remove)
-				$save = array();
-				if (array_key_exists ( '.id', $elem )) {
-					$save[] = $elem ['.id'];
-				}
-			}
 			$collect_ids = array();
 			//get all '.id' from every rule in menulevel from table has (from existing rules on remote device)
 			foreach ( $has as $id => $value ) {
@@ -307,6 +295,22 @@ class Mtcfengine {
 					$collect_ids[] = $value ['.id'];
 				}
 			}
+			// reset sve array.  for every menulevel
+			$save = array();
+			// for every rule row. id = rule number  data = settings in id
+			foreach ( $tobesetarray as $id => $data ) {
+				//if we have a row (from remote device, doesn't matter what it contains), return the array containing all settings in specified row id (number), else return empty array
+				$elem = isset ( $has [$id] ) ? $has [$id] : array ();
+				//compare from data against elem. return array containing elements from data not present in elem. = what we want to set on remoe device
+				$diff = array_diff ( $data, $elem );
+				//var_dump ( $data, $elem, $diff );
+				$this->save_diff($diff, $elem, $menulevel, $data);
+				//if key '.id' exists in elem array write '.id' values to array save. this is needet to know with rows in remote device are ment to be kept (do not remove)
+				if (array_key_exists ( '.id', $elem )) {
+					$save[] = $elem ['.id'];
+				}
+			}
+			// pass .id's to remove function (remove rows that do not match desired settings. )
 			if (! empty ( $collect_ids ) && ! empty ( $save )) {
 				$this->remove(array_diff ( $collect_ids, $save ), $menulevel);
 			}
@@ -486,6 +490,8 @@ if (!$api->connected) {
 $configurator = new Mtcfengine($api);
 $configurator->configure($parser->parseFile());
 $api->disconnect();
-
+// known bug. for example users. if on remote device all users specified in config file exists but with different order you can not change it. mcm tries to set first one's name to second one's witch eventually gives message user with same name already exists.
+// some menu levels doesn't accept delete. ip services
+// some menus have default unremovable but configurable values. /ppp profile. values can be changed (except name?) but not deleted
 
 ?>
