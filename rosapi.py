@@ -56,8 +56,8 @@ class rosapi:
 			loginError. raised when failed to log in
 		"""
 		self.sock = socket.create_connection((address, port), self.sock_timeout, (str(saddr), sport))
-		self.write('/login')
-		response = self.read(parse=False)
+		self.__write('/login')
+		response = self.__read(parse=False)
 		#check for valid response.
 		#response must contain !done (as frst reply word), =ret=37 characters long response hash (as second reply word)
 		if len(response) != 2 or len(response[1]) != 37:
@@ -65,10 +65,10 @@ class rosapi:
 		chal = binascii.unhexlify((response[1].split('=')[2].encode('UTF-8')))
 		md = hashlib.md5()
 		md.update(b'\x00' + password.encode('UTF-8') + chal)
-		self.write('/login', False)
-		self.write('=name=' + username, False)
-		self.write('=response=00' + binascii.hexlify(md.digest()).decode('UTF-8'))
-		response = self.read(parse=False)
+		self.__write('/login', False)
+		self.__write('=name=' + username, False)
+		self.__write('=response=00' + binascii.hexlify(md.digest()).decode('UTF-8'))
+		response = self.__read(parse=False)
 		#check if logged in successfully
 		if response[0] != '!done':
 			raise loginError('wrong username and/or password')
@@ -94,8 +94,8 @@ class rosapi:
 		#map bollean types to string equivalents in routeros api
 		mapping = {False: 'false', True: 'true'}
 		read_timeout = read_timeout or self.read_timeout
-		#write level and if attrs is empty pass True to self.write, else False
-		self.write(level, not bool(attrs))
+		#write level and if attrs is empty pass True to self.__write, else False
+		self.__write(level, not bool(attrs))
 		if attrs:
 			count = len(attrs)
 			i = 0
@@ -104,15 +104,15 @@ class rosapi:
 					i += 1
 					last = (i == count)
 					#write name and value (if bool is present convert to api equivalent) and cast it as string
-					self.write('=' + name + '=' + str(mapping.get(value, value)), last)
+					self.__write('=' + name + '=' + str(mapping.get(value, value)), last)
 			if isinstance(attrs, list):
 				for string in attrs:
 					i += 1
 					last = (i == count)
-					self.write(str(string), last)
-		return self.read(read_timeout=read_timeout)
+					self.__write(str(string), last)
+		return self.__read(read_timeout=read_timeout)
 
-	def encodeLen(self, length):
+	def __encodeLen(self, length):
 		"""
 		takes:
 			(int) length of a string as parameter
@@ -134,7 +134,7 @@ class rosapi:
 			length = chr(0xF0) + chr((length >> 24) & 0xFF) + chr((length >> 16) & 0xFF) + chr((length >> 8) & 0xFF) + chr(length & 0xFF)
 		return length
 
-	def write(self, string, end=True):
+	def __write(self, string, end=True):
 		"""
 		takes:
 			(mixed) string to write
@@ -146,7 +146,7 @@ class rosapi:
 		"""
 		length = len(string)
 		#send encoded string length
-		self.sock.send(bytes(self.encodeLen(length), 'UTF-8'))
+		self.sock.send(bytes(self.__encodeLen(length), 'UTF-8'))
 		#send the string itself
 		result = self.sock.send(bytes(string, 'UTF-8'))
 		if result < length:
@@ -156,7 +156,7 @@ class rosapi:
 		self.sock.send(bytes(end, 'UTF-8'))
 		return True
 
-	def read(self, read_timeout=None, parse=True):
+	def __read(self, read_timeout=None, parse=True):
 		"""
 		takes:
 			(bool) parse. whether to parse the response or not
@@ -214,10 +214,10 @@ class rosapi:
 			if (not self.logged and not LENGTH) or (self.logged and not LENGTH and received_done):
 				break
 		if parse:
-			response = self.parse_response(response)
+			response = self.__parseResponse(response)
 		return response
 
-	def parse_response(self, response=[]):
+	def __parseResponse(self, response=[]):
 		"""
 		takes:
 			(list) response. response to be parsed
@@ -266,7 +266,7 @@ class rosapi:
 		"""
 		#send /quit and close socket if socket still exists
 		if self.sock and self.logged:
-			self.sock.send(bytes(self.encodeLen(5), 'UTF-8'))
+			self.sock.send(bytes(self.__encodeLen(5), 'UTF-8'))
 			self.sock.send(bytes('/quit', 'UTF-8'))
 			self.sock.send(bytes(chr(0), 'UTF-8'))
 			self.sock.close()
