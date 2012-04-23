@@ -262,6 +262,7 @@ class Parser {
 
 	public function parseFile() {
 		foreach ($this->xml->rules->menu as $menu) {
+			$tmp = array();
 			foreach ($menu->rule as $rule) {
 				foreach ($rule->children() as $child) {
 					$tmp [ (string) $child->getName()] =  (string) $child;
@@ -269,6 +270,8 @@ class Parser {
 			$tobeset [ trim ((string) $menu['level'], "/" )] []= $tmp;
 			unset ($tmp);
 			}
+			if (!isset($tobeset))
+				$tobeset [ trim ((string) $menu['level'], "/" )] []= $tmp;
 		}
 		return $tobeset;
     }
@@ -303,15 +306,14 @@ class Mtcfengine {
 				$elem = isset ( $has [$id] ) ? $has [$id] : array ();
 				//compare from data against elem. return array containing elements from data not present in elem. = what we want to set on remoe device
 				$diff = array_diff ( $data, $elem );
-				//var_dump ( $data, $elem, $diff );
 				$this->save_diff($diff, $elem, $menulevel, $data);
-				//if key '.id' exists in elem array write '.id' values to array save. this is needet to know with rows in remote device are ment to be kept (do not remove)
-				if (array_key_exists ( '.id', $elem )) {
+				//if key '.id' exists in elem array and $data array is not empty, write '.id' values to array save. this is needet to know with rows in remote device are ment to be kept (do not remove)
+				if (array_key_exists ( '.id', $elem ) && !empty($data)) {
 					$save[] = $elem ['.id'];
 				}
 			}
-			// pass .id's to remove function (remove rows that do not match desired settings. )
-			if (! empty ( $collect_ids ) && ! empty ( $save )) {
+			// pass .id's to remove function (remove rows that do not match desired settings. ). this enables removing of all rules in specified empty menu level config in xml
+			if (! empty ( $collect_ids )) {
 				$this->remove(array_diff ( $collect_ids, $save ), $menulevel);
 			}
 		}
