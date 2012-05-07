@@ -40,7 +40,7 @@ class rosapi:
 		self.sock = None
 		self.logged = False
 
-	def login(self, address, username, password, port=8728, saddr=0, sport=0):
+	def login(self, address, username, password='', port=8728, saddr=0, sport=0):
 		"""
 		login to RouterOS via api
 		takes:
