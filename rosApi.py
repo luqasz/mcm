@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 from time import time
-import binascii, socket, hashlib
+import binascii, socket, hashlib, logging
 
 class writeError(Exception):
 	def __init__(self, msg):
@@ -19,7 +19,7 @@ class loginError(Exception):
 		self.msg = msg
 		Exception.__init__(self, msg)
 
-class rosapi:
+class rosApi:
 	"""
 	RouterOS API implementation.
 
@@ -39,8 +39,9 @@ class rosapi:
 		self.sock_timeout = sock_timeout
 		self.sock = None
 		self.logged = False
+		self.logger = logging.getLogger(__name__)
 
-	def login(self, address, username, password='', port=8728, saddr=0, sport=0):
+	def login(self, address, username, password='', port=8728):
 		"""
 		login to RouterOS via api
 		takes:
@@ -48,14 +49,12 @@ class rosapi:
 			(string) username = username to login
 			(string) password = password to login
 			(int) port = port to witch to login. defaults to 8728
-			(int) saddr = source address defaults to 0
-			(int) sport = source port defaults to 0
 		returns:
 			(bool) True when logged in successfully
 		exceptions:
 			loginError. raised when failed to log in
 		"""
-		self.sock = socket.create_connection((address, port), self.sock_timeout, (str(saddr), sport))
+		self.sock = socket.create_connection((address, port), self.sock_timeout)
 		self.__write('/login')
 		response = self.__read(parse=False)
 		#check for valid response.
@@ -95,6 +94,7 @@ class rosapi:
 		mapping = {False: 'false', True: 'true'}
 		read_timeout = read_timeout or self.read_timeout
 		#write level and if attrs is empty pass True to self.__write, else False
+		self.level = level
 		self.__write(level, not bool(attrs))
 		if attrs:
 			count = len(attrs)
@@ -222,8 +222,8 @@ class rosapi:
 		takes:
 			(list) response. response to be parsed
 		returns:
-			(list) on no error occurence. in list every data reply is a dictionary with key value pair
-			(bool) False on error occurence from routeros. self.last_error contains all error messages from routeros
+			(list) or (bool) True on no error occurence. in list every data reply is a dictionary with key value pair
+			(bool) False on error occurence from routeros. warning is emmited.
 		exceptions:
 			none
 		"""
@@ -233,27 +233,28 @@ class rosapi:
 		is_error = False
 		index = -1
 		for word in response:
-			if word == '!done':
-				break
-			elif word == '!re':
+			if word in ['!trap', '!re']:
 				index += 1
 				parsed_response.append({})
-			elif word == '!trap':
-				is_error = True
-			elif parsed_response:
-				#strip first = char from word. then split it with first occurence of '='
-				word = word.lstrip('=').split('=',1)
-				parsed_response[index][word[0]] = mapping.get(word[1], word[1])
-			elif is_error:
-				self.last_error.append(word[1:])
-		if self.last_error:
-			sep = ', '
-			self.last_error = sep.join(last_error)
+			elif word == '!done' or word == '!fatal':
+				break
+			else:
+				#split word by second occurence of '='
+				word = word.split('=',2)
+				parsed_response[index][word[1]] = mapping.get(word[2], word[2])
+		if '!trap' in response:
+			msg = []
+			for dict in parsed_response:
+				for key, value in dict.items():
+					msg.append(key + '=' + '"' + value + '"')
+			self.logger.error('{0} {1}'.format(self.level, ', '.join(msg)))
 			return False
+		if parsed_response:
+			return parsed_response
 		elif len(parsed_response) == 0:
 			return True
-		elif parsed_response:
-			return parsed_response
+		else:
+			return False
 
 	def disconnect(self):
 		"""
