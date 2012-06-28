@@ -274,10 +274,6 @@ class rosApi:
 				ret = mapping.get(string, string)
 		return ret
 
-	def __del__(self):
-		"""if forgot to disconnect manually do it when destroying class"""
-		self.disconnect()
-
 	def disconnect(self):
 		"""
 		takes:
@@ -296,5 +292,9 @@ class rosApi:
 			self.sock.close()
 		self.logged = False
 		return True
+
+	def __del__(self):
+		"""if forgot to disconnect manually do it when destroying class"""
+		self.disconnect()
 
 

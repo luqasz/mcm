@@ -44,15 +44,6 @@ class configurator:
 		self.log.info('remote version is: {0}'.format(self.version))
 		return
 
-	def __del__(self):
-		self.disconnect()
-
-	def disconnect(self):
-		self.api.disconnect()
-		if self.api.logged:
-			self.log.info('discnnected')
-		return
-
 	def configure(self):
 		"""begin configuring remote device"""
 		for menu in self.profile['rules']:
@@ -130,6 +121,13 @@ class configurator:
 				self.log.error(estr)
 		return
 
+	def disconnect(self):
+		self.api.disconnect()
+		if self.api.logged:
+			self.log.info('discnnected')
+		return
 
+	def __del__(self):
+		self.disconnect()
 
 

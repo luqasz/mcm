@@ -11,7 +11,6 @@ class moduleFilter(logging.Filter):
 		self.module = module
 
 	def filter(self, record):
-		#print(record.module)
 		return not self.module == record.module
 
 mainlog = logging.getLogger('mcm')
