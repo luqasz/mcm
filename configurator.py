@@ -53,6 +53,7 @@ class configurator:
 				present_rules = self.api.talk(menu['level'] + '/print')
 			except rosApi.cmdError as estr:
 				self.log.error('error while reading rules: {0}'.format(estr))
+				continue
 			self.log.debug('remote rules for {0} are: {1}'.format(menu['level'], present_rules))
 			self.log.debug('retreiving all .ids from {0}'.format(menu['level']))
 			#get all ids in current menu level
