@@ -44,10 +44,15 @@ class configurator:
 		self.log.info('remote version is: {0}'.format(self.version))
 		return
 
+
+
 	def configure(self):
 		"""begin configuring remote device"""
 		for menu in self.profile['rules']:
-			present_rules = self.api.talk(menu['level'] + '/print')
+			try:
+				present_rules = self.api.talk(menu['level'] + '/print')
+			except rosApi.cmdError as estr:
+				self.log.error('error while reading rules: {0}'.format(estr))
 			self.log.debug('remote rules for {0} are: {1}'.format(menu['level'], present_rules))
 			self.log.debug('retreiving all .ids from {0}'.format(menu['level']))
 			#get all ids in current menu level
