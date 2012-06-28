@@ -1,8 +1,8 @@
-#!/usr/bin/python3 -B
+#!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
 import xml.etree.ElementTree as xml
-import re
+import re, logging
 
 class parseError(Exception):
 	def __init__(self, msg):
@@ -13,98 +13,110 @@ class cfParser:
 	"""
 	parse given configuration file
 	"""
+	def __init__(self):
+		self.log = logging.getLogger('mcm.cfParser')
 
-	def parseProfile(self, fp):
+	def parseProfile(self, fn):
 		"""
 		parse profile file.
-		fp = file pointer or filename with relative path
+		fn = filename with relative path
+		returns dictionary with {profile_name: profile_dict}
 		"""
-		tree = xml.parse(fp)
-		if tree.getroot().tag != 'profile':
+		self.log.debug('parsing file {0}'.format(fn))
+		tree = xml.parse(fn)
+		root_name = tree.getroot().tag
+		tree_root = tree.getroot()
+		if root_name != 'profile':
 			raise parseError('root tag must be named \'profile\'')
-		self.check_keys(['name'], tree.getroot())
-		self.check_mand_keys(['name'], tree.getroot())
-		prof_name = tree.getroot().get('name')
-		if not prof_name:
+		self.checkKeys(tree_root, ['name'], ['name'])
+		profile_name = tree_root.get('name')
+		if not profile_name:
 			raise parseError('profile name must be given')
 
 		profile = {}
-		for elem in tree.getroot():
+		for elem in tree_root:
 			if elem.tag == 'rules':
 				profile['rules'] = self.parseRules(elem)
-			elif elem.tag == 'packages':
-				profile['packages'] = self.parsePackages(elem)
 		if not profile:
 			raise parseError('empty profiles are not allowed')
-		return profile
+		return (profile_name, profile)
 
 	def parseRules (self, rules):
 		#map strings to bollean types
-		mapping = {'false': False, 'true': True, 'yes': True, 'no': False}
 		menu_list = []
 		#parse all menu tags
 		for menu in list(rules):
-			self.check_mand_keys(['level'], menu)
-			self.check_keys(['level', 'action', 'version'], menu)
-			menu = self.prep_valid_menu(menu)
+			self.checkKeys(menu, ['level'], ['level', 'action', 'version'])
+			menu = self.prepValidMenu(menu)
 			rule_list = []
 			#for every rule tag under menu
 			for rule in list(menu):
-				self.check_keys(['version'], rule)
-				rule = self.prep_valid_rule(rule)
+				self.checkKeys(rule, [], ['version'])
+				rule = self.prepValidRule(rule)
 				#check if rule is empty
 				if not list(rule):
-					raise parseError('no rule definitions found')
+					raise parseError('no rule definitions found under \'{0}\' menu level'.format(menu.get('level')))
 				defs_dict = {}
 				for defs in list(rule):
 					#strip whitechars from begin and end
-					value = defs.text.strip()
+					if defs.text:
+						value = defs.text.strip()
+					else:
+						value = defs.text
 					#populate dictionary
-					defs_dict[defs.tag] = mapping.get(value, value)
+					defs_dict[defs.tag] = self.__typeCaster(value)
 				rule_list.append({'version': rule.get('version'), 'defs': defs_dict})
 			menu_list.append({'level': menu.get('level'), 'action': menu.get('action'), 'rules': rule_list})
 		return menu_list
 
-	def parsePackages(self, packages):
-		return
+	def __typeCaster(self, string):
+		"""cast strings into possibly float, int, boollean"""
+		try:
+			ret = int(string)
+		except ValueError:
+			try:
+				ret = float(string)
+			except ValueError:
+				mapping = {'false': False, 'true': True, 'yes': True, 'no': False, 'True': True, 'False': False}
+				ret = mapping.get(string, string)
+		return ret
 
-	def check_mand_keys(self, keys, tag):
-		"""
-		check obligatory keys
-		takes: list, tag
-		"""
-		result = list(set(keys) - set(tag.keys()))
-		if result:
-			raise parseError('could not find \'{0}\' attribute in <{1}> tag'.format(result[0], tag.tag))
+	def checkKeys(self, tag, mandatory=[], allowed=[]):
+		"""check for mandatory and allowed keys in given element"""
+		if mandatory:
+			result = list(set(mandatory) - set(tag.keys()))
+			if result:
+				raise parseError('could not find \'{0}\' attribute in <{1}> tag'.format(result[0], tag.tag))
+		if allowed:
+			result = list(set(tag.keys()) - set(allowed))
+			if result:
+				raise parseError('unknown attribute \'{0}\' in <{1}> tag'.format(result[0], tag.tag))
 
-	def check_keys(self, keys, tag):
-		"""
-		check unknown keys
-		takes: list, tag
-		"""
-		result = list(set(tag.keys()) - set(keys))
-		if result:
-			raise parseError('unknown attribute \'{0}\' in <{1}> tag'.format(result[0], tag.tag))
-
-	def prep_valid_menu(self, menu):
+	def prepValidMenu(self, menu):
 		#check for valid value of level
 		pattern = re.compile('^(/[a-zA-Z]+)([/][a-zA-Z]+)*$')
 		match = pattern.match(menu.get('level'))
 		if not match:
 			raise parseError('invalid value of \'level\' attribute')
 		#set default action value if it doesn't exist'
-		menu.set('action', menu.get('action', 'remove-rest'))
+		menu.set('action', menu.get('action', 'overwrite'))
 		#check for valid action values
-		if menu.get('action') not in ['remove-rest', 'append']:
+		if menu.get('action') not in ['append', 'overwrite']:
 			raise parseError('unknown value \'{0}\' of \'action\' attribute'.format(menu.get('action')))
+		menu.set('version', menu.get('version'))
+		if menu.get('version'):
+			pattern = re.compile('^([!=<>]{1})\d{1}\.\d{1,2}$')
+			match = pattern.match(menu.get('version'))
+			if not match:
+				raise parseError('wrong value \'{0}\' in \'version\' attribute'.format(rule.get('version')))
 		return menu
 
-	def prep_valid_rule(self, rule):
+	def prepValidRule(self, rule):
 		#set default version string
 		rule.set('version', rule.get('version', ''))
 		#check for valid entries in version list
 		if rule.get('version'):
-			pattern = re.compile('^([!=+-]{1})\d{1}\.\d{1,2}$')
+			pattern = re.compile('^([!=<>]{1})\d{1}\.\d{1,2}$')
 			match = pattern.match(rule.get('version'))
 			if not match:
 				raise parseError('wrong value \'{0}\' in \'version\' attribute'.format(rule.get('version')))

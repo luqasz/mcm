@@ -19,6 +19,18 @@ class loginError(Exception):
 		self.msg = msg
 		Exception.__init__(self, msg)
 
+class cmdError(Exception):
+	def __init__(self, msg):
+		self.msg = msg
+		Exception.__init__(self, msg)
+
+class addHostname(logging.Filter):
+	def __init__(self, host):
+		self.host = host
+	def filter(self, record):
+		record.msg = '{0}: {1}'.format(self.host, record.msg)
+		return True
+
 class rosApi:
 	"""
 	RouterOS API implementation.
@@ -39,7 +51,7 @@ class rosApi:
 		self.sock_timeout = sock_timeout
 		self.sock = None
 		self.logged = False
-		self.logger = logging.getLogger(__name__)
+		self.log = logging.getLogger('mcm.configurator.rosApi')
 
 	def login(self, address, username, password='', port=8728):
 		"""
@@ -54,6 +66,7 @@ class rosApi:
 		exceptions:
 			loginError. raised when failed to log in
 		"""
+		self.log.addFilter(addHostname(address))
 		self.sock = socket.create_connection((address, port), self.sock_timeout)
 		self.__write('/login')
 		response = self.__read(parse=False)
@@ -70,7 +83,7 @@ class rosApi:
 		response = self.__read(parse=False)
 		#check if logged in successfully
 		if response[0] != '!done':
-			raise loginError('wrong username and/or password')
+			raise loginError('could not log in. wrong username and/or password')
 		self.logged = True
 		return True
 
@@ -103,8 +116,8 @@ class rosApi:
 				for name, value in attrs.items():
 					i += 1
 					last = (i == count)
-					#write name and value (if bool is present convert to api equivalent) and cast it as string
-					self.__write('=' + name + '=' + str(mapping.get(value, value)), last)
+					#write name and value (if bool is present convert to api equivalent) cast rest as string
+					self.__write('={0}={1}'.format(name, str(mapping.get(value, value))), last)
 			if isinstance(attrs, list):
 				for string in attrs:
 					i += 1
@@ -144,13 +157,16 @@ class rosApi:
 		exceptions:
 			writeError. raised when failed to send all bytes to socket
 		"""
+		#strip all whitechars from begining and end
+		string = string.strip()
 		length = len(string)
 		#send encoded string length
 		self.sock.send(bytes(self.__encodeLen(length), 'UTF-8'))
 		#send the string itself
 		result = self.sock.send(bytes(string, 'UTF-8'))
+		self.log.debug('<<< {0}'.format(string))
 		if result < length:
-			raise writeError('error while writing to socket. ' + result + '/' + length + ' bytes sent')
+			raise writeError('error while writing to socket. {0}/{1} bytes sent'.format(result, length))
 		#if end is set to bool(true) send ending character chr(0), if not send empty string.
 		end = chr(0) if end else ''
 		self.sock.send(bytes(end, 'UTF-8'))
@@ -203,8 +219,9 @@ class rosApi:
 					string = self.sock.recv(LENGTH - retlen)
 					retlen = len(string)
 					retword += string.decode('UTF-8', 'replace')
+				self.log.debug('>>> {0}'.format(retword))
 				if len(retword) != LENGTH:
-					raise readError('error while reading from socket. ' + len(retword) + '/' + LENGTH + ' bytes received')
+					raise readError('error while reading from socket. {0}/{1} bytes received'.format(len(retword), LENGTH))
 				response.append(retword)
 			#make a note when got !done. this marks end of transmission
 			if retword == '!done':
@@ -229,8 +246,6 @@ class rosApi:
 		"""
 		parsed_response = []
 		mapping = {'true': True, 'false': False}
-		self.last_error = []
-		is_error = False
 		index = -1
 		for word in response:
 			if word in ['!trap', '!re']:
@@ -241,20 +256,27 @@ class rosApi:
 			else:
 				#split word by second occurence of '='
 				word = word.split('=',2)
-				parsed_response[index][word[1]] = mapping.get(word[2], word[2])
+				parsed_response[index][word[1]] = self.__typeCaster(word[2])
 		if '!trap' in response:
-			msg = []
-			for dict in parsed_response:
-				for key, value in dict.items():
-					msg.append(key + '=' + '"' + value + '"')
-			self.logger.error('{0} {1}'.format(self.level, ', '.join(msg)))
-			return False
-		if parsed_response:
-			return parsed_response
-		elif len(parsed_response) == 0:
-			return True
-		else:
-			return False
+			msg = ', '.join(' '.join('{0}="{1}"'.format(k,v) for (k,v) in inner.items()) for inner in parsed_response)
+			raise cmdError('{0} {1}'.format(self.level, msg))
+		return parsed_response
+
+	def __typeCaster(self, string):
+		"""cast strings into possibly float, int, boollean"""
+		try:
+			ret = int(string)
+		except ValueError:
+			try:
+				ret = float(string)
+			except ValueError:
+				mapping = {'true': True, 'false': False}
+				ret = mapping.get(string, string)
+		return ret
+
+	def __del__(self):
+		"""if forgot to disconnect manually do it when destroying class"""
+		self.disconnect()
 
 	def disconnect(self):
 		"""
@@ -265,11 +287,12 @@ class rosApi:
 		exceptions:
 			none
 		"""
-		#send /quit and close socket if socket still exists
-		if self.sock and self.logged:
+		#send /quit and close socket
+		if self.logged and self.sock:
 			self.sock.send(bytes(self.__encodeLen(5), 'UTF-8'))
 			self.sock.send(bytes('/quit', 'UTF-8'))
 			self.sock.send(bytes(chr(0), 'UTF-8'))
+		if self.sock:
 			self.sock.close()
 		self.logged = False
 		return True
