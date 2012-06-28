@@ -44,7 +44,8 @@ class configurator:
 		self.log.info('remote version is: {0}'.format(self.version))
 		return
 
-
+	def prepProfile(self):
+		"""prepare profile based on remote version"""
 
 	def configure(self):
 		"""begin configuring remote device"""
