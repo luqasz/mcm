@@ -39,7 +39,7 @@ except (configurator.configError, configurator.rosApi.loginError, configurator.r
 	mainlog.error('{0}: {1}'.format(host, estr))
 except cfParser.parseError as estr:
 	mainlog.critical(estr)
-except cfParser.IOError as estr:
+except IOError as estr:
 	mainlog.critical(estr)
 except KeyboardInterrupt:
 	print('\r')

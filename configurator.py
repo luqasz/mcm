@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
-import rosApi, logging
+import rosApi, logging, common
 
 class configError(Exception):
 	def __init__(self, msg):
@@ -26,7 +26,6 @@ class configurator:
 		self.profile = profile
 
 	def login(self, host, user, pw):
-
 		self.api.login(host, user, pw)
 		self.log.addFilter(addHostname(host))
 		self.log.info('logged in')
@@ -44,13 +43,15 @@ class configurator:
 		self.log.info('remote version is: {0}'.format(self.version))
 		return
 
-	def prepProfile(self):
-		"""prepare profile based on remote version"""
-
 	def configure(self):
 		"""begin configuring remote device"""
 		for menu in self.profile['rules']:
+			#use comparison from profile and compare remote version to version in profile
+			if menu['version'] and not common.opResult(self.version, float(menu['version'][2:]), menu['version'][:2]):
+				#skip if comparison result is false
+				continue
 			try:
+				#get all rules from menu level from remote device
 				present_rules = self.api.talk(menu['level'] + '/print')
 			except rosApi.cmdError as estr:
 				self.log.error('error while reading rules: {0}'.format(estr))
@@ -70,6 +71,9 @@ class configurator:
 				self.__removeIds(menu['level'], remote_ids)
 			else:
 				for wanted_rule in menu['rules']:
+					#use comparison from profile and compare remote version to version in profile
+					if wanted_rule['version'] and not common.opResult(self.version, float(wanted_rule['version'][2:]), wanted_rule['version'][:2]):
+						continue
 					#get current index
 					wanted_rule_index = menu['rules'].index(wanted_rule)
 					#get n-th rule from present_rules
@@ -86,7 +90,6 @@ class configurator:
 				save_ids = list(filter(None, save_ids))
 				#remote_ids - save_ids gives ids to remove from current menu level
 				self.__removeIds(menu['level'], (set(remote_ids) - set(save_ids)))
-
 
 	def __removeIds(self, menu_level, idlist):
 		"""remove all ids in given menu level"""

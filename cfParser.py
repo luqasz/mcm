@@ -65,8 +65,9 @@ class cfParser:
 						value = defs.text
 					#populate dictionary
 					defs_dict[defs.tag] = self.__typeCaster(value)
+					# to od try to convert below 2 to more easilly understandable form
 				rule_list.append({'version': rule.get('version'), 'defs': defs_dict})
-			menu_list.append({'level': menu.get('level'), 'action': menu.get('action'), 'rules': rule_list})
+			menu_list.append({'version': menu.get('version'), 'level': menu.get('level'), 'action': menu.get('action'), 'rules': rule_list})
 		return menu_list
 
 	def __typeCaster(self, string):
@@ -103,9 +104,9 @@ class cfParser:
 		#check for valid action values
 		if menu.get('action') not in ['append', 'overwrite']:
 			raise parseError('unknown value \'{0}\' of \'action\' attribute'.format(menu.get('action')))
-		menu.set('version', menu.get('version'))
+		menu.set('version', menu.get('version', ''))
 		if menu.get('version'):
-			pattern = re.compile('^([!=<>]{1})\d{1}\.\d{1,2}$')
+			pattern = re.compile('^(gt|lt|le|ge|eq|ne){1}\d{1}\.\d{1,2}$')
 			match = pattern.match(menu.get('version'))
 			if not match:
 				raise parseError('wrong value \'{0}\' in \'version\' attribute'.format(rule.get('version')))
@@ -116,7 +117,7 @@ class cfParser:
 		rule.set('version', rule.get('version', ''))
 		#check for valid entries in version list
 		if rule.get('version'):
-			pattern = re.compile('^([!=<>]{1})\d{1}\.\d{1,2}$')
+			pattern = re.compile('^(gt|lt|le|ge|eq|ne){1}\d{1}\.\d{1,2}$')
 			match = pattern.match(rule.get('version'))
 			if not match:
 				raise parseError('wrong value \'{0}\' in \'version\' attribute'.format(rule.get('version')))
