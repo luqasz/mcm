@@ -24,13 +24,6 @@ class cmdError(Exception):
 		self.msg = msg
 		Exception.__init__(self, msg)
 
-class addHostname(logging.Filter):
-	def __init__(self, host):
-		self.host = host
-	def filter(self, record):
-		record.msg = '{0}: {1}'.format(self.host, record.msg)
-		return True
-
 class rosApi:
 	"""
 	RouterOS API implementation.
@@ -38,20 +31,18 @@ class rosApi:
 	This class can throw exceptions:
 		socket.error -> socket errors that mey be raised from socket operations
 		Exception -> various predefined exceptions. see class methods for more info
-
-	no support for .tag.
 	"""
 	def __init__(self, read_timeout=15, sock_timeout=10):
 		"""
 		takes:
-		(int) sock_timeout = socket timeout (in seconds). defaults to 20
-		(int) read_timeout = data read timeout (in seconds). defaults to 30. protection not to wait forever for data. may be set to 0 to disable protection.
+		(int) sock_timeout = socket timeout (in seconds).
+		(int) read_timeout = data read timeout (in seconds). wait n seconds for data. if 0, disabled.
 		"""
 		self.read_timeout = read_timeout
 		self.sock_timeout = sock_timeout
 		self.sock = None
 		self.logged = False
-		self.log = logging.getLogger('mcm.configurator.rosApi')
+		self.log = logging.getLogger('mcm.configurator.{0}'.format(self.__class__.__name__))
 
 	def login(self, address, username, password='', port=8728):
 		"""
@@ -62,16 +53,15 @@ class rosApi:
 			(string) password = password to login
 			(int) port = port to witch to login. defaults to 8728
 		returns:
-			(bool) True when logged in successfully
+
 		exceptions:
 			loginError. raised when failed to log in
 		"""
-		self.log.addFilter(addHostname(address))
 		self.sock = socket.create_connection((address, port), self.sock_timeout)
 		self.__write('/login')
 		response = self.__read(parse=False)
 		#check for valid response.
-		#response must contain !done (as frst reply word), =ret=37 characters long response hash (as second reply word)
+		#response must contain !done (as frst reply word), =ret=37 characters long response hash (as second reply word))
 		if len(response) != 2 or len(response[1]) != 37:
 			raise loginError('did not receive challenge response')
 		chal = binascii.unhexlify((response[1].split('=')[2].encode('UTF-8')))
@@ -81,11 +71,18 @@ class rosApi:
 		self.__write('=name=' + username, False)
 		self.__write('=response=00' + binascii.hexlify(md.digest()).decode('UTF-8'))
 		response = self.__read(parse=False)
+		try:
+			result = response[0]
+		except IndexError:
+			raise loginError('unknown error')
 		#check if logged in successfully
-		if response[0] != '!done':
-			raise loginError('could not log in. wrong username and/or password')
-		self.logged = True
-		return True
+		if result == '!done':
+			self.logged = True
+			return
+		elif result == '!trap':
+			raise loginError('wrong username and/or password')
+		else:
+			raise loginError('unknown error {0}'.format(response))
 
 	def talk(self, level, attrs={}, read_timeout=None):
 		"""
@@ -104,7 +101,7 @@ class rosApi:
 		if not self.logged:
 			raise loginError('not logged in')
 		#map bollean types to string equivalents in routeros api
-		mapping = {False: 'false', True: 'true'}
+		mapping = {False: 'false', True: 'true', None: ''}
 		read_timeout = read_timeout or self.read_timeout
 		#write level and if attrs is empty pass True to self.__write, else False
 		self.level = level
@@ -239,13 +236,11 @@ class rosApi:
 		takes:
 			(list) response. response to be parsed
 		returns:
-			(list) or (bool) True on no error occurence. in list every data reply is a dictionary with key value pair
-			(bool) False on error occurence from routeros. warning is emmited.
+			(list) in list every data reply is a dictionary with key value pair
 		exceptions:
 			none
 		"""
 		parsed_response = []
-		mapping = {'true': True, 'false': False}
 		index = -1
 		for word in response:
 			if word in ['!trap', '!re']:
@@ -279,7 +274,7 @@ class rosApi:
 		takes:
 			none
 		returns:
-			(bool) True
+			none
 		exceptions:
 			none
 		"""
@@ -291,7 +286,7 @@ class rosApi:
 		if self.sock:
 			self.sock.close()
 		self.logged = False
-		return True
+		return
 
 	def __del__(self):
 		"""if forgot to disconnect manually do it when destroying class"""

@@ -14,38 +14,22 @@ class cfParser:
 	parse given configuration file
 	"""
 	def __init__(self):
-		self.log = logging.getLogger('mcm.cfParser')
+		self.log = logging.getLogger('mcm.{0}'.format(self.__class__.__name__))
 
-	def parseProfile(self, fn):
-		"""
-		parse profile file.
-		fn = filename with relative path
-		returns dictionary with {profile_name: profile_dict}
-		"""
+	def parseRules (self, fn):
 		self.log.debug('parsing file {0}'.format(fn))
-		tree = xml.parse(fn)
+		try:
+			tree = xml.parse(fn)
+		except xml.ParseError as estr:
+			raise parseError(estr)
 		root_name = tree.getroot().tag
 		tree_root = tree.getroot()
-		if root_name != 'profile':
-			raise parseError('root tag must be named \'profile\'')
-		self.checkKeys(tree_root, ['name'], ['name'])
-		profile_name = tree_root.get('name')
-		if not profile_name:
-			raise parseError('profile name must be given')
+		if root_name != 'rules':
+			raise parseError('no \'rules\' section found')
 
-		profile = {}
-		for elem in tree_root:
-			if elem.tag == 'rules':
-				profile['rules'] = self.parseRules(elem)
-		if not profile:
-			raise parseError('empty profiles are not allowed')
-		return (profile_name, profile)
-
-	def parseRules (self, rules):
-		#map strings to bollean types
 		menu_list = []
 		#parse all menu tags
-		for menu in list(rules):
+		for menu in list(tree_root):
 			self.checkKeys(menu, ['level'], ['level', 'action', 'version'])
 			menu = self.prepValidMenu(menu)
 			rule_list = []
@@ -68,17 +52,19 @@ class cfParser:
 					# to od try to convert below 2 to more easilly understandable form
 				rule_list.append({'version': rule.get('version'), 'defs': defs_dict})
 			menu_list.append({'version': menu.get('version'), 'level': menu.get('level'), 'action': menu.get('action'), 'rules': rule_list})
+		if not menu_list:
+			raise parseError('empty rules are not allowed')
 		return menu_list
 
 	def __typeCaster(self, string):
 		"""cast strings into possibly float, int, boollean"""
 		try:
 			ret = int(string)
-		except ValueError:
+		except (ValueError, TypeError):
 			try:
 				ret = float(string)
-			except ValueError:
-				mapping = {'false': False, 'true': True, 'yes': True, 'no': False, 'True': True, 'False': False}
+			except (ValueError, TypeError):
+				mapping = {'false': False, 'true': True, 'yes': True, 'no': False, 'True': True, 'False': False, None: ''}
 				ret = mapping.get(string, string)
 		return ret
 

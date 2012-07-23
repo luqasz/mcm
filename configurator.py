@@ -1,33 +1,25 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
-import rosApi, logging, common
+import rosApi, logging, common, menucmp
+from copy import deepcopy
 
 class configError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
 		Exception.__init__(self, msg)
 
-class addHostname(logging.Filter):
-	def __init__(self, host):
-		self.host = host
-	def filter(self, record):
-		record.msg = '{0}: {1}'.format(self.host, record.msg)
-		return True
-
 class configurator:
 	"""
 	configure mikrotik
 	"""
 
-	def __init__(self, profile):
-		self.log = logging.getLogger('mcm.configurator')
+	def __init__(self):
+		self.log = logging.getLogger('mcm.{0}'.format(self.__class__.__name__))
 		self.api = rosApi.rosApi()
-		self.profile = profile
 
 	def login(self, host, user, pw):
 		self.api.login(host, user, pw)
-		self.log.addFilter(addHostname(host))
 		self.log.info('logged in')
 
 	def gatherInfo(self):
@@ -40,56 +32,65 @@ class configurator:
 			self.version = float(self.version)
 		except ValueError:
 			raise configError('unknown/unsupported version number: {0}'.format(self.version))
-		self.log.info('remote version is: {0}'.format(self.version))
+		self.log.info('version: {0}'.format(self.version))
 		return
 
-	def configure(self):
-		"""begin configuring remote device"""
-		for menu in self.profile['rules']:
-			#use comparison from profile and compare remote version to version in profile
-			if menu['version'] and not common.opResult(self.version, float(menu['version'][2:]), menu['version'][:2]):
-				#skip if comparison result is false
-				continue
+	def prepRules(self, rules):
+		"""once remote version is known filter and prepare rules"""
+		cp_rules = deepcopy(rules)
+		for menu in rules:
+			menuindex = cp_rules.index(menu)
+			if menu.get('version'):
+				menu_version = float(menu['version'][2:])
+				menu_op = menu['version'][:2]
+				if not common.opResult(self.version, menu_version, menu_op):
+					cp_rules.remove(menu)
+					continue
+			for rule in menu['rules']:
+				if rule.get('version'):
+					rule_version = float(rule['version'][2:])
+					rule_op = rule['version'][:2]
+					if not common.opResult(self.version, rule_version, rule_op):
+						cp_rules[menuindex]['rules'].remove(rule)
+		#return modified rules
+		return cp_rules
+
+	def configure(self, rules):
+		"""
+		begin configuring remote device
+		takes rules (list).
+		"""
+		cmp = menucmp.cmp(self.version)
+		for menu in rules:
+			self.log.debug('entering menu level {0}'.format(menu['level']))
 			try:
 				#get all rules from menu level from remote device
 				present_rules = self.api.talk(menu['level'] + '/print')
 			except rosApi.cmdError as estr:
 				self.log.error('error while reading rules: {0}'.format(estr))
 				continue
-			self.log.debug('remote rules for {0} are: {1}'.format(menu['level'], present_rules))
-			self.log.debug('retreiving all .ids from {0}'.format(menu['level']))
-			#get all ids in current menu level
-			remote_ids = (dict.get('.id') for dict in (listelem for listelem in present_rules))
-			#filter of None types from remote_ids
-			remote_ids = list(filter(None, remote_ids))
-			self.log.debug('.ids for {0} are: {1}'.format(menu['level'], remote_ids))
-			#reset save ids
-			self.log.debug('reseting saved .ids')
-			save_ids = []
-			# empty rules under menu level means delete everything
-			if not menu['rules']:
-				self.__removeIds(menu['level'], remote_ids)
+			cmp_menu_level = menu['level'].replace('/', '_')
+			wanted = [dic['defs'] for dic in menu['rules']]
+			#pick approprieate method for specific menu level. if not found pick default
+			addlist, setlist, dellist, action_order = getattr(cmp, cmp_menu_level, cmp.default)(wanted, present_rules)
+
+			self.log.debug('addlist={0}'.format(addlist))
+			self.log.debug('setlist={0}'.format(setlist))
+			self.log.debug('dellist={0}'.format(dellist))
+
+			if action_order:
+				for action in action_order:
+					if action == 'ADD':
+						self.__addEntry(menu['level'], addlist)
+					elif action == 'DEL':
+						self.__removeIds(menu['level'], dellist)
+					elif action == 'SET':
+						self.__updateEntry(menu['level'], setlist)
 			else:
-				for wanted_rule in menu['rules']:
-					#use comparison from profile and compare remote version to version in profile
-					if wanted_rule['version'] and not common.opResult(self.version, float(wanted_rule['version'][2:]), wanted_rule['version'][:2]):
-						continue
-					#get current index
-					wanted_rule_index = menu['rules'].index(wanted_rule)
-					#get n-th rule from present_rules
-					try:
-						present_rule = present_rules[wanted_rule_index]
-					except IndexError:
-						present_rule = {}
-					self.log.debug('present rule {0}'.format(present_rule))
-					self.log.debug('wanted rule {0}'.format(wanted_rule['defs']))
-					self.__updateEntry(menu['level'], present_rule, wanted_rule['defs'])
-					#get id from present_rule
-					save_ids.append(present_rule.get('.id'))
-				#filter of None entries in save_ids list
-				save_ids = list(filter(None, save_ids))
-				#remote_ids - save_ids gives ids to remove from current menu level
-				self.__removeIds(menu['level'], (set(remote_ids) - set(save_ids)))
+				self.__removeIds(menu['level'], dellist)
+				self.__updateEntry(menu['level'], setlist)
+				self.__addEntry(menu['level'], addlist)
+		return
 
 	def __removeIds(self, menu_level, idlist):
 		"""remove all ids in given menu level"""
@@ -103,41 +104,33 @@ class configurator:
 				self.log.error(estr)
 		return
 
-	def __updateEntry(self, menu_level, present, wanted):
-		"""to do: maybe add some function to check waether something have been done on remote device. sometimes doing something doesn't do what we want and do not return any error"""
-		difference = dict(set(iter(wanted.items()))-set(iter(present.items())))
-		self.log.debug('difference: {0}'.format(difference))
-		if not difference:
-			return
-		#add wanted rule to menu if present is empty
-		if not present:
+	def __updateEntry(self, menu_level, setlist):
+		for set in setlist:
 			try:
-				wanted_str = ' '.join('{0}="{1}"'.format(k,v) for (k,v) in difference.items())
-				self.log.info('{0}/add {1}'.format(menu_level, wanted_str))
-				self.api.talk('{0}/add'.format(menu_level), difference)
-			except rosApi.cmdError as estr:
-				self.log.error(estr)
-		#update present rule with difference
-		else:
-			#if there is .id key in present rule add it to difference dict.
-			#if there is no .id then it is no .id section eg. /system/clock
-			if '.id' in present:
-				difference['.id'] = present['.id']
-			try:
-				wanted_str = ' '.join('{0}="{1}"'.format(k,v) for (k,v) in difference.items())
-				self.log.info('{0}/set {1}'.format(menu_level, wanted_str))
-				self.api.talk('{0}/set'.format(menu_level), difference)
+				if menu_level == '/user' and 'password' in set:
+					log_str = ' '.join('{0}="{1}"'.format(k,'***' if k == 'password' else v) for (k,v) in set.items())
+				else:
+					log_str = ' '.join('{0}="{1}"'.format(k,v) for (k,v) in set.items())
+				self.log.info('{0}/set {1}'.format(menu_level, log_str))
+				self.api.talk('{0}/set'.format(menu_level), set)
 			except rosApi.cmdError as estr:
 				self.log.error(estr)
 		return
 
-	def disconnect(self):
-		self.api.disconnect()
-		if self.api.logged:
-			self.log.info('discnnected')
+	def __addEntry(self, menu_level, addlist):
+		for set in addlist:
+			try:
+				if menu_level == '/user' and 'password' in set:
+					log_str = ' '.join('{0}="{1}"'.format(k,'***' if k == 'password' else v) for (k,v) in set.items())
+				else:
+					log_str = ' '.join('{0}="{1}"'.format(k,v) for (k,v) in set.items())
+				self.log.info('{0}/add {1}'.format(menu_level, log_str))
+				self.api.talk('{0}/add'.format(menu_level), set)
+			except rosApi.cmdError as estr:
+				self.log.error(estr)
 		return
 
 	def __del__(self):
-		self.disconnect()
+		self.api.disconnect()
 
 
