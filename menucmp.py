@@ -28,7 +28,7 @@ class cmp:
 			for k,v in wanted.items():
 				if isinstance(v,list):
 					cmp_value = present.get(k, [])
-					dif = set(v) - set(cmp_value)
+					dif = list(set(v) - set(cmp_value))
 					#update only those with are not empty
 					if dif:
 						difference.update({k:dif})
