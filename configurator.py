@@ -6,7 +6,6 @@ from copy import deepcopy
 
 class configError(Exception):
 	def __init__(self, msg):
-		self.msg = msg
 		Exception.__init__(self, msg)
 
 class configurator:
