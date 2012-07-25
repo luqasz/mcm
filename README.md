@@ -1,9 +1,7 @@
-## mikrotik configuration manager
+## Mikrotik Configuration Manager
 
-easily manage multiple mikrotik devices
+Easily manage multiple mikrotik devices.
 
-### Project page
 
-Go and visit [mcm projest page](http://xio.com.pl/redmine/projects/mcm/) for more info.
-Documentaion is available [here](http://xio.com.pl/redmine/projects/mcm/wiki/Documentation)
-
+* [Project page](http://xio.com.pl/redmine/projects/mcm/)
+* [Documentation](http://xio.com.pl/redmine/projects/mcm/wiki/Documentation)
