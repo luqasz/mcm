@@ -87,39 +87,6 @@ class cmp:
 		dellist = set(all_ids) - set(save_ids) - set(def_ids)
 		return (addlist, setlist, dellist, order)
 
-	def _snmp_community(self, wanted, present):
-		"""snmp community name must be unique"""
-		self.log.debug('entering _snmp_community method')
-		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name', mng_def=True)
-		return (addlist, setlist, dellist, ())
-
-	def _user(self, wanted, present):
-		"""user name must be unique"""
-		self.log.debug('entering _user method')
-		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name')
-		#mikrotik will not allow remving of last user with full permissions
-		#add possible first
-		return (addlist, setlist, dellist, ('ADD', 'SET', 'DEL'))
-
-	def _user_group(self, wanted, present):
-		"""
-		group names must be uniqie
-		policy can be split into list to ease up comparison
-		by default first 3 groups are not removable
-		"""
-		self.log.debug('entering _user_group method')
-		#convert present and wanted to split policy into list
-		present = list(dict((k,(v.split(',') if k == 'policy' else v)) for (k,v) in inner.items()) for inner in present)
-		wanted = list(dict((k,(v.split(',') if k == 'policy' else v)) for (k,v) in inner.items()) for inner in wanted)
-
-		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name', offset=3)
-
-		#convert back to original form
-		addlist = list(dict((k,(','.join(v) if k == 'policy' else v)) for (k,v) in inner.items()) for inner in addlist)
-		setlist = list(dict((k,(','.join(v) if k == 'policy' else v)) for (k,v) in inner.items()) for inner in setlist)
-
-		return (addlist, setlist, dellist, ())
-
 	def __uniqKeyNoOrder(self, wanted, present, key, offset=0, mng_def=False):
 		"""
 		may have default entries, they are not removable
@@ -146,7 +113,7 @@ class cmp:
 		if not wanted:
 			dellist = set(all_ids) - set(def_ids)
 			if def_ids and not dellist:
-				self.log.warning('can not remove default entry / entries')
+				self.log.warning('can not remove default entry/entries')
 			return ([], [], dellist)
 
 		addlist = []
@@ -216,5 +183,35 @@ class cmp:
 		dellist = set(all_ids) - set(def_ids) - set(save_ids)
 		return(addlist, setlist, dellist)
 
+	def _snmp_community(self, wanted, present):
+		"""snmp community name must be unique"""
+		self.log.debug('entering _snmp_community method')
+		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name', mng_def=True)
+		return (addlist, setlist, dellist, ())
 
+	def _user(self, wanted, present):
+		"""user name must be unique"""
+		self.log.debug('entering _user method')
+		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name')
+		#mikrotik will not allow remving of last user with full permissions
+		#add possible first
+		return (addlist, setlist, dellist, ('ADD', 'SET', 'DEL'))
 
+	def _user_group(self, wanted, present):
+		"""
+		group names must be uniqie
+		policy can be split into list to ease up comparison
+		by default first 3 groups are not removable
+		"""
+		self.log.debug('entering _user_group method')
+		#convert present and wanted to split policy into list
+		present = list(dict((k,(v.split(',') if k == 'policy' else v)) for (k,v) in inner.items()) for inner in present)
+		wanted = list(dict((k,(v.split(',') if k == 'policy' else v)) for (k,v) in inner.items()) for inner in wanted)
+
+		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name', offset=3)
+
+		#convert back to original form
+		addlist = list(dict((k,(','.join(v) if k == 'policy' else v)) for (k,v) in inner.items()) for inner in addlist)
+		setlist = list(dict((k,(','.join(v) if k == 'policy' else v)) for (k,v) in inner.items()) for inner in setlist)
+
+		return (addlist, setlist, dellist, ())

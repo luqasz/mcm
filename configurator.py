@@ -69,7 +69,7 @@ class configurator:
 			except rosApi.cmdError as estr:
 				self.log.error('error while reading rules: {0}'.format(estr))
 				continue
-			cmp_menu_level = menu['level'].replace('/', '_')
+			cmp_menu_level = menu['level'].replace('/', '_').replace('-', '_')
 			wanted = [dic['defs'] for dic in menu['rules']]
 			#pick approprieate method for specific menu level. if not found pick default
 			addlist, setlist, dellist, action_order = getattr(cmp, cmp_menu_level, cmp.default)(wanted, present_rules)
