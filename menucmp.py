@@ -127,13 +127,19 @@ class cmp:
 		no .id menu levels can not be handeled by this method
 
 		key (str) is uniqie key name
-		offset (int). pass to treat first number of offset as default
+		offset (mixed). if int, treat first number of offset as default. if 'all' treat all found as default
 		mng_def (bool) pass to 'shift' default entries
 		"""
 		self.log.debug('entering __uniqKeyNoOrder method')
-		#find all .ids from rules where default key is set to True, or first offset if given
-		def_ids = [dic.get('.id') for dic in present if dic.get('default')] or [dic.get('.id') for dic in present[:offset]]
+
+		if isinstance(offset, int):
+			#find all .ids from rules where default key is set to True, or first offset if given
+			def_ids = [dic.get('.id') for dic in present if dic.get('default')] or [dic.get('.id') for dic in present[:offset]]
+		else:
+			#treat all found ids as default, not removable
+			def_ids = [dic.get('.id') for dic in present]
 		self.log.debug('default_ids = {0}'.format(def_ids))
+
 		#get all .ids from present
 		all_ids = [dict.get('.id') for dict in present]
 		self.log.debug('all_ids = {0}'.format(all_ids))
