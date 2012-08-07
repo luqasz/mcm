@@ -189,6 +189,11 @@ class cmp:
 		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name', mng_def=True)
 		return (addlist, setlist, dellist, ())
 
+	def _ip_service(self, wanted, present):
+		"""snmp community name must be unique"""
+		addlist, setlist, dellist = self.__uniqKeyNoOrder(wanted, present, 'name', offset='all')
+		return ([], setlist, [], ())
+
 	def _user(self, wanted, present):
 		"""user name must be unique"""
 		self.log.debug('entering _user method')

@@ -255,13 +255,16 @@ class rosApi:
 
 	def __typeCaster(self, string):
 		"""cast strings into possibly float, int, boollean"""
+		mapping = {'true': True, 'false': False}
 		try:
 			ret = int(string)
 		except ValueError:
 			try:
-				ret = float(string)
+				if '.' in string:
+					ret = float(string)
+				else:
+					ret = mapping.get(string, string)
 			except ValueError:
-				mapping = {'true': True, 'false': False}
 				ret = mapping.get(string, string)
 		return ret
 
