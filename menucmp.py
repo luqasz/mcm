@@ -70,8 +70,8 @@ class cmp:
 				present_rule = present[index]
 			except IndexError:
 				present_rule = {}
-				self.log.debug('wanted rule: {0}'.format(wanted_rule))
-				self.log.debug('present rule: {0}'.format(present_rule))
+			self.log.debug('wanted rule: {0}'.format(wanted_rule))
+			self.log.debug('present rule: {0}'.format(present_rule))
 			if not present_rule:
 				addlist.append(wanted_rule)
 			else:

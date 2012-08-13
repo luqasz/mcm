@@ -51,6 +51,9 @@ class configurator:
 					rule_op = rule['version'][:2]
 					if not common.opResult(self.version, rule_version, rule_op):
 						cp_rules[menuindex]['rules'].remove(rule)
+			#remove menu witch have been stripped out of rules
+			if not cp_rules[menuindex]['rules'] and menu['rules']:
+				del cp_rules[menuindex]
 		#return modified rules
 		return cp_rules
 

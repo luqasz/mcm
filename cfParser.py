@@ -3,6 +3,7 @@
 
 import xml.etree.ElementTree as xml
 import re, logging
+from common import typeCast
 
 class parseError(Exception):
 	def __init__(self, msg):
@@ -47,25 +48,13 @@ class cfParser:
 					else:
 						value = defs.text
 					#populate dictionary
-					defs_dict[defs.tag] = self.__typeCaster(value)
+					defs_dict[defs.tag] = typeCast(value)
 					# to od try to convert below 2 to more easilly understandable form
 				rule_list.append({'version': rule.get('version'), 'defs': defs_dict})
 			menu_list.append({'version': menu.get('version'), 'level': menu.get('level'), 'action': menu.get('action'), 'rules': rule_list})
 		if not menu_list:
 			raise parseError('empty rules are not allowed')
 		return menu_list
-
-	def __typeCaster(self, string):
-		"""cast strings into possibly float, int, boollean"""
-		try:
-			ret = int(string)
-		except (ValueError, TypeError):
-			try:
-				ret = float(string)
-			except (ValueError, TypeError):
-				mapping = {'false': False, 'true': True, 'yes': True, 'no': False, 'True': True, 'False': False, None: ''}
-				ret = mapping.get(string, string)
-		return ret
 
 	def checkKeys(self, tag, mandatory=[], allowed=[]):
 		"""check for mandatory and allowed keys in given element"""
@@ -80,10 +69,10 @@ class cfParser:
 
 	def prepValidMenu(self, menu):
 		#check for valid value of level
-		pattern = re.compile('^(/[a-zA-Z]+)([/][a-zA-Z]+)*$')
+		pattern = re.compile('^(/[a-zA-Z]+)([/][-a-zA-Z]+)*$')
 		match = pattern.match(menu.get('level'))
 		if not match:
-			raise parseError('invalid value of \'level\' attribute')
+			raise parseError('invalid value of \'level\' attribute \'{0}\''.format(menu.get('level')))
 		#set default action value if it doesn't exist'
 		menu.set('action', menu.get('action', 'overwrite'))
 		#check for valid action values

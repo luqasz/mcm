@@ -3,6 +3,7 @@
 
 from time import time
 import binascii, socket, hashlib, logging
+from common import typeCast
 
 class writeError(Exception):
 	def __init__(self, msg):
@@ -250,7 +251,7 @@ class rosApi:
 				parsed_response[index][word[1]] = self.__typeCaster(word[2])
 		if '!trap' in response:
 			msg = ', '.join(' '.join('{0}="{1}"'.format(k,v) for (k,v) in inner.items()) for inner in parsed_response)
-			raise cmdError('{0} {1}'.format(self.level, msg))
+			raise cmdError(msg)
 		return parsed_response
 
 	def __typeCaster(self, string):
