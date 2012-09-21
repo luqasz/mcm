@@ -2,9 +2,12 @@
 # -*- coding: UTF-8 -*-
 
 try:
-	import cfParser, configurator, logging, argparse
 	from sys import stdout
-	import xml.etree.ElementTree as xml
+	import logging
+	import argparse
+
+	import cfParser
+	import configurator
 except ImportError as estr:
 	exit(estr)
 
@@ -51,29 +54,27 @@ else:
 console.setFormatter(formatter)
 
 if args.verbose < 3:
-	console.addFilter(moduleFilter('rosApi'))
+	console.addFilter(moduleFilter('rosapi'))
 
 mainlog.addHandler(console)
 
 try:
-	parser = cfParser.cfParser()
-	rules = parser.parseRules(args.config)
-	configer = configurator.configurator()
+	rules = cfParser.parseRules(args.config)
+	configer = configurator.configurator(args.host, args.user, args.password)
 	filter = hostAppend(args.host)
 	console.addFilter(filter)
-	configer.login(args.host, args.user, args.password)
-	configer.gatherInfo()
-	rules = configer.prepRules(rules)
+	rules = cfParser.prepRules(rules, configer.version)
 	configer.configure(rules)
-except configurator.rosApi.socket.error as estr:
+except configurator.rosapi.socket.error as estr:
 	mainlog.error("{0}: socket error: {1}".format(args.host, estr))
-except (configurator.configError, configurator.rosApi.loginError, configurator.rosApi.cmdError) as estr:
+except (configurator.configError, configurator.rosapi.loginError, configurator.rosapi.cmdError) as estr:
 	mainlog.error('{0}: {1}'.format(args.host, estr))
 except cfParser.parseError as estr:
 	mainlog.error('{0}: {1}'.format(args.config, estr))
 except IOError as estr:
 	mainlog.error(estr)
 except KeyboardInterrupt:
+	del configer
 	exit(1)
 finally:
 	console.removeFilter(filter)
