@@ -44,5 +44,5 @@ def dictStr (dictionary):
 	if 'password' in dictionary:
 		dictionary = dict((k,'***' if k == 'password' else v) for (k,v) in dictionary.items())
 
-	log_str = ' '.join('{0}="{1}"'.format(k,v) for (k,v) in dictionary.items())
+	log_str = ' '.join('{0}={1}'.format(k,('"{0}"'.format(v) if ' ' in v else v)) for (k,v) in dictionary.items())
 	return log_str
