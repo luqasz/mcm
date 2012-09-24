@@ -20,15 +20,12 @@ def vcmp(v1, v2, op):
 	return result_map[op]
 
 def typeCast(string):
-	"""cast strings into possibly float, int, boollean"""
+	"""cast strings into possibly int, boollean"""
 	try:
 		ret = int(string)
 	except (ValueError, TypeError):
-		try:
-			ret = float(string)
-		except (ValueError, TypeError):
-			mapping = {'false': False, 'true': True, 'yes': True, 'no': False, 'True': True, 'False': False, None: ''}
-			ret = mapping.get(string, string)
+		mapping = {'false': False, 'true': True, 'yes': True, 'no': False, 'True': True, 'False': False, None: ''}
+		ret = mapping.get(string, string)
 	return ret
 
 def dictStr (dictionary):
@@ -44,5 +41,5 @@ def dictStr (dictionary):
 	if 'password' in dictionary:
 		dictionary = dict((k,'***' if k == 'password' else v) for (k,v) in dictionary.items())
 
-	log_str = ' '.join('{0}={1}'.format(k,('"{0}"'.format(v) if ' ' in v else v)) for (k,v) in dictionary.items())
+	log_str = ' '.join('{0}={1}'.format(k,('"{0}"'.format(v) if ' ' in str(v) else v)) for (k,v) in dictionary.items())
 	return log_str

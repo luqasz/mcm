@@ -232,18 +232,12 @@ class rosapi:
 		return parsed_response
 
 	def typeCast(self, string):
-		"""cast strings into possibly float, int, boollean"""
+		"""cast strings into possibly int, boollean"""
 		mapping = {'true': True, 'false': False}
 		try:
 			ret = int(string)
 		except ValueError:
-			try:
-				if '.' in string:
-					ret = float(string)
-				else:
-					ret = mapping.get(string, string)
-			except ValueError:
-				ret = mapping.get(string, string)
+			ret = mapping.get(string, string)
 		return ret
 
 	def __del__(self):

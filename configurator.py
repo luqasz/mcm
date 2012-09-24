@@ -28,10 +28,9 @@ class configurator:
 		"""get basic information from remote device"""
 		resource = self.api.talk('/system/resource/print')[0]
 		self.version = resource.get('version')
-		if not self.version:
-			raise configError('could not retreive version number')
+
 		try:
-			self.version = float(self.version)
+			float(self.version)
 		except ValueError:
 			raise configError('unknown/unsupported version number: {0}'.format(self.version))
 		return
