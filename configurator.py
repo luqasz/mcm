@@ -200,6 +200,12 @@ class comparison:
 						difference['.id'] = present_rule['.id']
 					setlist.append(difference)
 				save_ids.append(present_rule.get('.id'))
+
+				#check if user specified more than one rule in menu level witch has no .id
+				if '.id' not in present_rule and present_rule and len(wanted) > 1:
+					self.log.error('more than one rule specified in no \'.id\' menu level. skipping...')
+					return ([], [], [])
+
 			index += 1
 
 		dellist = set(dellist) - set(save_ids)
