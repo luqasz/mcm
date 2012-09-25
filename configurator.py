@@ -54,16 +54,15 @@ class configurator:
 			#pick approprieate method for specific menu level. if not found pick default
 			addlist, setlist, dellist, action_order = cmp.compare(wanted, present_rules, menu['level'])
 
-			self.log.debug('addlist={0}'.format(addlist))
-			self.log.debug('setlist={0}'.format(setlist))
-			self.log.debug('dellist={0}'.format(dellist))
-
 			for action in action_order:
 				if action == 'ADD':
+					self.log.debug('addlist={0}'.format(addlist))
 					self.addEntry(menu['level'], addlist)
 				elif action == 'DEL':
+					self.log.debug('dellist={0}'.format(dellist))
 					self.removeIds(menu['level'], dellist)
 				elif action == 'SET':
+					self.log.debug('setlist={0}'.format(setlist))
 					self.updateEntry(menu['level'], setlist)
 
 		return

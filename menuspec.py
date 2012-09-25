@@ -85,5 +85,5 @@ sample class for different version dependent menu specification
 class version_3_x:
 	_snmp_community = {'key':'community'}
 
-vmap = {3.0:version_3_x, 3.1:version_3_x, ETC...}
+vmap = {'3.0':version_3_x, '3.1':version_3_x, ETC...}
 """

@@ -98,14 +98,14 @@ def prepRules(rules, version):
 	for menu in rules:
 		menuindex = cp_rules.index(menu)
 		if menu.get('version'):
-			menu_version = float(menu['version'][2:])
+			menu_version = menu['version'][2:]
 			menu_op = menu['version'][:2]
 			if not vcmp(version, menu_version, menu_op):
 				cp_rules.remove(menu)
 				continue
 		for rule in menu['rules']:
 			if rule.get('version'):
-				rule_version = float(rule['version'][2:])
+				rule_version = rule['version'][2:]
 				rule_op = rule['version'][:2]
 				if not vcmp(version, rule_version, rule_op):
 					cp_rules[menuindex]['rules'].remove(rule)
