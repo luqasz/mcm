@@ -13,23 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from distutils.version import StrictVersion
+import operator
 
 def vcmp(v1, v2, op):
 	"""
-	takes float, float, str
+	takes float | str v1, float | str v2, str op (operator can be gt, lt, ge, le, eq, ne)
 	return bool
 	compare v1 to v2 using op as comparison operator
+	
 	"""
 
+	#cast versions to strings
 	v1 = str(v1)
 	v2 = str(v2)
-	opmap = {'==': 'eq', '>': 'gt', '<': 'lt', '>=': 'ge', '<=': 'le', '!=': 'ne'}
-	op = opmap.get(op, op)
 
-	result_map = {'gt': StrictVersion(v1) > StrictVersion(v2), 'lt': StrictVersion(v1) < StrictVersion(v2), 'ge': StrictVersion(v1) >= StrictVersion(v2), 'le': StrictVersion(v1) <= StrictVersion(v2), 'eq': StrictVersion(v1) == StrictVersion(v2), 'ne': StrictVersion(v1) != StrictVersion(v2)}
-
-	return result_map[op]
+	return getattr(operator, op)(v1, v2)
 
 def typeCast(string):
 	"""cast strings into possibly int, boollean"""

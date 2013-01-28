@@ -1,0 +1,12 @@
+#python compiled files
+*.py[cod]
+__pycache__
+
+#package related files / dirs
+*.deb
+dist
+build
+sdist
+
+#my own testing dir
+test
