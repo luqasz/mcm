@@ -18,7 +18,7 @@
 
 allowed dictionary attributes in menu level variables:
 offset = how many first offset rules to treat as default. (default are not removable)
-key = with attribute will be treated as 'key' one.
+key = with attribute will be treated as 'key' one. key one means that is unique
 mng_def = to 'shift' default enries or not
 mod_ord = order in witch mcm will ADD DEL or SET
 lst_attr = tuple with 1 element as name of attribute to split it into list, second by what char to split it.

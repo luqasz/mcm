@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import operator
+from distutils.version import StrictVersion
 
 def vcmp(v1, v2, op):
 	"""
@@ -27,7 +28,7 @@ def vcmp(v1, v2, op):
 	v1 = str(v1)
 	v2 = str(v2)
 
-	return getattr(operator, op)(v1, v2)
+	return getattr(operator, op)(StrictVersion(v1), StrictVersion(v2))
 
 def typeCast(string):
 	"""cast strings into possibly int, boollean"""
@@ -50,6 +51,6 @@ def dictStr (dictionary):
 	#replace password value with '***' in dictionary if present
 	if 'password' in dictionary:
 		dictionary = dict((k,'***' if k == 'password' else v) for (k,v) in dictionary.items())
-
+	#put every value in ""
 	log_str = ' '.join('{0}={1}'.format(k,('"{0}"'.format(v) if ' ' in str(v) else v)) for (k,v) in dictionary.items())
 	return log_str
