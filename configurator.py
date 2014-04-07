@@ -40,11 +40,10 @@ class configurator:
 	def gatherInfo( self ):
 		"""get basic information from remote device"""
 		resource = self.api.talk( '/system/resource/print' )[0]
-		self.version = resource.get( 'version' )
-
+		
 		try:
-			float( self.version )
-		except ValueError:
+			self.version = resource['version']
+		except KeyError:
 			raise configError( 'unknown/unsupported version number: {0}'.format( self.version ) )
 		return
 
