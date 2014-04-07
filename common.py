@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import operator
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 def vcmp(v1, v2, op):
 	"""
@@ -28,7 +28,7 @@ def vcmp(v1, v2, op):
 	v1 = str(v1)
 	v2 = str(v2)
 
-	return getattr(operator, op)(StrictVersion(v1), StrictVersion(v2))
+	return getattr(operator, op)(LooseVersion(v1), LooseVersion(v2))
 
 def typeCast(string):
 	"""cast strings into possibly int, boollean"""
