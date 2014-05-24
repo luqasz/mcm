@@ -8,10 +8,5 @@ dist
 build
 sdist
 
-#my own testing dir
-test
-
-#ignore dot files
-.*
 #except .gitignore
 !.gitignore
