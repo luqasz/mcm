@@ -56,7 +56,7 @@ class SimpleKey:
     def compare(self, wanted):
 
         for rule in wanted:
-            kvp = ({ self.key : rule[self.key] },)
+            kvp = { self.key : rule[self.key] }
             present = self.Printer.get( kvp=kvp )
             difference = dictdiff( wanted=rule, present=present )
             self.decide( difference, present )
