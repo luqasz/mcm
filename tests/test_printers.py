@@ -18,19 +18,40 @@ class CachedPrintTests(TestCase):
         self.instmock = MagicMock()
         self.ownmock = MagicMock()
 
-    def test_calls_instances_api_run_method(self):
+    @patch.object(CachedPrint, 'filter')
+    def test_getter_calls_instances_api_run_method(self,filtermock):
         self.TestCls.__get__(self.instmock, self.ownmock)
         self.assertEqual( self.instmock.api.run.call_count, 1 )
 
-    def test_sets_instances_dictionary_with_data_key_value(self):
-        self.instmock.api.run.return_value = 1
+    @patch.object(CachedPrint, 'filter')
+    def test_getter_sets_instances_dictionary_with_data_key_value(self, filtermock):
+        filtermock.return_value = 1
         self.TestCls.__get__(self.instmock, self.ownmock)
         self.assertEqual( self.instmock.data, 1 )
 
-    def test_returns_same_data_as_run_method_returns(self):
-        self.instmock.api.run.return_value = 1
+    @patch.object(CachedPrint, 'filter')
+    def test_returns_same_data_as_run_method_returns(self, filtermock):
+        filtermock.return_value = 1
         retval = self.TestCls.__get__(self.instmock, self.ownmock)
         self.assertEqual( retval, 1 )
+
+    @patch.object(CachedPrint, 'filter')
+    def test_getter_calls_filter(self, filtermock):
+        self.TestCls.__get__(self.instmock, self.ownmock)
+        self.assertEqual( filtermock.call_count, 1 )
+
+    def test_filter_filters_out_dynamic_rules(self):
+        data = ( {'dynamic':True, 'name':'asd'}, {'dynamic':False, 'name':'dsa'} )
+        retval = self.TestCls.filter( data )
+        self.assertEqual( retval, ( {'dynamic':False, 'name':'dsa'}, ) )
+
+    def test_filter_does_not_raise_any_excaption_if_rules_do_not_have_dynamic_key(self):
+        data = ( {'name':'asd'}, {'name':'dsa'} )
+        retval = self.TestCls.filter( data )
+        self.assertEqual( retval, data )
+
+
+
 
 
 

@@ -22,10 +22,13 @@ class CachedPrint:
     def __get__(self, inst, own):
         path = pjoin( inst.lvl, 'print' )
         data = inst.api.run( path )
+        data = self.filter( data )
         inst.__dict__['data'] = data
         return data
 
+    def filter(self, data):
 
+        return tuple( elem for elem in data if not elem.get('dynamic') )
 
 
 '''
