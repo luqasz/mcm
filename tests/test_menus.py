@@ -12,7 +12,28 @@ librouteros_mock = MagicMock()
 mp = patch.dict('sys.modules', {'librouteros.extras':librouteros_mock})
 mp.start()
 
-from menutypes import WithKeyMenu, SingleMenu, GenericMenu
+from menus import WithKeyMenu, SingleMenu, GenericMenu, mkpath
+
+
+class PathTests(TestCase):
+
+    def setUp(self):
+        self.path = mkpath( 'ip/address' )
+
+    def test_path_attribute_returns_absolute_path_without_appended_forward_slash(self):
+        self.assertEqual( self.path.path, '/ip/address' )
+
+    def test_remove_returns_appended_remove_string_without_ending_forward_slash(self):
+        self.assertEqual( self.path.remove, '/ip/address/remove' )
+
+    def test_add_returns_appended_add_string_without_ending_forward_slash(self):
+        self.assertEqual( self.path.add, '/ip/address/add' )
+
+    def test_set_returns_appended_set_string_without_ending_forward_slash(self):
+        self.assertEqual( self.path.set, '/ip/address/set' )
+
+    def test_getall_returns_appended_getall_string_without_ending_forward_slash(self):
+        self.assertEqual( self.path.getall, '/ip/address/getall' )
 
 
 
@@ -84,7 +105,7 @@ class GenericMenu_purge_Tests(TestCase):
         self.TestCls.purge()
         self.assertEqual( self.PrinterMock.exceptIDs.call_count , 0 )
 
-@patch('menutypes.dictdiff')
+@patch('menus.dictdiff')
 @patch.object(GenericMenu, 'decide')
 @patch.object(GenericMenu, 'saveDecide')
 @patch.object(GenericMenu, 'purge')
@@ -135,7 +156,7 @@ class GenericMenu_compare_Tests(TestCase):
 
 
 
-@patch('menutypes.dictdiff')
+@patch('menus.dictdiff')
 class SingleTests(TestCase):
 
     def setUp(self):
@@ -176,7 +197,7 @@ class SingleTests(TestCase):
 @patch.object(GenericMenu, 'decide')
 @patch.object(GenericMenu, 'saveDecide')
 @patch.object(WithKeyMenu, 'mkkvp')
-@patch('menutypes.dictdiff')
+@patch('menus.dictdiff')
 class WithKey_compare_Tests(TestCase):
 
     def setUp(self):
