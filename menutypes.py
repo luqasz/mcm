@@ -2,91 +2,11 @@
 
 from librouteros.extras import dictdiff
 
+from itertools import zip_longest
 
 
-class Single:
-    '''
-    This class is used to compare single element menus. Such as /snmp,/system/ntp/client
-    '''
+class GenericMenu:
 
-    def __init__(self, printer):
-        self.Printer = printer
-
-
-    def compare(self, wanted):
-
-        present = self.Printer.get()
-        difference = dictdiff( wanted=wanted, present=present )
-        SET = ( difference, ) if difference else tuple()
-
-        return tuple(), SET, tuple()
-
-
-
-class SimpleKey:
-    '''
-    Class for comparing menus with unique key. /queue/simple where key is 'name'.
-    Items are unordered. Can not have duplicates. Only one key allowed.
-    '''
-
-    def __init__(self, printer, key, exact):
-        '''
-        DEL
-            list with rules to delete
-        SET
-            list with rules to set
-        ADD
-            list with rules to add
-        printer
-            Printer object responsible for printing elements
-        key
-            unique key used name
-        exact
-            bool whether remove remaining rules or not
-        '''
-
-        self.DEL = []
-        self.SET= []
-        self.ADD = []
-        self.Printer = printer
-        self.key = key
-        self.exact = exact
-
-
-    def compare(self, wanted):
-
-        for rule in wanted:
-            kvp = { self.key : rule[self.key] }
-            present = self.Printer.get( kvp=kvp )
-            difference = dictdiff( wanted=rule, present=present )
-            self.decide( difference, present )
-
-        self.purge(wanted)
-
-        return tuple(self.DEL), tuple(self.SET), tuple(self.ADD)
-
-
-    def decide(self, difference, present):
-
-        if present.get('ID'):
-            difference['ID'] = present['ID']
-            self.SET.append(difference)
-        else:
-            self.ADD.append(difference)
-
-
-    def purge(self, wanted):
-
-        if self.exact:
-            kvps = [ { self.key : rule[self.key] } for rule in wanted ]
-            self.DEL.extend( self.Printer.notIn( kvp=kvps  ) )
-
-
-class CompositeKey:
-    '''
-    Class for composite key menus. /ip/firewall/address-list where 'list' and 'address' creates a composite key.
-    May have 2 or more keys as compositekey. Order is irrelevant. May have duplicates.
-    '''
 
     def __init__(self, printer, keys, exact):
         '''
@@ -96,10 +16,12 @@ class CompositeKey:
             list with rules to set
         ADD
             list with rules to add
+        SAVE_IDS
+            list with rule IDs not to be removed
         printer
             Printer object responsible for printing elements
         keys
-            keys to use as composite key
+            key names that create unique key
         exact
             bool whether remove remaining rules or not
         '''
@@ -107,6 +29,7 @@ class CompositeKey:
         self.DEL = []
         self.SET= []
         self.ADD = []
+        self.SAVE_IDS = []
         self.Printer = printer
         self.keys = keys
         self.exact = exact
@@ -114,34 +37,81 @@ class CompositeKey:
 
     def compare(self, wanted):
 
-        for rule in wanted:
-            compkey = dict( (key,rule[key]) for key in self.keys )
-            present = self.Printer.get( kvp=compkey )
-            difference = dictdiff( wanted=rule, present=present )
-            self.decide( difference, present )
+        present_rules = self.Printer.get()
 
-        self.purge(wanted)
+        for prule, wrule in zip_longest(present_rules, wanted, fillvalue=dict()):
+            diff = dictdiff( wanted=wrule, present=prule )
+            self.decide( difference=diff, present=prule )
+            self.saveDecide( prule )
 
+        self.purge()
         return tuple(self.DEL), tuple(self.SET), tuple(self.ADD)
 
 
     def decide(self, difference, present):
 
-        if present.get('ID'):
-            difference['ID'] = present['ID']
+        ID = present.get('ID')
+
+        if ID and difference:
+            difference['ID'] = ID
             self.SET.append(difference)
-        else:
+        elif difference:
             self.ADD.append(difference)
 
 
-    def purge(self, wanted):
+    def saveDecide(self, present):
+
+        try:
+            self.SAVE_IDS.append( present['ID'] )
+        except KeyError:
+            pass
+
+
+    def purge(self):
 
         if self.exact:
+            self.DEL = self.Printer.exceptIDs( ids=self.SAVE_IDS )
 
-            kvps = []
-            for rule in wanted:
-                compkey = dict( (key,rule[key]) for key in self.keys )
-                kvps.append(compkey)
 
-            self.DEL.extend( self.Printer.notIn( kvp=kvps ) )
+
+class SingleMenu(GenericMenu):
+    '''
+    This class is used to compare single element menus. Such as /snmp,/system/ntp/client
+    '''
+
+
+    def compare(self, wanted):
+
+        present = self.Printer.get()[0]
+        difference = dictdiff( wanted=wanted, present=present )
+        SET = ( difference, ) if difference else tuple()
+        return tuple(), SET, tuple()
+
+
+
+class WithKeyMenu(GenericMenu):
+    '''
+    This class holds methods for comparing composite and single key menus.
+    '''
+
+
+    def compare(self, wanted):
+
+        for rule in wanted:
+            kvp = self.mkkvp( rule )
+            present = self.Printer.get( kvp=kvp )
+            difference = dictdiff( wanted=rule, present=present )
+            self.decide( difference, present )
+            self.saveDecide( present )
+
+        self.purge()
+        return tuple(self.DEL), tuple(self.SET), tuple(self.ADD)
+
+
+    def mkkvp(self, elem):
+        '''
+        Make (extract) key,value pairs out of elem.
+        '''
+
+        return dict( (key,elem[key]) for key in self.keys )
 
