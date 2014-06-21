@@ -69,11 +69,12 @@ class WithKeyPrinter(GenericPrinter):
         '''
 
         # prepare function call
-        func = lambda x: self.issubset( kvp, x )
+        func = lambda rule: self.issubset( kvp, rule )
         for found in filter( func, self.data ):
             return found
         else:
             return dict()
+
 
     def issubset(self, kvp, rule):
         '''
