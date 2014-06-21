@@ -13,7 +13,7 @@ except ImportError:
     from time import time as test_timer
 
 
-from ctxtools import StopWatch, timer
+from tools import StopWatch, timer
 
 
 
@@ -37,19 +37,19 @@ class StopWatchTests(TestCase):
         self.assertEqual(st.runtime, None)
 
     @patch.object(StopWatch, 'calc')
-    @patch('ctxtools.timer')
+    @patch('tools.timer')
     def test_enter_calls_timer_function(self, timermock, calcmock):
         StopWatch().__enter__()
         timermock.assert_called_once_with()
 
     @patch.object(StopWatch, 'calc')
-    @patch('ctxtools.timer')
+    @patch('tools.timer')
     def test_exit_calls_timer_function(self, timermock, calcmock):
         StopWatch().__exit__(None,None,None)
         timermock.assert_called_once_with()
 
     @patch.object(StopWatch, 'calc')
-    @patch('ctxtools.timer')
+    @patch('tools.timer')
     def test_exit_calls_calc(self, timermock, calcmock):
         StopWatch().__exit__(None, None, None)
         calcmock.assert_called_once_with()
