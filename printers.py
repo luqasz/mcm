@@ -33,10 +33,7 @@ Non query enabled classes
 '''
 
 
-class Generic:
-    '''
-    Base class for all others.
-    '''
+class GenericPrinter:
 
     data = CachedPrint()
 
@@ -51,21 +48,17 @@ class Generic:
         self.api = api
 
 
-class Single(Generic):
-    '''
-    Class for single menu levels. /snmp, /system/ntp/client.
-    '''
-
-
     def get(self):
 
-        return self.data[0]
+        return self.data
 
 
-class Keyed(Generic):
+
+class WithKeyPrinter(GenericPrinter):
     '''
     Class for menu types with composite and simple keys.
     '''
+
 
     def get(self, kvp):
         '''
