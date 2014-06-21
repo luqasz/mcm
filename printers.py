@@ -5,8 +5,6 @@
 Module that holds various Printer classes. They are used to retreive rules from given menu.
 '''
 
-from posixpath import join as pjoin
-
 
 
 '''
@@ -20,8 +18,7 @@ class CachedPrint:
     '''
 
     def __get__(self, inst, own):
-        path = pjoin( inst.lvl, 'print' )
-        data = inst.api.run( path )
+        data = inst.api.run( inst.path.getall )
         data = self.filter( data )
         inst.__dict__['data'] = data
         return data
@@ -43,14 +40,14 @@ class Generic:
 
     data = CachedPrint()
 
-    def __init__(self, lvl, api):
+    def __init__(self, path, api):
         '''
-        lvl
-            menu level
+        path
+            menu path
         api
             api instance
         '''
-        self.lvl = lvl
+        self.path = path
         self.api = api
 
 
