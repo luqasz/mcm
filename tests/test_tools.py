@@ -11,9 +11,10 @@ try:
     from time import monotonic as test_timer
 except ImportError:
     from time import time as test_timer
+import operator
 
 
-from tools import StopWatch, timer
+from tools import StopWatch, timer, vcmp
 
 
 
@@ -61,3 +62,67 @@ class StopWatchTests(TestCase):
         st.calc()
         self.assertEqual( st.runtime, 5.92 )
 
+
+
+class VersionCompareTests(TestCase):
+
+    def test_greater_then_comparison_returns_True(self):
+        result = vcmp( '4.11', '3.12', operator.gt )
+        self.assertTrue( result )
+
+    def test_greater_then_comparison_returns_False(self):
+        result = vcmp( '4.11', '5.12', operator.gt )
+        self.assertFalse( result )
+
+
+    def test_greater_or_equel_comparison_returns_True_when_same_versions(self):
+        result = vcmp( '4.11', '4.11', operator.ge )
+        self.assertTrue( result )
+
+    def test_greater_or_equel_comparison_returns_True_when_different_versions(self):
+        result = vcmp( '4.14', '4.11', operator.ge )
+        self.assertTrue( result )
+
+    def test_greater_or_equal_comparison_returns_False(self):
+        result = vcmp( '4.11', '5.12', operator.ge )
+        self.assertFalse( result )
+
+
+    def test_less_then_comparison_returns_True(self):
+        result = vcmp( '4.11', '5.12', operator.lt )
+        self.assertTrue( result )
+
+    def test_less_then_comparison_returns_False(self):
+        result = vcmp( '6.11', '5.12', operator.lt )
+        self.assertFalse( result )
+
+
+    def test_less_or_equel_comparison_returns_True_when_same_versions(self):
+        result = vcmp( '4.11', '4.11', operator.le )
+        self.assertTrue( result )
+
+    def test_less_or_equel_comparison_returns_True_when_different_versions(self):
+        result = vcmp( '4.1', '4.11', operator.le )
+        self.assertTrue( result )
+
+    def test_less_or_equal_comparison_returns_False(self):
+        result = vcmp( '6.11', '5.12', operator.le )
+        self.assertFalse( result )
+
+
+    def test_equal_comparison_returns_True(self):
+        result = vcmp( '4.11', '4.11', operator.eq )
+        self.assertTrue( result )
+
+    def test_equal_comparison_returns_False(self):
+        result = vcmp( '4.10', '4.1', operator.eq )
+        self.assertFalse( result )
+
+
+    def test_not_equal_comparison_returns_True(self):
+        result = vcmp( '4.10', '4.1', operator.ne )
+        self.assertTrue( result )
+
+    def test_not_equal_comparison_returns_False(self):
+        result = vcmp( '4.11', '4.11', operator.ne )
+        self.assertFalse( result )

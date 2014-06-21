@@ -6,6 +6,8 @@ try:
 except ImportError:
     from time import time as timer
 
+from distutils.version import LooseVersion
+
 
 
 class StopWatch:
@@ -25,4 +27,18 @@ class StopWatch:
 
     def calc(self):
         self.runtime = round( (self.stop - self.start), 2 )
+
+
+def vcmp(v1, v2, op):
+    '''
+    Compare v1 and v2 using op.
+
+    op:
+        operator.op object
+    '''
+
+    v1 = str(v1)
+    v2 = str(v2)
+
+    return op(LooseVersion(v1), LooseVersion(v2))
 
