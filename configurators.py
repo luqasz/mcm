@@ -4,6 +4,7 @@
 Module that holds configuration classes and helpers.
 '''
 
+from exc import ConfigRunError
 
 
 class GenericConfigurator:
@@ -26,11 +27,15 @@ class GenericConfigurator:
             MenuPath namedtuple
         '''
 
-        DEL, SET, ADD = menu_type.compare( rules )
-        data_action_map = {'DEL':DEL, 'SET':SET, 'ADD':ADD}
-        for action in modord:
-            method = getattr( self, action )
-            method( data_action_map[action], path )
+        try:
+            DEL, SET, ADD = menu_type.compare( rules )
+        except ConfigRunError:
+            return
+        else:
+            data_action_map = {'DEL':DEL, 'SET':SET, 'ADD':ADD}
+            for action in modord:
+                method = getattr( self, action )
+                method( data_action_map[action], path )
 
 
 class NonQueriedConfigurator(GenericConfigurator):

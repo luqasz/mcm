@@ -8,7 +8,7 @@ from unittest import TestCase
 
 
 from configurators import GenericConfigurator, NonQueriedConfigurator, DryRunConfigurator
-
+from exc import ConfigRunError
 
 
 class GenericConfigurator_applyMenu_Tests(TestCase):
@@ -27,6 +27,13 @@ class GenericConfigurator_applyMenu_Tests(TestCase):
     def test_calls_compare(self):
         self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.MenuType.compare.assert_called_once_with( self.rules )
+
+    def test_does_not_call_ADD_SET_DEL_when_Menu_type_compare_method_raises_ConfigRunError(self):
+        self.MenuType.compare.side_effect = ConfigRunError()
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.assertEqual(0, self.TestCls.SET.call_count)
+        self.assertEqual(0, self.TestCls.ADD.call_count)
+        self.assertEqual(0, self.TestCls.DEL.call_count)
 
     def test_calls_ADD_if_specified_in_modord(self):
         self.modord = ('ADD', )
