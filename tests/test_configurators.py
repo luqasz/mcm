@@ -24,7 +24,7 @@ class GenericConfigurator_applyMenu_Tests(TestCase):
         self.modord = ('SET', 'ADD')
         self.PathMock = MagicMock()
 
-    def test_calls_compare(self):
+    def test_calls_MenuType_compare_method(self):
         self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.MenuType.compare.assert_called_once_with( self.rules )
 
