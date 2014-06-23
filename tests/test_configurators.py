@@ -11,7 +11,7 @@ from configurators import GenericConfigurator, NonQueriedConfigurator, DryRunCon
 
 
 
-class GenericConfigurator_apply_Tests(TestCase):
+class GenericConfigurator_applyMenu_Tests(TestCase):
 
     def setUp(self):
         self.TestCls = GenericConfigurator( None, None )
