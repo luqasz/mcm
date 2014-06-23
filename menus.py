@@ -4,34 +4,18 @@ from librouteros.extras import dictdiff
 
 from itertools import zip_longest
 from posixpath import join as pjoin
+from collections import namedtuple
 
 
-
-class MenuPath(tuple):
-    '''
-    Named tuple representing menu path
-    '''
-
-    __slots__ = ()
-
-    def __new__(_cls, path, remove, set, add, getall):
-        return tuple.__new__(_cls, (path, remove, set, add, getall))
-
-    def __repr__(self):
-        return 'MenuPath({!r}, remove={!r}, set={!r}, add={!r}, getall={!r})'.format(*self)
-
-    path = property( lambda x: x[0][:-1] )
-    remove = property( lambda x: x[1] )
-    set = property( lambda x: x[2] )
-    add = property( lambda x: x[3] )
-    getall = property( lambda x: x[4] )
+MenuPath = namedtuple('MenuPath', ('path', 'remove', 'set', 'add', 'getall', 'type', 'modord', 'keys', 'split_by', 'split_keys') )
 
 
-def mkpath( path ):
+def mkpath( path, attrs ):
 
-    fields = ('', 'remove', 'set', 'add', 'getall')
-    attrs = tuple( pjoin( '/', path, attr ) for attr in fields )
-    return MenuPath( *attrs )
+    fields = ('remove', 'set', 'add', 'getall')
+    field_attrs = ( pjoin('/', path), )
+    field_attrs += tuple( pjoin( '/', path, attr ) for attr in fields )
+    return MenuPath( *field_attrs, **attrs )
 
 
 
