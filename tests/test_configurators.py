@@ -40,6 +40,11 @@ class GenericConfigurator_applyMenu_Tests(TestCase):
         self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.TestCls.ADD.assert_called_once_with('ADD', self.PathMock)
 
+    def test_calls_DEL_if_specified_in_modord(self):
+        self.modord = ('DEL', )
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.TestCls.DEL.assert_called_once_with('DEL', self.PathMock)
+
     def test_calls_SET_if_specified_in_modord(self):
         self.modord = ('SET', )
         self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
@@ -49,6 +54,16 @@ class GenericConfigurator_applyMenu_Tests(TestCase):
         self.modord = ('SET', 'ADD')
         self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.assertEqual(0, self.TestCls.DEL.call_count)
+
+    def test_does_not_call_SEt_if_not_listed_in_modord(self):
+        self.modord = ('DEL', 'ADD')
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.assertEqual(0, self.TestCls.SET.call_count)
+
+    def test_does_not_call_ADD_if_not_listed_in_modord(self):
+        self.modord = ('SET', 'DEL')
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.assertEqual(0, self.TestCls.ADD.call_count)
 
 
 
