@@ -25,22 +25,22 @@ class GenericConfigurator_apply_Tests(TestCase):
         self.PathMock = MagicMock()
 
     def test_calls_compare(self):
-        self.TestCls.apply( rules=self.rules, menu=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.MenuType.compare.assert_called_once_with( self.rules )
 
     def test_calls_ADD_if_specified_in_modord(self):
         self.modord = ('ADD', )
-        self.TestCls.apply( rules=self.rules, menu=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.TestCls.ADD.assert_called_once_with('ADD', self.PathMock)
 
     def test_calls_SET_if_specified_in_modord(self):
         self.modord = ('SET', )
-        self.TestCls.apply( rules=self.rules, menu=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.TestCls.SET.assert_called_once_with('SET', self.PathMock)
 
     def test_does_not_call_DEL_if_not_listed_in_modord(self):
         self.modord = ('SET', 'ADD')
-        self.TestCls.apply( rules=self.rules, menu=self.MenuType, modord=self.modord, path=self.PathMock )
+        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
         self.assertEqual(0, self.TestCls.DEL.call_count)
 
 

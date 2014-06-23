@@ -14,13 +14,11 @@ class GenericConfigurator:
         self.log = log
 
 
-    def apply(self, rules, menu, modord, path):
+    def applyMenu(self, rules, menu_type, modord, path):
         '''
-        Apply given rules to menu path
-
         rules:
             iterable with dictionaries as rules
-        menu:
+        menu_type:
             instantiated MenuType object
         modord:
             iterable with modification order as string
@@ -28,7 +26,7 @@ class GenericConfigurator:
             MenuPath namedtuple
         '''
 
-        DEL, SET, ADD = menu.compare( rules )
+        DEL, SET, ADD = menu_type.compare( rules )
         data_action_map = {'DEL':DEL, 'SET':SET, 'ADD':ADD}
         for action in modord:
             method = getattr( self, action )
