@@ -12,7 +12,7 @@ Descriptors
 '''
 
 
-class CachedPrint:
+class CachedRead:
     '''
     Print all elements from menu and set attribute on instance.
     '''
@@ -33,9 +33,9 @@ Non query enabled classes
 '''
 
 
-class GenericPrinter:
+class ApiReader:
 
-    data = CachedPrint()
+    data = CachedRead()
 
     def __init__(self, path, api):
         '''
