@@ -48,21 +48,17 @@ class ApiReader:
         self.api = api
 
 
-    def get(self):
+    def issubset(self, kvp, rule):
+        '''
+        Check if all key, value pairs from kvp are in rule.
+        '''
 
-        return self.data
-
-
-
-class WithKeyPrinter(GenericPrinter):
-    '''
-    Class for menu types with composite and simple keys.
-    '''
+        return set(kvp.items()) <= set(rule.items())
 
 
     def get(self, kvp):
         '''
-        Always get first found element. Duplicates are ignored.
+        Return first found key value pair/s. Duplicates are ignored.
 
         kvp
             dictionary with key, value pairs
@@ -74,12 +70,3 @@ class WithKeyPrinter(GenericPrinter):
             return found
         else:
             return dict()
-
-
-    def issubset(self, kvp, rule):
-        '''
-        Check if all key, value pairs from kvp are in rule.
-        '''
-
-        return set(kvp.items()) <= set(rule.items())
-
