@@ -156,12 +156,12 @@ class SingleElementCmdPathTests(TestCase):
     def test_compare_updates_SET_if_difference(self, diffmock):
         diffmock.return_value = self.wanted
         self.TestCls.compare( self.wanted )
-        self.assertEqual( (self.wanted,), self.TestCls.SET )
+        self.assertEqual( [self.wanted], self.TestCls.SET )
 
     def test_compare_does_not_update_SET_if_no_difference(self, diffmock):
         diffmock.return_value = dict()
         self.TestCls.compare( self.wanted )
-        self.assertEqual( self.TestCls.SET, tuple() )
+        self.assertEqual( self.TestCls.SET, list() )
 
 
 

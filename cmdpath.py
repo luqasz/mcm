@@ -83,7 +83,7 @@ class SingleElementCmdPath(GenericCmdPath):
 
         present = self.Printer.get()[0]
         difference = dictdiff( wanted=wanted, present=present )
-        self.SET = ( difference, ) if difference else tuple()
+        self.SET = [difference] if difference else list()
 
 
 
