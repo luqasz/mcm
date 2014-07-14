@@ -56,7 +56,6 @@ class GenericCmdPath:
         for prule, wrule in zip_longest(present_rules, wanted, fillvalue=dict()):
             diff = dictdiff( wanted=wrule, present=prule )
             self.decide( difference=diff, present=prule )
-            self.saveDecide( prule )
 
         self.purge()
         return tuple(self.DEL), tuple(self.SET), tuple(self.ADD)
@@ -71,14 +70,6 @@ class GenericCmdPath:
             self.SET.append(difference)
         elif difference:
             self.ADD.append(difference)
-
-
-    def saveDecide(self, present):
-
-        try:
-            self.SAVE_IDS.append( present['ID'] )
-        except KeyError:
-            pass
 
 
     def purge(self):
@@ -116,7 +107,6 @@ class UniqueKeyCmdPath(GenericCmdPath):
             present = self.Printer.get( kvp=kvp )
             difference = dictdiff( wanted=rule, present=present )
             self.decide( difference, present )
-            self.saveDecide( present )
 
         self.purge()
         return tuple(self.DEL), tuple(self.SET), tuple(self.ADD)

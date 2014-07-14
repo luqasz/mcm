@@ -85,24 +85,6 @@ class GenericCmdPath_decide_Tests(TestCase):
         self.TestCls.decide( difference=dict(), present={'ID':1, 'name':1} )
         self.assertEqual( [], self.TestCls.SET )
 
-class GenericCmdPath_saveDecide_Tests(TestCase):
-
-    def setUp(self):
-        self.ApiReadermock = MagicMock()
-        self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, exact=True )
-
-    def test_saveDecide_appends_presents_ID_to_SAVE_IDS_when_present_has_ID(self):
-        self.TestCls.saveDecide( present={'ID':1, 'name':'some_name'} )
-        self.assertEqual( [1], self.TestCls.SAVE_IDS )
-
-    def test_saveDecide_does_not_append_ID_to_SAVE_IDS_when_present_lacks_ID_key(self):
-        self.TestCls.saveDecide( present={'name':'some_name'} )
-        self.assertEqual( [], self.TestCls.SAVE_IDS )
-
-    def test_saveDecide_does_not_append_ID_to_SAVE_IDS_when_present_is_empty(self):
-        self.TestCls.saveDecide( present=dict() )
-        self.assertEqual( [], self.TestCls.SAVE_IDS )
 
 class GenericCmdPath_purge_Tests(TestCase):
 
@@ -132,7 +114,6 @@ class GenericCmdPath_purge_Tests(TestCase):
 
 @patch('cmdpath.dictdiff')
 @patch.object(GenericCmdPath, 'decide')
-@patch.object(GenericCmdPath, 'saveDecide')
 @patch.object(GenericCmdPath, 'purge')
 class GenericCmdPath_compare_Tests(TestCase):
 
@@ -143,40 +124,30 @@ class GenericCmdPath_compare_Tests(TestCase):
         self.wanted = ( MagicMock(), MagicMock() )
         self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, exact=True )
 
-    def test_compare_calls_purge(self, purgemock, savemock, decidemock, diffmock):
+    def test_compare_calls_purge(self, purgemock, decidemock, diffmock):
         self.TestCls.compare( self.wanted )
         purgemock.assert_called_once_with()
 
-    def test_compare_accesses_Printers_data_attribute(self, purgemock, savemock, decidemock, diffmock):
+    def test_compare_accesses_Printers_data_attribute(self, purgemock, decidemock, diffmock):
         self.TestCls.compare( self.wanted )
         self.ReaderDataMock.assert_called_once_with()
 
-    def test_compare_calls_dictdiff_for_longest_iterable_present_rules(self, purgemock, savemock, decidemock, diffmock):
+    def test_compare_calls_dictdiff_for_longest_iterable_present_rules(self, purgemock, decidemock, diffmock):
         self.ApiReadermock.get.return_value = [1] * 10
         self.TestCls.compare( [1] )
         self.assertEqual( diffmock.call_count, 10 )
 
-    def test_compare_calls_dictdiff_for_longest_iterable_wanted(self, purgemock, savemock, decidemock, diffmock):
+    def test_compare_calls_dictdiff_for_longest_iterable_wanted(self, purgemock, decidemock, diffmock):
         self.ApiReadermock.get.return_value = [1]
         self.TestCls.compare( [1]*10 )
         self.assertEqual( diffmock.call_count, 10 )
 
-    def test_compare_calls_saveDecide_for_longest_iterable_present_rules(self, purgemock, savemock, decidemock, diffmock):
-        self.ApiReadermock.get.return_value = [1] * 10
-        self.TestCls.compare( [1] )
-        self.assertEqual( savemock.call_count, 10 )
-
-    def test_compare_calls_saveDecide_for_longest_iterable_wanted(self, purgemock, savemock, decidemock, diffmock):
-        self.ApiReadermock.get.return_value = [1]
-        self.TestCls.compare( [1]*10 )
-        self.assertEqual( savemock.call_count, 10 )
-
-    def test_compare_calls_decide_for_longest_iterable_present_rules(self, purgemock, savemock, decidemock, diffmock):
+    def test_compare_calls_decide_for_longest_iterable_present_rules(self, purgemock, decidemock, diffmock):
         self.ApiReadermock.get.return_value = [1] * 10
         self.TestCls.compare( [1] )
         self.assertEqual( decidemock.call_count, 10 )
 
-    def test_compare_calls_decide_for_longest_iterable_wanted(self, purgemock, savemock, decidemock, diffmock):
+    def test_compare_calls_decide_for_longest_iterable_wanted(self, purgemock, decidemock, diffmock):
         self.ApiReadermock.get.return_value = [1]
         self.TestCls.compare( [1]*10 )
         self.assertEqual( decidemock.call_count, 10 )
@@ -222,7 +193,6 @@ class SingleElementCmdPathTests(TestCase):
 
 @patch.object(GenericCmdPath, 'purge')
 @patch.object(GenericCmdPath, 'decide')
-@patch.object(GenericCmdPath, 'saveDecide')
 @patch.object(UniqueKeyCmdPath, 'mkkvp')
 @patch('cmdpath.dictdiff')
 class UniqueKeyCmdPath_compare_Tests(TestCase):
@@ -232,29 +202,26 @@ class UniqueKeyCmdPath_compare_Tests(TestCase):
         self.wanted = ( MagicMock(), MagicMock() )
         self.TestCls = UniqueKeyCmdPath( printer=self.ApiReadermock, keys=('name',), exact=True )
 
-    def test_compare_calls_printers_get_method(self, diffmock, mkkvpmock, savemock, decidemock, purgemock):
+    def test_compare_calls_printers_get_method(self, diffmock, mkkvpmock, decidemock, purgemock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( self.ApiReadermock.get.call_count, 2 )
 
-    def test_compare_calls_dictdiff(self, diffmock, mkkvpmock, savemock, decidemock, purgemock):
+    def test_compare_calls_dictdiff(self, diffmock, mkkvpmock, decidemock, purgemock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( diffmock.call_count, 2 )
 
-    def test_compare_calls_purge(self, diffmock, mkkvpmock, savemock, decidemock, purgemock):
+    def test_compare_calls_purge(self, diffmock, mkkvpmock, decidemock, purgemock):
         self.TestCls.compare(self.wanted)
         purgemock.assert_called_once_with()
 
-    def test_compare_calls_mkkvp(self, diffmock, mkkvpmock, savemock, decidemock, purgemock):
+    def test_compare_calls_mkkvp(self, diffmock, mkkvpmock, decidemock, purgemock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( mkkvpmock.call_count, 2 )
 
-    def test_compare_calls_decide(self, diffmock, mkkvpmock, savemock, decidemock, purgemock):
+    def test_compare_calls_decide(self, diffmock, mkkvpmock, decidemock, purgemock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( decidemock.call_count, 2 )
 
-    def test_compare_calls_saveDecide(self, mkkvpmock, diffmock, savemock, decidemock, purgemock):
-        self.TestCls.compare(self.wanted)
-        self.assertEqual( savemock.call_count, 2 )
 
 class UniqueKeyCmdPath_mkkvp_Tests(TestCase):
 
