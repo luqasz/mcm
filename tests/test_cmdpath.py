@@ -67,7 +67,7 @@ class GenericCmdPath_decide_Tests(TestCase):
     def setUp(self):
         self.ApiReadermock = MagicMock()
         self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, exact=True )
+        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, )
 
     def test_decide_appends_to_SET_with_ID_if_difference_and_non_empty_present(self):
         self.TestCls.decide( difference={'name':1}, present={'ID':1, 'name':2} )
@@ -86,32 +86,6 @@ class GenericCmdPath_decide_Tests(TestCase):
         self.assertEqual( [], self.TestCls.SET )
 
 
-class GenericCmdPath_purge_Tests(TestCase):
-
-    def setUp(self):
-        self.ApiReadermock = MagicMock()
-        self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, exact=True )
-
-    def test_purge_calls_printers_exceptIDs_method_if_exact_is_True(self):
-        self.TestCls.purge()
-        self.assertEqual( self.ApiReadermock.exceptIDs.call_count, 1 )
-
-    def test_purge_sets_DEL_if_exact_is_True(self):
-        self.ApiReadermock.exceptIDs.return_value = [ 1,2,3 ]
-        self.TestCls.purge()
-        self.assertEqual( self.TestCls.DEL, [1,2,3] )
-
-    def test_purge_leaves_DEL_empty_if_exact_is_False(self):
-        self.TestCls.exact = False
-        self.TestCls.purge()
-        self.assertEqual( self.TestCls.DEL, [] )
-
-    def test_purge_does_not_call_printers_exceptIDs_method_if_exact_is_False(self):
-        self.TestCls.exact = False
-        self.TestCls.purge()
-        self.assertEqual( self.ApiReadermock.exceptIDs.call_count , 0 )
-
 @patch('cmdpath.dictdiff')
 @patch.object(GenericCmdPath, 'decide')
 @patch.object(GenericCmdPath, 'purge')
@@ -122,7 +96,7 @@ class GenericCmdPath_compare_Tests(TestCase):
         self.ReaderDataMock = PropertyMock( return_value=[1]*10 )
         type(self.ApiReadermock).data = self.ReaderDataMock
         self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, exact=True )
+        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, )
 
     def test_compare_calls_purge(self, purgemock, decidemock, diffmock):
         self.TestCls.compare( self.wanted )
@@ -160,7 +134,7 @@ class SingleElementCmdPathTests(TestCase):
     def setUp(self):
         self.ApiReadermock = MagicMock()
         self.wanted = MagicMock()
-        self.TestCls = SingleElementCmdPath( printer=self.ApiReadermock, keys=tuple(), exact=False )
+        self.TestCls = SingleElementCmdPath( printer=self.ApiReadermock, keys=tuple(), )
 
     def test_returns_DEL_as_empty_tuple(self, diffmock):
         DEL, SET, ADD = self.TestCls.compare( self.wanted )
@@ -200,7 +174,7 @@ class UniqueKeyCmdPath_compare_Tests(TestCase):
     def setUp(self):
         self.ApiReadermock = MagicMock()
         self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = UniqueKeyCmdPath( printer=self.ApiReadermock, keys=('name',), exact=True )
+        self.TestCls = UniqueKeyCmdPath( printer=self.ApiReadermock, keys=('name',), )
 
     def test_compare_calls_printers_get_method(self, diffmock, mkkvpmock, decidemock, purgemock):
         self.TestCls.compare(self.wanted)
@@ -228,7 +202,7 @@ class UniqueKeyCmdPath_mkkvp_Tests(TestCase):
     def setUp(self):
         self.ApiReadermock = MagicMock()
         self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = UniqueKeyCmdPath( printer=self.ApiReadermock, keys=('name',), exact=True )
+        self.TestCls = UniqueKeyCmdPath( printer=self.ApiReadermock, keys=('name',), )
 
     def test_mkkvp_extracts_key_value_pair_when_keys_have_one_element(self):
         self.TestCls.keys = ('name',)

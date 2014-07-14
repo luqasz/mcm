@@ -22,7 +22,7 @@ def mkCmdPath( path, attrs ):
 class GenericCmdPath:
 
 
-    def __init__(self, printer, keys, exact):
+    def __init__(self, printer, keys):
         '''
         DEL
             list with rules to delete
@@ -36,8 +36,6 @@ class GenericCmdPath:
             Printer object responsible for printing elements
         keys
             key names that create unique key
-        exact
-            bool whether remove remaining rules or not
         '''
 
         self.DEL = []
@@ -46,7 +44,6 @@ class GenericCmdPath:
         self.SAVE_IDS = []
         self.Printer = printer
         self.keys = keys
-        self.exact = exact
 
 
     def compare(self, wanted):
@@ -74,9 +71,7 @@ class GenericCmdPath:
 
     def purge(self):
 
-        if self.exact:
-            self.DEL = self.Printer.exceptIDs( ids=self.SAVE_IDS )
-
+        pass
 
 
 class SingleElementCmdPath(GenericCmdPath):
