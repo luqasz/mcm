@@ -136,32 +136,32 @@ class SingleElementCmdPathTests(TestCase):
         self.wanted = MagicMock()
         self.TestCls = SingleElementCmdPath( printer=self.ApiReadermock, keys=tuple(), )
 
-    def test_returns_DEL_as_empty_tuple(self, diffmock):
-        DEL, SET, ADD = self.TestCls.compare( self.wanted )
-        self.assertEqual( DEL, tuple() )
+    def test_compare_does_not_modify_DEL(self, diffmock):
+        self.TestCls.compare( self.wanted )
+        self.assertEqual( self.TestCls.DEL, list() )
 
-    def test_returns_ADD__as_empty_tuple(self, diffmock):
-        DEL, SET, ADD = self.TestCls.compare( self.wanted )
-        self.assertEqual( ADD, tuple() )
+    def test_compare_does_not_modify_ADD(self, diffmock):
+        self.TestCls.compare( self.wanted )
+        self.assertEqual( self.TestCls.ADD, list() )
 
-    def test_calls_dictdiff_with_extracted_first_element(self, diffmock):
+    def test_compare_calls_dictdiff_with_extracted_first_element(self, diffmock):
         self.ApiReadermock.get.return_value = ('get_value', )
         self.TestCls.compare( self.wanted )
         diffmock.assert_called_once_with(wanted=self.wanted, present='get_value')
 
-    def test_calls_printers_get_method(self, diffmock):
+    def test_compare_calls_printers_get_method(self, diffmock):
         self.TestCls.compare( self.wanted )
         self.ApiReadermock.get.assert_called_once_with()
 
-    def test_returns_non_empty_SET_as_tuple_if_difference(self, diffmock):
+    def test_compare_updates_SET_if_difference(self, diffmock):
         diffmock.return_value = self.wanted
-        DEL, SET, ADD = self.TestCls.compare( self.wanted )
-        self.assertEqual( (self.wanted,), SET )
+        self.TestCls.compare( self.wanted )
+        self.assertEqual( (self.wanted,), self.TestCls.SET )
 
-    def test_returns_empty_SET_as_tuple_if_no_difference(self, diffmock):
+    def test_compare_does_not_update_SET_if_no_difference(self, diffmock):
         diffmock.return_value = dict()
-        DEL, SET, ADD = self.TestCls.compare( self.wanted )
-        self.assertEqual( SET, tuple() )
+        self.TestCls.compare( self.wanted )
+        self.assertEqual( self.TestCls.SET, tuple() )
 
 
 
