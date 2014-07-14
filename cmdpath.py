@@ -55,7 +55,6 @@ class GenericCmdPath:
             self.decide( difference=diff, present=prule )
 
         self.purge()
-        return tuple(self.DEL), tuple(self.SET), tuple(self.ADD)
 
 
     def decide(self, difference, present):
@@ -103,7 +102,6 @@ class UniqueKeyCmdPath(GenericCmdPath):
             self.decide( difference, present )
 
         self.purge()
-        return tuple(self.DEL), tuple(self.SET), tuple(self.ADD)
 
 
     def mkkvp(self, elem):
