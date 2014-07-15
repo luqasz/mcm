@@ -86,6 +86,20 @@ class GenericCmdPath_decide_Tests(TestCase):
         self.assertEqual( [], self.TestCls.SET )
 
 
+
+class GenericCmdPath_populateDEL_Tests(TestCase):
+
+    def setUp(self):
+        data = ( {1:2}, {3:4} )
+        self.TestCls = GenericCmdPath( data=data, keys=None, )
+        self.TestCls.SET = ( {1:2}, )
+
+    def test_sets_DEL_with_elements_in_data_but_SET(self):
+        self.TestCls.populateDEL()
+        self.assertEqual( self.TestCls.DEL, [{3:4}] )
+
+
+
 @patch('cmdpath.zip_longest', return_value=MagicMock() )
 @patch('cmdpath.dictdiff', return_value=MagicMock() )
 @patch.object(GenericCmdPath, 'decide')

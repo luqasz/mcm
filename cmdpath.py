@@ -57,7 +57,8 @@ class GenericCmdPath:
 
 
     def populateDEL(self):
-        pass
+
+        self.DEL = list( elem for elem in self.data if elem not in self.SET )
 
 
     def search(self):
