@@ -41,7 +41,6 @@ class GenericCmdPath:
         self.DEL = []
         self.SET= []
         self.ADD = []
-        self.SAVE_IDS = []
         self.data = data
         self.keys = keys
 
