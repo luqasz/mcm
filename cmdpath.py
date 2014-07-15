@@ -61,10 +61,6 @@ class GenericCmdPath:
         self.DEL = list( elem for elem in self.data if elem not in self.SET )
 
 
-    def search(self):
-        pass
-
-
 
 class OrderedCmdPath(GenericCmdPath):
     '''
@@ -117,4 +113,8 @@ class UniqueKeyCmdPath(GenericCmdPath):
         '''
 
         return dict( (key,elem[key]) for key in self.keys )
+
+
+    def search(self):
+        pass
 

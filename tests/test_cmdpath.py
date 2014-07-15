@@ -167,7 +167,7 @@ class SingleElementCmdPathTests(TestCase):
 
 
 
-@patch.object(GenericCmdPath, 'search')
+@patch.object(UniqueKeyCmdPath, 'search')
 @patch.object(GenericCmdPath, 'populateDEL')
 @patch.object(GenericCmdPath, 'decide')
 @patch.object(UniqueKeyCmdPath, 'mkkvp')
