@@ -65,9 +65,7 @@ class PathTests(TestCase):
 class GenericCmdPath_decide_Tests(TestCase):
 
     def setUp(self):
-        self.DataMock = MagicMock()
-        self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = GenericCmdPath( data=self.DataMock, keys=None, )
+        self.TestCls = GenericCmdPath( data=None, keys=None, )
 
     def test_decide_appends_to_SET_with_ID_if_difference_and_non_empty_present(self):
         self.TestCls.decide( difference={'name':1}, present={'ID':1, 'name':2} )
@@ -141,7 +139,7 @@ class SingleElementCmdPathTests(TestCase):
 
     def setUp(self):
         self.wanted = MagicMock()
-        self.TestCls = SingleElementCmdPath( data=('first', 'second' ), keys=tuple(), )
+        self.TestCls = SingleElementCmdPath( data=('first', 'second' ), keys=None )
 
     def test_compare_does_not_modify_DEL(self, diffmock):
         self.TestCls.compare( self.wanted )
@@ -175,9 +173,8 @@ class SingleElementCmdPathTests(TestCase):
 class UniqueKeyCmdPath_compare_Tests(TestCase):
 
     def setUp(self):
-        self.DataMock = MagicMock()
         self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = UniqueKeyCmdPath( data=self.DataMock, keys=('name',), )
+        self.TestCls = UniqueKeyCmdPath( data=None, keys=('name',), )
 
     def test_compare_calls_search(self, diffmock, mkkvpmock, decidemock, populatemock, searchmock):
         self.TestCls.compare(self.wanted)
@@ -203,8 +200,7 @@ class UniqueKeyCmdPath_compare_Tests(TestCase):
 class UniqueKeyCmdPath_mkkvp_Tests(TestCase):
 
     def setUp(self):
-        self.DataMock = MagicMock()
-        self.TestCls = UniqueKeyCmdPath( data=self.DataMock, keys=('name',), )
+        self.TestCls = UniqueKeyCmdPath( data=None, keys=None )
 
     def test_mkkvp_extracts_key_value_pair_when_keys_have_one_element(self):
         self.TestCls.keys = ('name',)
