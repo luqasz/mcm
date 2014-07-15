@@ -30,8 +30,6 @@ class GenericCmdPath:
             list with rules to set
         ADD
             list with rules to add
-        SAVE_IDS
-            list with rule IDs not to be removed
         data
             Read previously data for given cmd path
         keys
