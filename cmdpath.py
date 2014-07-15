@@ -22,7 +22,7 @@ def mkCmdPath( path, attrs ):
 class GenericCmdPath:
 
 
-    def __init__(self, printer, keys):
+    def __init__(self, data, keys):
         '''
         DEL
             list with rules to delete
@@ -32,8 +32,8 @@ class GenericCmdPath:
             list with rules to add
         SAVE_IDS
             list with rule IDs not to be removed
-        printer
-            Printer object responsible for printing elements
+        data
+            Read previously data for given cmd path
         keys
             key names that create unique key
         '''
@@ -42,15 +42,13 @@ class GenericCmdPath:
         self.SET= []
         self.ADD = []
         self.SAVE_IDS = []
-        self.Printer = printer
+        self.data = data
         self.keys = keys
 
 
     def compare(self, wanted):
 
-        present_rules = self.Printer.data
-
-        for prule, wrule in zip_longest(present_rules, wanted, fillvalue=dict()):
+        for prule, wrule in zip_longest(self.data, wanted, fillvalue=dict()):
             diff = dictdiff( wanted=wrule, present=prule )
             self.decide( difference=diff, present=prule )
 
@@ -72,6 +70,10 @@ class GenericCmdPath:
 
         pass
 
+    def search(self):
+        pass
+
+
 
 class SingleElementCmdPath(GenericCmdPath):
     '''
@@ -81,8 +83,7 @@ class SingleElementCmdPath(GenericCmdPath):
 
     def compare(self, wanted):
 
-        present = self.Printer.get()[0]
-        difference = dictdiff( wanted=wanted, present=present )
+        difference = dictdiff( wanted=wanted, present=self.data[0] )
         self.SET = [difference] if difference else list()
 
 
@@ -97,7 +98,7 @@ class UniqueKeyCmdPath(GenericCmdPath):
 
         for rule in wanted:
             kvp = self.mkkvp( rule )
-            present = self.Printer.get( kvp=kvp )
+            present = self.search( kvp )
             difference = dictdiff( wanted=rule, present=present )
             self.decide( difference, present )
 

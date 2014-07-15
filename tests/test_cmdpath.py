@@ -65,9 +65,9 @@ class PathTests(TestCase):
 class GenericCmdPath_decide_Tests(TestCase):
 
     def setUp(self):
-        self.ApiReadermock = MagicMock()
+        self.DataMock = MagicMock()
         self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, )
+        self.TestCls = GenericCmdPath( data=self.DataMock, keys=None, )
 
     def test_decide_appends_to_SET_with_ID_if_difference_and_non_empty_present(self):
         self.TestCls.decide( difference={'name':1}, present={'ID':1, 'name':2} )
@@ -86,45 +86,39 @@ class GenericCmdPath_decide_Tests(TestCase):
         self.assertEqual( [], self.TestCls.SET )
 
 
-@patch('cmdpath.dictdiff')
+@patch('cmdpath.zip_longest', return_value=MagicMock() )
+@patch('cmdpath.dictdiff', return_value=MagicMock() )
 @patch.object(GenericCmdPath, 'decide')
 @patch.object(GenericCmdPath, 'purge')
 class GenericCmdPath_compare_Tests(TestCase):
 
     def setUp(self):
-        self.ApiReadermock = MagicMock()
-        self.ReaderDataMock = PropertyMock( return_value=[1]*10 )
-        type(self.ApiReadermock).data = self.ReaderDataMock
-        self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = GenericCmdPath( printer=self.ApiReadermock, keys=None, )
+        self.DataMock = MagicMock()
+        self.wanted = MagicMock()
+        self.TestCls = GenericCmdPath( data=self.DataMock, keys=None, )
 
-    def test_compare_calls_purge(self, purgemock, decidemock, diffmock):
+    def test_compare_calls_purge(self, purgemock, decidemock, diffmock, zipmock):
         self.TestCls.compare( self.wanted )
         purgemock.assert_called_once_with()
 
-    def test_compare_accesses_Printers_data_attribute(self, purgemock, decidemock, diffmock):
+    def test_compare_calls_zip_longest_with_wanted_and_present(self, purgemock, decidemock, diffmock, zipmock):
         self.TestCls.compare( self.wanted )
-        self.ReaderDataMock.assert_called_once_with()
+        zipmock.assert_called_once_with( self.DataMock, self.wanted, fillvalue=dict() )
 
-    def test_compare_calls_dictdiff_for_longest_iterable_present_rules(self, purgemock, decidemock, diffmock):
-        self.ApiReadermock.get.return_value = [1] * 10
-        self.TestCls.compare( [1] )
-        self.assertEqual( diffmock.call_count, 10 )
+    def test_compare_calls_dictdiff(self, purgemock, decidemock, diffmock, zipmock):
+        wanted_mock = MagicMock(name='wanted_mock')
+        present_mock = MagicMock(name='present_mock')
+        zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
+        self.TestCls.compare( self.wanted )
+        diffmock.assert_called_once_with( wanted=wanted_mock, present=present_mock )
 
-    def test_compare_calls_dictdiff_for_longest_iterable_wanted(self, purgemock, decidemock, diffmock):
-        self.ApiReadermock.get.return_value = [1]
-        self.TestCls.compare( [1]*10 )
-        self.assertEqual( diffmock.call_count, 10 )
+    def test_compare_calls_decide(self, purgemock, decidemock, diffmock, zipmock):
+        wanted_mock = MagicMock(name='wanted_mock')
+        present_mock = MagicMock(name='present_mock')
+        zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
+        self.TestCls.compare( self.wanted )
+        decidemock.assert_called_once_with( difference=diffmock.return_value, present=present_mock )
 
-    def test_compare_calls_decide_for_longest_iterable_present_rules(self, purgemock, decidemock, diffmock):
-        self.ApiReadermock.get.return_value = [1] * 10
-        self.TestCls.compare( [1] )
-        self.assertEqual( decidemock.call_count, 10 )
-
-    def test_compare_calls_decide_for_longest_iterable_wanted(self, purgemock, decidemock, diffmock):
-        self.ApiReadermock.get.return_value = [1]
-        self.TestCls.compare( [1]*10 )
-        self.assertEqual( decidemock.call_count, 10 )
 
 
 
@@ -132,9 +126,8 @@ class GenericCmdPath_compare_Tests(TestCase):
 class SingleElementCmdPathTests(TestCase):
 
     def setUp(self):
-        self.ApiReadermock = MagicMock()
         self.wanted = MagicMock()
-        self.TestCls = SingleElementCmdPath( printer=self.ApiReadermock, keys=tuple(), )
+        self.TestCls = SingleElementCmdPath( data=('first', 'second' ), keys=tuple(), )
 
     def test_compare_does_not_modify_DEL(self, diffmock):
         self.TestCls.compare( self.wanted )
@@ -145,13 +138,8 @@ class SingleElementCmdPathTests(TestCase):
         self.assertEqual( self.TestCls.ADD, list() )
 
     def test_compare_calls_dictdiff_with_extracted_first_element(self, diffmock):
-        self.ApiReadermock.get.return_value = ('get_value', )
         self.TestCls.compare( self.wanted )
-        diffmock.assert_called_once_with(wanted=self.wanted, present='get_value')
-
-    def test_compare_calls_printers_get_method(self, diffmock):
-        self.TestCls.compare( self.wanted )
-        self.ApiReadermock.get.assert_called_once_with()
+        diffmock.assert_called_once_with(wanted=self.wanted, present='first')
 
     def test_compare_updates_SET_if_difference(self, diffmock):
         diffmock.return_value = self.wanted
@@ -165,6 +153,7 @@ class SingleElementCmdPathTests(TestCase):
 
 
 
+@patch.object(GenericCmdPath, 'search')
 @patch.object(GenericCmdPath, 'purge')
 @patch.object(GenericCmdPath, 'decide')
 @patch.object(UniqueKeyCmdPath, 'mkkvp')
@@ -172,27 +161,27 @@ class SingleElementCmdPathTests(TestCase):
 class UniqueKeyCmdPath_compare_Tests(TestCase):
 
     def setUp(self):
-        self.ApiReadermock = MagicMock()
+        self.DataMock = MagicMock()
         self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = UniqueKeyCmdPath( printer=self.ApiReadermock, keys=('name',), )
+        self.TestCls = UniqueKeyCmdPath( data=self.DataMock, keys=('name',), )
 
-    def test_compare_calls_printers_get_method(self, diffmock, mkkvpmock, decidemock, purgemock):
+    def test_compare_calls_search(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
         self.TestCls.compare(self.wanted)
-        self.assertEqual( self.ApiReadermock.get.call_count, 2 )
+        self.assertEqual( searchmock.call_count, 2 )
 
-    def test_compare_calls_dictdiff(self, diffmock, mkkvpmock, decidemock, purgemock):
+    def test_compare_calls_dictdiff(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( diffmock.call_count, 2 )
 
-    def test_compare_calls_purge(self, diffmock, mkkvpmock, decidemock, purgemock):
+    def test_compare_calls_purge(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
         self.TestCls.compare(self.wanted)
         purgemock.assert_called_once_with()
 
-    def test_compare_calls_mkkvp(self, diffmock, mkkvpmock, decidemock, purgemock):
+    def test_compare_calls_mkkvp(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( mkkvpmock.call_count, 2 )
 
-    def test_compare_calls_decide(self, diffmock, mkkvpmock, decidemock, purgemock):
+    def test_compare_calls_decide(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( decidemock.call_count, 2 )
 
@@ -200,9 +189,8 @@ class UniqueKeyCmdPath_compare_Tests(TestCase):
 class UniqueKeyCmdPath_mkkvp_Tests(TestCase):
 
     def setUp(self):
-        self.ApiReadermock = MagicMock()
-        self.wanted = ( MagicMock(), MagicMock() )
-        self.TestCls = UniqueKeyCmdPath( printer=self.ApiReadermock, keys=('name',), )
+        self.DataMock = MagicMock()
+        self.TestCls = UniqueKeyCmdPath( data=self.DataMock, keys=('name',), )
 
     def test_mkkvp_extracts_key_value_pair_when_keys_have_one_element(self):
         self.TestCls.keys = ('name',)
