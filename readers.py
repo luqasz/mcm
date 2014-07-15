@@ -48,25 +48,3 @@ class ApiReader:
         self.api = api
 
 
-    def issubset(self, kvp, rule):
-        '''
-        Check if all key, value pairs from kvp are in rule.
-        '''
-
-        return set(kvp.items()) <= set(rule.items())
-
-
-    def get(self, kvp):
-        '''
-        Return first found key value pair/s. Duplicates are ignored.
-
-        kvp
-            dictionary with key, value pairs
-        '''
-
-        # prepare function call
-        func = lambda rule: self.issubset( kvp, rule )
-        for found in filter( func, self.data ):
-            return found
-        else:
-            return dict()

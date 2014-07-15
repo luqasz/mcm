@@ -211,3 +211,36 @@ class UniqueKeyCmdPath_mkkvp_Tests(TestCase):
         self.TestCls.keys = ('name','address')
         kvp = self.TestCls.mkkvp( {'name':'some_name', 'address':'1.1.1.1', 'ID':2} )
         self.assertEqual( {'name':'some_name','address':'1.1.1.1'}, kvp )
+
+
+
+@patch.object(UniqueKeyCmdPath, 'issubset')
+class UniqueKeyCmdPath_search_Tests(TestCase):
+
+    def setUp(self):
+        self.TestCls = UniqueKeyCmdPath( data=[1]*100, keys=None )
+
+    def test_search_calls_issubset_untill_first_matching_subset_is_found(self, subsetmock):
+        subsetmock.side_effect = [False, False, True, False]
+        self.TestCls.search( dict() )
+        self.assertEqual(subsetmock.call_count, 3)
+
+    def test_search_returns_empty_dict_if_no_match_have_been_found(self, subsetmock):
+        subsetmock.return_value = False
+        retval = self.TestCls.search( dict() )
+        self.assertEqual( retval, dict() )
+
+class UniqueKeyCmdPath_issubset_Tests(TestCase):
+
+    def setUp(self):
+        self.TestCls = UniqueKeyCmdPath( data=None, keys=None )
+
+    def test_issubset_returns_True_if_all_key_value_pairs_are_present_in_tested_rule(self):
+        rule = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
+        retval = self.TestCls.issubset( {'address':'x.x', 'disabled':False}, rule )
+        self.assertTrue( retval == True )
+
+    def test_issubset_returns_False_if_at_least_one_key_value_pair_is_not_present_in_tested_rule(self):
+        rule = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
+        retval = self.TestCls.issubset( {'address':'x.x', 'disabled':True}, rule )
+        self.assertTrue( retval == False )
