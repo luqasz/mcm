@@ -12,7 +12,7 @@ librouteros_mock = MagicMock()
 mp = patch.dict('sys.modules', {'librouteros.extras':librouteros_mock})
 mp.start()
 
-from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, GenericCmdPath, mkCmdPath
+from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, GenericCmdPath, mkCmdPath, OrderedCmdPath
 
 
 class PathTests(TestCase):
@@ -90,12 +90,12 @@ class GenericCmdPath_decide_Tests(TestCase):
 @patch('cmdpath.dictdiff', return_value=MagicMock() )
 @patch.object(GenericCmdPath, 'decide')
 @patch.object(GenericCmdPath, 'populateDEL')
-class GenericCmdPath_compare_Tests(TestCase):
+class OrderedCmdPath_compare_Tests(TestCase):
 
     def setUp(self):
         self.DataMock = MagicMock()
         self.wanted = MagicMock()
-        self.TestCls = GenericCmdPath( data=self.DataMock, keys=None, )
+        self.TestCls = OrderedCmdPath( data=self.DataMock, keys=None, )
 
     def test_compare_calls_populateDEL(self, populatemock, decidemock, diffmock, zipmock):
         self.TestCls.compare( self.wanted )

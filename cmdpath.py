@@ -45,15 +45,6 @@ class GenericCmdPath:
         self.keys = keys
 
 
-    def compare(self, wanted):
-
-        for prule, wrule in zip_longest(self.data, wanted, fillvalue=dict()):
-            diff = dictdiff( wanted=wrule, present=prule )
-            self.decide( difference=diff, present=prule )
-
-        self.populateDEL()
-
-
     def decide(self, difference, present):
 
         ID = present.get('ID')
@@ -68,9 +59,25 @@ class GenericCmdPath:
     def populateDEL(self):
         pass
 
+
     def search(self):
         pass
 
+
+
+class OrderedCmdPath(GenericCmdPath):
+    '''
+    This class is used to compare ordered command paths. Such as /ip/firewall/filter
+    '''
+
+
+    def compare(self, wanted):
+
+        for prule, wrule in zip_longest(self.data, wanted, fillvalue=dict()):
+            diff = dictdiff( wanted=wrule, present=prule )
+            self.decide( difference=diff, present=prule )
+
+        self.populateDEL()
 
 
 class SingleElementCmdPath(GenericCmdPath):
