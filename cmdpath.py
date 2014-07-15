@@ -51,7 +51,7 @@ class GenericCmdPath:
             diff = dictdiff( wanted=wrule, present=prule )
             self.decide( difference=diff, present=prule )
 
-        self.purge()
+        self.populateDEL()
 
 
     def decide(self, difference, present):
@@ -65,8 +65,7 @@ class GenericCmdPath:
             self.ADD.append(difference)
 
 
-    def purge(self):
-
+    def populateDEL(self):
         pass
 
     def search(self):
@@ -101,7 +100,7 @@ class UniqueKeyCmdPath(GenericCmdPath):
             difference = dictdiff( wanted=rule, present=present )
             self.decide( difference, present )
 
-        self.purge()
+        self.populateDEL()
 
 
     def mkkvp(self, elem):

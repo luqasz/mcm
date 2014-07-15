@@ -89,7 +89,7 @@ class GenericCmdPath_decide_Tests(TestCase):
 @patch('cmdpath.zip_longest', return_value=MagicMock() )
 @patch('cmdpath.dictdiff', return_value=MagicMock() )
 @patch.object(GenericCmdPath, 'decide')
-@patch.object(GenericCmdPath, 'purge')
+@patch.object(GenericCmdPath, 'populateDEL')
 class GenericCmdPath_compare_Tests(TestCase):
 
     def setUp(self):
@@ -97,22 +97,22 @@ class GenericCmdPath_compare_Tests(TestCase):
         self.wanted = MagicMock()
         self.TestCls = GenericCmdPath( data=self.DataMock, keys=None, )
 
-    def test_compare_calls_purge(self, purgemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_populateDEL(self, populatemock, decidemock, diffmock, zipmock):
         self.TestCls.compare( self.wanted )
-        purgemock.assert_called_once_with()
+        populatemock.assert_called_once_with()
 
-    def test_compare_calls_zip_longest_with_wanted_and_present(self, purgemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_zip_longest_with_wanted_and_present(self, populatemock, decidemock, diffmock, zipmock):
         self.TestCls.compare( self.wanted )
         zipmock.assert_called_once_with( self.DataMock, self.wanted, fillvalue=dict() )
 
-    def test_compare_calls_dictdiff(self, purgemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_dictdiff(self, populatemock, decidemock, diffmock, zipmock):
         wanted_mock = MagicMock(name='wanted_mock')
         present_mock = MagicMock(name='present_mock')
         zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
         self.TestCls.compare( self.wanted )
         diffmock.assert_called_once_with( wanted=wanted_mock, present=present_mock )
 
-    def test_compare_calls_decide(self, purgemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_decide(self, populatemock, decidemock, diffmock, zipmock):
         wanted_mock = MagicMock(name='wanted_mock')
         present_mock = MagicMock(name='present_mock')
         zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
@@ -154,7 +154,7 @@ class SingleElementCmdPathTests(TestCase):
 
 
 @patch.object(GenericCmdPath, 'search')
-@patch.object(GenericCmdPath, 'purge')
+@patch.object(GenericCmdPath, 'populateDEL')
 @patch.object(GenericCmdPath, 'decide')
 @patch.object(UniqueKeyCmdPath, 'mkkvp')
 @patch('cmdpath.dictdiff')
@@ -165,23 +165,23 @@ class UniqueKeyCmdPath_compare_Tests(TestCase):
         self.wanted = ( MagicMock(), MagicMock() )
         self.TestCls = UniqueKeyCmdPath( data=self.DataMock, keys=('name',), )
 
-    def test_compare_calls_search(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
+    def test_compare_calls_search(self, diffmock, mkkvpmock, decidemock, populatemock, searchmock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( searchmock.call_count, 2 )
 
-    def test_compare_calls_dictdiff(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
+    def test_compare_calls_dictdiff(self, diffmock, mkkvpmock, decidemock, populatemock, searchmock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( diffmock.call_count, 2 )
 
-    def test_compare_calls_purge(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
+    def test_compare_calls_populateDEL(self, diffmock, mkkvpmock, decidemock, populatemock, searchmock):
         self.TestCls.compare(self.wanted)
-        purgemock.assert_called_once_with()
+        populatemock.assert_called_once_with()
 
-    def test_compare_calls_mkkvp(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
+    def test_compare_calls_mkkvp(self, diffmock, mkkvpmock, decidemock, populatemock, searchmock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( mkkvpmock.call_count, 2 )
 
-    def test_compare_calls_decide(self, diffmock, mkkvpmock, decidemock, purgemock, searchmock):
+    def test_compare_calls_decide(self, diffmock, mkkvpmock, decidemock, populatemock, searchmock):
         self.TestCls.compare(self.wanted)
         self.assertEqual( decidemock.call_count, 2 )
 
