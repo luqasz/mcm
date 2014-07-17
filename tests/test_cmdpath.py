@@ -82,6 +82,11 @@ class GenericCmdPath_decide_Tests(TestCase):
         self.TestCls.decide( difference=passed_diff, present=dict() )
         self.assertIsNot( self.TestCls.ADD[0], passed_diff )
 
+    def test_decide_does_not_append_to_SET_passed_present_parameter(self):
+        passed_present = { 'name':1, 'ID':2 }
+        self.TestCls.decide( difference={ 'name':3 }, present=passed_present )
+        self.assertIsNot( self.TestCls.SET[0][0], passed_present )
+
     def test_decide_appends_difference_to_ADD_if_difference_and_empty_present(self):
         self.TestCls.ADD = MagicMock()
         self.TestCls.decide( difference={'name':1}, present=dict() )

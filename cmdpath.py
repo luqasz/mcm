@@ -47,10 +47,11 @@ class GenericCmdPath:
 
         ID = present.get('ID')
         diff = dict(difference)
+        pres = dict(present)
 
         if ID and difference:
             diff['ID'] = ID
-            pair = ( present, diff )
+            pair = ( pres, diff )
             self.SET.append(pair)
         elif difference:
             self.ADD.append(diff)
