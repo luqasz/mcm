@@ -53,7 +53,7 @@ class GenericCmdPath:
             pair = ( present, diff )
             self.SET.append(pair)
         elif difference:
-            self.ADD.append(difference)
+            self.ADD.append(diff)
 
 
     def populateDEL(self):
