@@ -46,10 +46,11 @@ class GenericCmdPath:
     def decide(self, difference, present):
 
         ID = present.get('ID')
+        diff = dict(difference)
 
         if ID and difference:
-            difference['ID'] = ID
-            pair = ( present, difference )
+            diff['ID'] = ID
+            pair = ( present, diff )
             self.SET.append(pair)
         elif difference:
             self.ADD.append(difference)

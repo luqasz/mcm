@@ -68,12 +68,19 @@ class GenericCmdPath_decide_Tests(TestCase):
         self.TestCls = GenericCmdPath( data=None, keys=None, )
 
     def test_decide_appends_present_difference_pair_tuple_to_SET(self):
+        self.TestCls.SET = MagicMock()
         self.TestCls.decide( difference={'name':1}, present={'ID':1, 'name':2} )
-        self.assertEqual( [ ({'ID':1, 'name':2},{'ID':1, 'name':1}) ], self.TestCls.SET )
+        self.TestCls.SET.append.assert_called_once_with(  ({'ID':1, 'name':2},{'ID':1, 'name':1}) )
 
-    def test_decide_appends_to_ADD_if_difference_and_empty_present(self):
+    def test_decide_does_not_modify_passed_difference_agrument(self):
+        passed_diff = { 'name':1 }
+        self.TestCls.decide( difference=passed_diff, present={'ID':1, 'name':2} )
+        self.assertEqual( passed_diff, {'name':1} )
+
+    def test_decide_appends_difference_to_ADD_if_difference_and_empty_present(self):
+        self.TestCls.ADD = MagicMock()
         self.TestCls.decide( difference={'name':1}, present=dict() )
-        self.assertEqual( [ {'name':1} ], self.TestCls.ADD )
+        self.TestCls.ADD.append.assert_called_once_with( {'name':1} )
 
     def test_decide_does_not_append_to_ADD_if_no_difference(self):
         self.TestCls.decide( difference=dict(), present={'ID':1, 'name':1} )
