@@ -67,9 +67,9 @@ class GenericCmdPath_decide_Tests(TestCase):
     def setUp(self):
         self.TestCls = GenericCmdPath( data=None, keys=None, )
 
-    def test_decide_appends_to_SET_with_ID_if_difference_and_non_empty_present(self):
+    def test_decide_appends_present_difference_pair_tuple_to_SET(self):
         self.TestCls.decide( difference={'name':1}, present={'ID':1, 'name':2} )
-        self.assertEqual( [ {'ID':1, 'name':1} ], self.TestCls.SET )
+        self.assertEqual( [ ({'ID':1, 'name':2},{'ID':1, 'name':1}) ], self.TestCls.SET )
 
     def test_decide_appends_to_ADD_if_difference_and_empty_present(self):
         self.TestCls.decide( difference={'name':1}, present=dict() )

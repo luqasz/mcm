@@ -27,7 +27,7 @@ class GenericCmdPath:
         DEL
             list with rules to delete
         SET
-            list with rules to set
+            List with rules to set. Each element is a tuple (present,difference)
         ADD
             list with rules to add
         data
@@ -49,7 +49,8 @@ class GenericCmdPath:
 
         if ID and difference:
             difference['ID'] = ID
-            self.SET.append(difference)
+            pair = ( present, difference )
+            self.SET.append(pair)
         elif difference:
             self.ADD.append(difference)
 
