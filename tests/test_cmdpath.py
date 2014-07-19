@@ -105,13 +105,13 @@ class GenericCmdPath_decide_Tests(TestCase):
 class GenericCmdPath_populateDEL_Tests(TestCase):
 
     def setUp(self):
-        data = ( {1:2}, {3:4} )
+        data = ( {'ID':2, 'name':'private'}, {'ID':3, 'name':'public'} )
         self.TestCls = GenericCmdPath( data=data, keys=None, )
-        self.TestCls.SET = ( {1:2}, )
+        self.TestCls.SET = ( (data[0],{'name':'readonly'}), )
 
-    def test_sets_DEL_with_elements_in_data_but_SET(self):
+    def test_sets_DEL_with_elements_in_data_except_prsesnt_elements_from_SET(self):
         self.TestCls.populateDEL()
-        self.assertEqual( self.TestCls.DEL, [{3:4}] )
+        self.assertEqual( self.TestCls.DEL, [{'ID':3, 'name':'public'}] )
 
 
 

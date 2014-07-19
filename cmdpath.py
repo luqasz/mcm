@@ -59,7 +59,8 @@ class GenericCmdPath:
 
     def populateDEL(self):
 
-        self.DEL = list( elem for elem in self.data if elem not in self.SET )
+        saved = ( elem[0] for elem in self.SET )
+        self.DEL = list( elem for elem in self.data if elem not in saved )
 
 
 
