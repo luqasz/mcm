@@ -87,7 +87,7 @@ class SingleElementCmdPath(GenericCmdPath):
 
     def compare(self, wanted):
 
-        difference = dictdiff( wanted=wanted, present=self.data[0] )
+        difference = dictdiff( wanted=wanted[0], present=self.data[0] )
         self.SET = [difference] if difference else list()
 
 

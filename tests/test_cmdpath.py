@@ -155,8 +155,9 @@ class OrderedCmdPath_compare_Tests(TestCase):
 class SingleElementCmdPathTests(TestCase):
 
     def setUp(self):
-        self.wanted = MagicMock()
-        self.TestCls = SingleElementCmdPath( data=('first', 'second' ), keys=None )
+        self.wanted = ( MagicMock(), )
+        self.data = ( MagicMock(),  )
+        self.TestCls = SingleElementCmdPath( data=self.data, keys=None )
 
     def test_compare_does_not_modify_DEL(self, diffmock):
         self.TestCls.compare( self.wanted )
@@ -166,9 +167,9 @@ class SingleElementCmdPathTests(TestCase):
         self.TestCls.compare( self.wanted )
         self.assertEqual( self.TestCls.ADD, list() )
 
-    def test_compare_calls_dictdiff_with_extracted_first_element(self, diffmock):
+    def test_compare_calls_dictdiff_with_only_first_elements_from_wanted_and_data(self, diffmock):
         self.TestCls.compare( self.wanted )
-        diffmock.assert_called_once_with(wanted=self.wanted, present='first')
+        diffmock.assert_called_once_with(wanted=self.wanted[0], present=self.data[0])
 
     def test_compare_updates_SET_if_difference(self, diffmock):
         diffmock.return_value = self.wanted
