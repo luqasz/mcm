@@ -16,25 +16,43 @@ class CmdPathElem:
         self.keys = keys
         self.split_pairs = split_pairs
 
+
     def __str__(self):
+        '''
+        Return nicelly formated code. Usefull for logging.
+        '''
+
         return ' '.join('{}={}'.format(key, value) for key, value in self.data)
+
 
     def __eq__(self, other):
         return self.data == other.data
 
+
     def __ne__(self, other):
         return self.data != other.data
+
 
     def __hash__(self):
         return hash(self.data)
 
+
     def __iter__(self):
         return iter(self.data)
 
+
     def __sub__(self, other):
+        '''
+        Return a new CmdPathElem with elements in self that are not in other.
+        '''
+
         self.difference(other)
 
+
     def difference(self, other):
+        '''
+        Return elements in self that are not in other. Additional comparison is made using self.split_pairs.
+        '''
 
         difference = set(self.data) - set(other.data)
 
