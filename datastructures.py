@@ -26,10 +26,18 @@ class CmdPathElem:
 
 
     def __eq__(self, other):
+        '''
+        other
+            CmdPathElem instance
+        '''
         return self.data == other.data
 
 
     def __ne__(self, other):
+        '''
+        other
+            CmdPathElem instance
+        '''
         return self.data != other.data
 
 
@@ -44,6 +52,9 @@ class CmdPathElem:
     def __sub__(self, other):
         '''
         Return a new CmdPathElem with elements in self that are not in other.
+
+        other
+            CmdPathElem instance
         '''
 
         self.difference(other)
@@ -52,6 +63,9 @@ class CmdPathElem:
     def difference(self, other):
         '''
         Return elements in self that are not in other. Additional comparison is made using self.split_pairs.
+
+        other
+            CmdPathElem instance
         '''
 
         difference = set(self.data) - set(other.data)
