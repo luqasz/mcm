@@ -11,8 +11,6 @@ from datastructures import CmdPathElem
 class CmdPathElemTests(TestCase):
 
     def setUp(self):
-        self.test_dict = dict(interface='ether1', disabled=False)
-        self.test_data = tuple(self.test_dict.items())
         self.TestCls = CmdPathElem(data=MagicMock(), keys=MagicMock(), split_pairs=MagicMock())
         self.Other = CmdPathElem(data=MagicMock(), keys=MagicMock(), split_pairs=MagicMock())
 
