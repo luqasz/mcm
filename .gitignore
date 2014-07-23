@@ -8,5 +8,9 @@ dist
 build
 sdist
 
+#eclipse files
+.project
+.pydevproject
+
 #except .gitignore
 !.gitignore
