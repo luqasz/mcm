@@ -38,9 +38,23 @@ class CmdPathElemTests(TestCase):
         self.TestCls - self.Other
         diffmock.assert_called_once_with(self.Other)
 
+    @patch.object(CmdPathElem, 'difference', return_value=MagicMock())
+    def test_sub_operator_returns_same_object_as_difference(self, diffmock):
+        returned = self.TestCls - self.Other
+        self.assertIsInstance( returned, MagicMock )
+
     def test_computes_difference_between_two_strings(self):
         retval = CmdPathElem.strdiff( '1,2,3', '1', ',' )
         # this variable must be as is. python is unpredictable how it will order hashed items
         desired = ','.join( {'3','2'} )
         self.assertEqual( retval, desired )
+
+    def test_getitem_returns_searched_key_value(self):
+        self.TestCls.data = (('interface', 'ether1'), ('arp', True), ('disabled', False))
+        self.assertEqual( self.TestCls['interface'], 'ether1' )
+
+    def test_getitem_raises_KeyError_if_key_not_found(self):
+        self.TestCls.data = (('interface', 'ether1'), ('arp', True), ('disabled', False))
+        with self.assertRaises( KeyError ):
+            self.TestCls['unknown_key']
 

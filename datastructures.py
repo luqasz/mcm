@@ -49,6 +49,14 @@ class CmdPathElem:
         return iter(self.data)
 
 
+    def __getitem__(self, key):
+
+        try:
+            return [elem[1] for elem in self.data if elem[0] == key][0]
+        except IndexError:
+            raise KeyError( key + 'not found' )
+
+
     def __sub__(self, other):
         '''
         Return a new CmdPathElem with elements in self that are not in other.
@@ -57,7 +65,7 @@ class CmdPathElem:
             CmdPathElem instance
         '''
 
-        self.difference(other)
+        return self.difference(other)
 
 
     def difference(self, other):
