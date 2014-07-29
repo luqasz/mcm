@@ -14,8 +14,12 @@ class CmdPathElemTests(TestCase):
         self.TestCls = CmdPathElem(data=MagicMock(), keys=MagicMock(), split_map=MagicMock())
         self.Other = CmdPathElem(data=MagicMock(), keys=MagicMock(), split_map=MagicMock())
 
-    def test_str_on_class_converts_its_data_into_printable_form(self):
+    def test_str_on_instance_returns_string(self):
         self.assertIsInstance( str(self.TestCls), str )
+
+    def test_str_on_instance_calls_data_items_method(self):
+        str(self.TestCls)
+        self.TestCls.data.items.assert_called_once_with()
 
     def test_equal_calls_eq_magic_method_on_data(self):
         self.TestCls == self.Other
