@@ -13,6 +13,7 @@ mp = patch.dict('sys.modules', {'librouteros.extras':librouteros_mock})
 mp.start()
 
 from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, GenericCmdPath, mkCmdPath, OrderedCmdPath
+from datastructures import CmdPathElem
 
 
 class PathTests(TestCase):
@@ -116,7 +117,6 @@ class GenericCmdPath_populateDEL_Tests(TestCase):
 
 
 @patch('cmdpath.zip_longest', return_value=MagicMock() )
-@patch('cmdpath.dictdiff', return_value=MagicMock() )
 @patch.object(GenericCmdPath, 'decide')
 @patch.object(GenericCmdPath, 'populateDEL')
 class OrderedCmdPath_compare_Tests(TestCase):
@@ -126,27 +126,29 @@ class OrderedCmdPath_compare_Tests(TestCase):
         self.wanted = MagicMock()
         self.TestCls = OrderedCmdPath( data=self.DataMock, keys=None, )
 
-    def test_compare_calls_populateDEL(self, populatemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_populateDEL(self, populatemock, decidemock, zipmock):
         self.TestCls.compare( self.wanted )
         populatemock.assert_called_once_with()
 
-    def test_compare_calls_zip_longest_with_wanted_and_present(self, populatemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_zip_longest_with_wanted_and_present(self, populatemock, decidemock, zipmock):
         self.TestCls.compare( self.wanted )
-        zipmock.assert_called_once_with( self.DataMock, self.wanted, fillvalue=dict() )
+        fillobj = CmdPathElem( data=dict(), keys=tuple(), split_map=dict() )
+        zipmock.assert_called_once_with( self.DataMock, self.wanted, fillvalue=fillobj )
 
-    def test_compare_calls_dictdiff(self, populatemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_sub_on_wanted(self, populatemock, decidemock, zipmock):
         wanted_mock = MagicMock(name='wanted_mock')
         present_mock = MagicMock(name='present_mock')
         zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
         self.TestCls.compare( self.wanted )
-        diffmock.assert_called_once_with( wanted=wanted_mock, present=present_mock )
+        wanted_mock.__sub__.assert_called_once_with( present_mock )
 
-    def test_compare_calls_decide(self, populatemock, decidemock, diffmock, zipmock):
+    def test_compare_calls_decide(self, populatemock, decidemock, zipmock):
         wanted_mock = MagicMock(name='wanted_mock')
+        diff = wanted_mock.__sub__.return_value = MagicMock()
         present_mock = MagicMock(name='present_mock')
         zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
         self.TestCls.compare( self.wanted )
-        decidemock.assert_called_once_with( difference=diffmock.return_value, present=present_mock )
+        decidemock.assert_called_once_with( difference=diff, present=present_mock )
 
 
 

@@ -6,6 +6,7 @@ from itertools import zip_longest
 from posixpath import join as pjoin
 from collections import namedtuple
 
+from datastructures import CmdPathElem
 
 CmdPath = namedtuple('CmdPath', ('path', 'remove', 'set', 'add', 'getall', 'type', 'modord', 'keys', 'split_by', 'split_keys') )
 
@@ -72,8 +73,9 @@ class OrderedCmdPath(GenericCmdPath):
 
     def compare(self, wanted):
 
-        for prule, wrule in zip_longest(self.data, wanted, fillvalue=dict()):
-            diff = dictdiff( wanted=wrule, present=prule )
+        fillobj = CmdPathElem( data=dict(), keys=tuple(), split_map=dict() )
+        for prule, wrule in zip_longest(self.data, wanted, fillvalue=fillobj):
+            diff = wrule - prule
             self.decide( difference=diff, present=prule )
 
         self.populateDEL()
