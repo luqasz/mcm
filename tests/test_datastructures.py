@@ -65,3 +65,14 @@ class CmdPathElemTests(TestCase):
     def test_bool_calls_bool_on_data(self):
         bool(self.TestCls)
         self.TestCls.data.__bool__.assert_called_once_with()
+
+    def test_isunique_returns_True_if_all_key_value_pairs_are_present_in_other(self):
+        self.Other.data = self.TestCls.data = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
+        self.Other.keys = self.TestCls.keys = ('address', 'disabled')
+        self.assertTrue( self.TestCls.isunique( self.Other ) )
+
+    def test_isunique_returns_False_if_all_at_least_one_key_value_pair_is_not_present_in_other(self):
+        self.Other.data = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
+        self.TestCls.data = {'address': 'x.x', 'disabled': True, 'dynamic': False, 'list': 'testlist'}
+        self.Other.keys = self.TestCls.keys = ('address', 'disabled')
+        self.assertFalse( self.TestCls.isunique( self.Other ) )

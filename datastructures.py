@@ -17,6 +17,15 @@ class CmdPathElem:
         self.split_map = split_map
 
 
+    def isunique(self, other):
+        '''
+        Test whether self is a Unique rule. That is all self.keys and theit values are in other.
+        '''
+
+        pairs = set( (key,self[key]) for key in self.keys )
+        return pairs <= set(other.data.items())
+
+
     def __str__(self):
         '''
         Return nicelly formated code. Usefull for logging.
