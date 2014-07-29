@@ -25,10 +25,6 @@ class CmdPathElemTests(TestCase):
         self.TestCls != self.Other
         self.TestCls.data.__ne__.assert_called_once_with(self.Other.data)
 
-    def test_iter_calls_items_view_of_data(self):
-        iter(self.TestCls)
-        self.TestCls.data.items.assert_called_once_with()
-
     @patch.object(CmdPathElem, 'difference')
     def test_sub_calls_difference(self, diffmock):
         self.TestCls - self.Other

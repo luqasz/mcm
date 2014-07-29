@@ -54,13 +54,10 @@ class CmdPathElem:
         return bool(self.data)
 
 
-    def __iter__(self):
-        return self.data.items()
-
-
     def __getitem__(self, key):
 
         return self.data[key]
+
 
     def __sub__(self, other):
         '''
