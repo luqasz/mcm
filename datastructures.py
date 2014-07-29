@@ -2,19 +2,19 @@
 
 class CmdPathElem:
 
-    def __init__(self, data, keys, split_pairs):
+    def __init__(self, data, keys=tuple(), split_map=dict()):
         '''
         data
-            Tuple with (key,value) tuple/s.
+            Dict with read data.
         keys
             Tuple with key names.
-        split_pairs
-            Tuple with (split_key, split_char) tuple/s.
+        split_map
+            Dictionary with split_key, split_char.
         '''
 
         self.data = data
         self.keys = keys
-        self.split_pairs = split_pairs
+        self.split_map = split_map
 
 
     def __str__(self):
@@ -22,7 +22,7 @@ class CmdPathElem:
         Return nicelly formated code. Usefull for logging.
         '''
 
-        return ' '.join('{}={}'.format(key, value) for key, value in self.data)
+        return ' '.join('{}={}'.format(key, value) for key, value in self.data.items())
 
 
     def __eq__(self, other):
@@ -41,21 +41,13 @@ class CmdPathElem:
         return self.data != other.data
 
 
-    def __hash__(self):
-        return hash(self.data)
-
-
     def __iter__(self):
-        return iter(self.data)
+        return self.data.items()
 
 
     def __getitem__(self, key):
 
-        try:
-            return [elem[1] for elem in self.data if elem[0] == key][0]
-        except IndexError:
-            raise KeyError( key + 'not found' )
-
+        return self.data[key]
 
     def __sub__(self, other):
         '''
@@ -65,40 +57,42 @@ class CmdPathElem:
             CmdPathElem instance
         '''
 
-        return self.difference(other)
+        diff = CmdPathElem.difference( wanted=self.data, present=other.data, split_map=self.split_map )
+        return CmdPathElem( data=diff, keys=self.keys, split_map=self.split_map )
 
 
-    def difference(self, other):
+    def difference( wanted, present, split_map=dict() ):
         '''
-        Return elements in self that are not in other. Additional comparison is made using self.split_pairs.
-
-        other
-            CmdPathElem instance
+        Return elements in wanted that are not in present. Additional comparison is made using split_map.
         '''
 
-        difference = set(self.data) - set(other.data)
+        diff = dict(set(wanted.items()) - set(present.items()))
 
-        return difference
+        for split_key, split_char in split_map.items():
+            if diff.get(split_key) and present.get(split_key):
+                diff[split_key] = CmdPathElem.strdiff( diff[split_key], present[split_key], split_char )
+
+        return diff
 
 
-    def strdiff( left, right, splchr ):
+    def strdiff( wanted, present, splchr ):
         '''
-        Compare two strings and return items from left not present in right.
-        Items from right,left are splitted by splchr and compared.
-        Returns string joined by splchr. _strdiff('1,2,3','1',',') may return
+        Compare two strings and return items from wanted not present in present.
+        Items from present,wanted are splitted by splchr and compared.
+        Returns string joined by splchr. strdiff('1,2,3','1',',') may return
         '3,2' or '2,3'.
 
-        left
+        wanted
             String containing elements.
-        right
+        present
             String containing elements.
         splchr
-            Split character to split left and right by.
+            Split character to split wanted and present by.
         '''
 
-        left_splitted = left.split( splchr )
-        rigth_splitted = right.split( splchr )
-        diff = set( left_splitted ) - set( rigth_splitted )
+        wanted_splitted = wanted.split( splchr )
+        present_splitted = present.split( splchr )
+        diff = set( wanted_splitted ) - set( present_splitted )
 
         return splchr.join( diff )
 
