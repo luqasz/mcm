@@ -89,7 +89,7 @@ class SingleElementCmdPath(GenericCmdPath):
 
         wanted = wanted[0]
         present = self.data[0]
-        difference = dictdiff( wanted=wanted, present=present )
+        difference = wanted - present
         self.SET = [(present,difference)] if difference else list()
 
 

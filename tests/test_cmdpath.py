@@ -151,7 +151,6 @@ class OrderedCmdPath_compare_Tests(TestCase):
 
 
 
-@patch('cmdpath.dictdiff')
 class SingleElementCmdPathTests(TestCase):
 
     def setUp(self):
@@ -159,26 +158,25 @@ class SingleElementCmdPathTests(TestCase):
         self.data = ( MagicMock(),  )
         self.TestCls = SingleElementCmdPath( data=self.data, keys=None )
 
-    def test_compare_does_not_modify_DEL(self, diffmock):
+    def test_compare_does_not_modify_DEL(self):
         self.TestCls.compare( self.wanted )
         self.assertEqual( self.TestCls.DEL, list() )
 
-    def test_compare_does_not_modify_ADD(self, diffmock):
+    def test_compare_does_not_modify_ADD(self):
         self.TestCls.compare( self.wanted )
         self.assertEqual( self.TestCls.ADD, list() )
 
-    def test_compare_calls_dictdiff_with_only_first_elements_from_wanted_and_data(self, diffmock):
+    def test_compare_calls_sub_with_only_first_elements_from_wanted_and_data(self):
         self.TestCls.compare( self.wanted )
-        diffmock.assert_called_once_with(wanted=self.wanted[0], present=self.data[0])
+        self.wanted[0].__sub__.assert_called_once_with(self.data[0])
 
-    def test_compare_updates_SET_if_difference(self, diffmock):
-        diff = diffmock.return_value = MagicMock()
-        present = self.data[0]
+    def test_compare_updates_SET_with_present_and_diff_if_difference(self):
+        diff = self.wanted[0].__sub__.return_value = MagicMock()
         self.TestCls.compare( self.wanted )
-        self.assertEqual( [(present,diff)], self.TestCls.SET )
+        self.assertEqual( [(self.data[0],diff)], self.TestCls.SET )
 
-    def test_compare_does_not_update_SET_if_no_difference(self, diffmock):
-        diffmock.return_value = dict()
+    def test_compare_does_not_update_SET_if_no_difference(self):
+        self.wanted[0].__sub__.return_value = dict()
         self.TestCls.compare( self.wanted )
         self.assertEqual( self.TestCls.SET, list() )
 
