@@ -62,3 +62,6 @@ class CmdPathElemTests(TestCase):
         self.TestCls['some_key']
         self.TestCls.data.__getitem__.assert_called_once_with( 'some_key' )
 
+    def test_bool_calls_bool_on_data(self):
+        bool(self.TestCls)
+        self.TestCls.data.__bool__.assert_called_once_with()

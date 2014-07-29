@@ -41,6 +41,10 @@ class CmdPathElem:
         return self.data != other.data
 
 
+    def __bool__(self):
+        return bool(self.data)
+
+
     def __iter__(self):
         return self.data.items()
 
