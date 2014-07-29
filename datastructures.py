@@ -28,7 +28,7 @@ class CmdPathElem:
 
     def __str__(self):
         '''
-        Return nicelly formated code. Usefull for logging.
+        Return ready for logging data.
         '''
 
         return ' '.join('{}={}'.format(key, value) for key, value in self.data.items())
