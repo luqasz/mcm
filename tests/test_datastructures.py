@@ -71,7 +71,7 @@ class CmdPathElemTests(TestCase):
         self.Other.keys = self.TestCls.keys = ('address', 'disabled')
         self.assertTrue( self.TestCls.isunique( self.Other ) )
 
-    def test_isunique_returns_False_if_all_at_least_one_key_value_pair_is_not_present_in_other(self):
+    def test_isunique_returns_False_if_at_least_one_key_value_pair_is_not_present_in_other(self):
         self.Other.data = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
         self.TestCls.data = {'address': 'x.x', 'disabled': True, 'dynamic': False, 'list': 'testlist'}
         self.Other.keys = self.TestCls.keys = ('address', 'disabled')
