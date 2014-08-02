@@ -19,7 +19,7 @@ class CmdPathElem:
 
     def isunique(self, other):
         '''
-        Test whether self is a Unique rule. That is all self.keys and theit values are in other.
+        Test whether self is a Unique rule. That is all self.keys and their values are in other.
         '''
 
         pairs = set( (key,self[key]) for key in self.keys )
@@ -52,6 +52,10 @@ class CmdPathElem:
 
     def __bool__(self):
         return bool(self.data)
+
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
 
 
     def __getitem__(self, key):
