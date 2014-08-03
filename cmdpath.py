@@ -1,7 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-from librouteros.extras import dictdiff
-
 from itertools import zip_longest
 from posixpath import join as pjoin
 from collections import namedtuple
@@ -23,7 +21,7 @@ def mkCmdPath( path, attrs ):
 class GenericCmdPath:
 
 
-    def __init__(self, data, keys):
+    def __init__(self, data):
         '''
         DEL
             list with rules to delete
@@ -33,36 +31,38 @@ class GenericCmdPath:
             list with rules to add
         data
             Read previously data for given cmd path
-        keys
-            key names that create unique key
         '''
 
         self.DEL = []
         self.SET= []
         self.ADD = []
         self.data = data
-        self.keys = keys
 
 
     def decide(self, difference, present):
 
-        ID = present.get('ID')
-        diff = dict(difference)
-        pres = dict(present)
-
-        if ID and difference:
-            diff['ID'] = ID
-            pair = ( pres, diff )
-            self.SET.append(pair)
-        elif difference:
-            self.ADD.append(diff)
+        if difference and not present:
+            self.ADD.append( difference )
+        elif present and not difference:
+            self.DEL.append( present )
+        elif present and difference:
+            try:
+                difference['ID'] = present['ID']
+            except KeyError:
+                pass
+            finally:
+                self.SET.append( (present, difference) )
 
 
     def populateDEL(self):
+        '''
+        Add rows from self.data that are not present in saved. That is they were not added to SET by decide method.
+        '''
 
-        saved = ( elem[0] for elem in self.SET )
-        self.DEL = list( elem for elem in self.data if elem not in saved )
-
+        saved = tuple( elem[0] for elem in self.SET )
+        for row in self.data:
+            if row in saved:
+                self.DEL.append( row )
 
 
 class OrderedCmdPath(GenericCmdPath):
@@ -92,54 +92,33 @@ class SingleElementCmdPath(GenericCmdPath):
         wanted = wanted[0]
         present = self.data[0]
         difference = wanted - present
-        self.SET = [(present,difference)] if difference else list()
+        self.decide( difference, present )
 
 
 
 class UniqueKeyCmdPath(GenericCmdPath):
     '''
-    This class holds methods for comparing composite and single key menus.
+    This class holds methods for comparing unique key,value command paths.
     '''
 
 
     def compare(self, wanted):
 
         for rule in wanted:
-            kvp = self.mkkvp( rule )
-            present = self.search( kvp )
-            difference = dictdiff( wanted=rule, present=present )
-            self.decide( difference, present )
+            found = self.search( rule )
+            difference = rule - found
+            self.decide( difference, found )
 
         self.populateDEL()
 
 
-    def mkkvp(self, elem):
+    def search(self, rule):
         '''
-        Make (extract) key,value pairs out of elem.
-        '''
-
-        return dict( (key,elem[key]) for key in self.keys )
-
-
-    def search(self, kvp):
-        '''
-        Return first found key value pair/s. Duplicates are ignored.
-
-        kvp
-            dictionary with key, value pairs
+        Return first found item in self that is unique to rule.
         '''
 
-        # prepare function call
-        func = lambda rule: self.issubset( kvp, rule )
-        for found in filter( func, self.data ):
-            return found
+        for elem in self.data:
+            if elem.isunique( rule ):
+                return elem
         else:
-            return dict()
-
-
-    def issubset(self, kvp, rule):
-        '''
-        Check if all key, value pairs from kvp are in rule.
-        '''
-
-        return set(kvp.items()) <= set(rule.items())
+            return CmdPathElem( data=dict(), keys=tuple(), split_map=dict() )
