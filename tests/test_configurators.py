@@ -92,19 +92,19 @@ class CmdPathConfigurator_Tests(TestCase):
         manager.assert_has_calls(expected)
 
     def test_extractActionData_returns_ADD_data_when_requested(self):
-        data = ( MagicMock(), MagicMock(), MagicMock() )
+        data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
         returned = CmdPathConfigurator.extartActionData(data=data, elem='ADD')
-        self.assertEqual(returned, data[0])
+        self.assertEqual(returned, ADD)
 
     def test_extractActionData_returns_SET_data_when_requested(self):
-        data = ( MagicMock(), MagicMock(), MagicMock() )
+        data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
         returned = CmdPathConfigurator.extartActionData(data=data, elem='SET')
-        self.assertEqual(returned, data[1])
+        self.assertEqual(returned, SET)
 
     def test_extractActionData_returns_DEL_data_when_requested(self):
-        data = ( MagicMock(), MagicMock(), MagicMock() )
+        data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
         returned = CmdPathConfigurator.extartActionData(data=data, elem='DEL')
-        self.assertEqual(returned, data[2])
+        self.assertEqual(returned, DEL)
 
 
 class ModificationFunctions_Tests(TestCase):
