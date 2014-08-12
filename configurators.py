@@ -4,84 +4,77 @@
 Module that holds configuration classes and helpers.
 '''
 
+from types import MethodType
+
 from exc import ConfigRunError
 
 
-class GenericConfigurator:
+class CmdPathConfigurator:
 
 
-    def __init__(self, api, log):
-        self.api = api
-        self.log = log
+    def __init__(self, **kwargs):
+        self.repository = kwargs['repository']
+        self.master = kwargs['master']
+        self.slave = kwargs['slave']
+        self.ADD = MethodType( kwargs['addfunc'], self )
+        self.DEL = MethodType( kwargs['delfunc'], self )
+        self.SET = MethodType( kwargs['setfunc'], self )
 
 
-    def applyMenu(self, rules, menu_type, modord, path):
-        '''
-        rules:
-            iterable with dictionaries as rules
-        menu_type:
-            instantiated MenuType object
-        modord:
-            iterable with modification order as string
-        path:
-            MenuPath namedtuple
-        '''
+    def run(self, path, modord):
 
-        try:
-            DEL, SET, ADD = menu_type.compare( rules )
-        except ConfigRunError:
-            return
-        else:
-            data_action_map = {'DEL':DEL, 'SET':SET, 'ADD':ADD}
-            for action in modord:
-                method = getattr( self, action )
-                method( data_action_map[action], path )
+        master_data = self.repository.read( device=self.master, path=path.path )
+        slave_data = self.repository.read( device=self.slave, path=path.path )
+        data = slave_data.compare(master_data)
+        for action in modord:
+            action_data = CmdPathConfigurator.extartActionData( data=data, elem=action )
+            func = getattr(self, action)
+            func(action_data)
 
 
-class NonQueriedConfigurator(GenericConfigurator):
-    '''
-    Class with methods for non query enabled routeros devices.
-    '''
+    def extartActionData(data, elem):
+
+        ADD, SET, DEL = data
+        map = {'ADD':ADD, 'SET':SET, 'DEL':DEL}
+        return map[elem]
 
 
-    def ADD(self, rules, path):
 
-        for elem in rules:
-            self.api.run( path.add, elem )
+def realADD(self, data, path):
 
-
-    def SET(self, rules, path):
-
-        for elem in rules:
-            self.api.run( path.set, elem )
+    for row in data:
+        self.repository.write(device=self.slave, data=(row,), path=path)
 
 
-    def DEL(self, rules, path):
+def realDEL(self, data, path):
 
-        for elem in rules:
-            self.api.run( path.remove, elem )
-
-
-class DryRunConfigurator(GenericConfigurator):
-    '''
-    Class for dummy/dry run configuration run.
-    Simply just log what would be done.
-    '''
+    for row in data:
+        pass
 
 
-    def ADD(self, rules, path):
+def realSET(self, data, path):
 
-        for elem in rules:
-            self.log.info( path.add, elem )
-
-
-    def SET(self, rules, path):
-
-        for elem in rules:
-            self.log.info( path.set, elem )
+    for row in data:
+        pass
 
 
-    def DEL(self, rules, path):
+def dummyADD(self, data, path):
 
-        for elem in rules:
-            self.log.info( path.remove, elem )
+    for row in data:
+        pass
+
+
+def dummyDEL(self, data, path):
+
+    for row in data:
+        pass
+
+
+def dummySET(self, data, path):
+
+    for row in data:
+        pass
+
+
+class Configurator:
+    pass

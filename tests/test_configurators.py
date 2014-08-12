@@ -7,151 +7,151 @@ except ImportError:
 from unittest import TestCase
 
 
-from configurators import GenericConfigurator, NonQueriedConfigurator, DryRunConfigurator
+from configurators import CmdPathConfigurator, realADD, realDEL, realSET, dummyDEL, dummySET, dummyADD
 from exc import ConfigRunError
 
 
-class GenericConfigurator_applyMenu_Tests(TestCase):
+class CmdPathConfigurator_Tests(TestCase):
 
     def setUp(self):
-        self.TestCls = GenericConfigurator( None, None )
-        self.TestCls.ADD = MagicMock()
-        self.TestCls.DEL = MagicMock()
-        self.TestCls.SET = MagicMock()
-        self.rules = MagicMock()
-        self.MenuType = MagicMock()
-        self.MenuType.compare.return_value = ('DEL', 'SET', 'ADD')
-        self.modord = ('SET', 'ADD')
-        self.PathMock = MagicMock()
+        self.addfunc = MagicMock()
+        self.delfunc = MagicMock()
+        self.setfunc = MagicMock()
+        self.master = MagicMock()
+        self.slave = MagicMock()
+        self.repository = MagicMock()
+        map = { self.master:MagicMock(), self.slave:MagicMock() }
+        self.repository.read.side_effect =  lambda *args, **kwargs: map[kwargs['device']]
+        self.master_data = map[self.master]
+        self.slave_data = map[self.slave]
+        self.path = MagicMock()
+        type(self.path).path = PropertyMock()
+        self.TestCls = CmdPathConfigurator( repository=self.repository, master=self.master,
+                slave=self.slave, addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc)
 
-    def test_calls_MenuType_compare_method(self):
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.MenuType.compare.assert_called_once_with( self.rules )
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_repository_read_with_master_device(self, extractmock):
+        self.TestCls.run( path=self.path, modord=tuple() )
+        self.repository.read.assert_any_call(device=self.master, path=self.path.path)
 
-    def test_does_not_call_ADD_SET_DEL_when_Menu_type_compare_method_raises_ConfigRunError(self):
-        self.MenuType.compare.side_effect = ConfigRunError()
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.assertEqual(0, self.TestCls.SET.call_count)
-        self.assertEqual(0, self.TestCls.ADD.call_count)
-        self.assertEqual(0, self.TestCls.DEL.call_count)
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_repository_read_with_slave_device(self, extractmock):
+        self.TestCls.run( path=self.path, modord=tuple())
+        self.repository.read.assert_any_call(device=self.slave, path=self.path.path)
 
-    def test_calls_ADD_if_specified_in_modord(self):
-        self.modord = ('ADD', )
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.TestCls.ADD.assert_called_once_with('ADD', self.PathMock)
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_compare_on_slave_data_with_passed_master_data(self, extractmock):
+        self.TestCls.run( path=self.path, modord=tuple() )
+        self.slave_data.compare.assert_called_once_with( self.master_data )
 
-    def test_calls_DEL_if_specified_in_modord(self):
-        self.modord = ('DEL', )
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.TestCls.DEL.assert_called_once_with('DEL', self.PathMock)
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_extartActionData_three_time_if_modord_has_three_actions(self, extractmock):
+        self.TestCls.run( path=self.path, modord=('ADD','SET','DEL') )
+        self.assertEqual( extractmock.call_count, 3 )
 
-    def test_calls_SET_if_specified_in_modord(self):
-        self.modord = ('SET', )
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.TestCls.SET.assert_called_once_with('SET', self.PathMock)
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_addfunc_if_ADD_in_modord(self, extractmock):
+        self.TestCls.run( path=self.path, modord=('ADD',) )
+        self.addfunc.assert_called_once_with( self.TestCls, extractmock.return_value )
 
-    def test_does_not_call_DEL_if_not_listed_in_modord(self):
-        self.modord = ('SET', 'ADD')
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.assertEqual(0, self.TestCls.DEL.call_count)
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_does_not_call_addfunc_if_ADD_not_in_modord(self, extractmock):
+        self.TestCls.run( path=self.path, modord=('DEL','SET') )
+        self.assertEqual( self.addfunc.call_count, 0 )
 
-    def test_does_not_call_SEt_if_not_listed_in_modord(self):
-        self.modord = ('DEL', 'ADD')
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.assertEqual(0, self.TestCls.SET.call_count)
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_setfunc_if_SET_in_modord(self, extractmock):
+        self.TestCls.run( path=self.path, modord=('SET',) )
+        self.setfunc.assert_called_once_with( self.TestCls, extractmock.return_value )
 
-    def test_does_not_call_ADD_if_not_listed_in_modord(self):
-        self.modord = ('SET', 'DEL')
-        self.TestCls.applyMenu( rules=self.rules, menu_type=self.MenuType, modord=self.modord, path=self.PathMock )
-        self.assertEqual(0, self.TestCls.ADD.call_count)
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_does_not_call_setfunc_if_SET_not_in_modord(self, extractmock):
+        self.TestCls.run( path=self.path, modord=('DEL','ADD') )
+        self.assertEqual( self.setfunc.call_count, 0 )
 
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_delfunc_if_DEL_in_modord(self, extractmock):
+        self.TestCls.run( path=self.path, modord=('DEL',) )
+        self.delfunc.assert_called_once_with( self.TestCls, extractmock.return_value )
 
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_does_not_call_delfunc_if_DEL_not_in_modord(self, extractmock):
+        self.TestCls.run( path=self.path, modord=('ADD','SET') )
+        self.assertEqual( self.delfunc.call_count, 0 )
 
+    @patch.object(CmdPathConfigurator, 'extartActionData')
+    def test_run_calls_modification_functions_in_passed_order(self, extractmock):
+        manager = MagicMock()
+        manager.DEL = self.delfunc
+        manager.SET = self.setfunc
+        manager.ADD = self.addfunc
+        self.TestCls.run( path=self.path, modord=('ADD','SET','DEL') )
+        expected = [call.ADD(self.TestCls, extractmock.return_value),
+                call.SET(self.TestCls, extractmock.return_value),
+                call.DEL(self.TestCls, extractmock.return_value)]
+        manager.assert_has_calls(expected)
 
-class NonQueriedConfigurator_SET_Tests(TestCase):
+    def test_extractActionData_returns_ADD_data_when_requested(self):
+        data = ( MagicMock(), MagicMock(), MagicMock() )
+        returned = CmdPathConfigurator.extartActionData(data=data, elem='ADD')
+        self.assertEqual(returned, data[0])
 
-    def setUp(self):
-        self.ApiMock = MagicMock()
-        self.PathMock = MagicMock()
-        self.Setmock = PropertyMock( return_value='set' )
-        type(self.PathMock).set = self.Setmock
-        self.TestCls = NonQueriedConfigurator( self.ApiMock, None )
+    def test_extractActionData_returns_SET_data_when_requested(self):
+        data = ( MagicMock(), MagicMock(), MagicMock() )
+        returned = CmdPathConfigurator.extartActionData(data=data, elem='SET')
+        self.assertEqual(returned, data[1])
 
-    def test_calls_api_run_for_every_element_in_rules(self):
-        self.TestCls.SET( rules=[1]*3, path=self.PathMock )
-        self.assertEqual( self.ApiMock.run.call_count, 3 )
-
-    def test_acceses_set_attribute(self):
-        self.TestCls.SET( rules=[1], path=self.PathMock )
-        self.Setmock.assert_called_once_with()
-
-    def test_for_every_rule_calls_api_run_with_rule_as_argument(self):
-        self.TestCls.SET( rules=[1]*2, path=self.PathMock )
-        self.assertEqual( self.ApiMock.run.call_args_list, [call('set', 1)]*2 )
-
-
-class NonQueriedConfigurator_DEL_Tests(TestCase):
-
-    def setUp(self):
-        self.ApiMock = MagicMock()
-        self.PathMock = MagicMock()
-        self.RemoveAttrMock = PropertyMock( return_value='del' )
-        type(self.PathMock).remove = self.RemoveAttrMock
-        self.TestCls = NonQueriedConfigurator( self.ApiMock, None )
-
-    def test_calls_api_run_for_every_element_in_rules(self):
-        self.TestCls.DEL( rules=[1]*3, path=self.PathMock )
-        self.assertEqual( self.ApiMock.run.call_count, 3 )
-
-    def test_acceses_del_attribute(self):
-        self.TestCls.DEL( rules=[1], path=self.PathMock )
-        self.RemoveAttrMock.assert_called_once_with()
-
-    def test_for_every_rule_calls_api_run_with_rule_as_argument(self):
-        self.TestCls.DEL( rules=[1]*2, path=self.PathMock )
-        self.assertEqual( self.ApiMock.run.call_args_list, [call('del', 1)]*2 )
+    def test_extractActionData_returns_DEL_data_when_requested(self):
+        data = ( MagicMock(), MagicMock(), MagicMock() )
+        returned = CmdPathConfigurator.extartActionData(data=data, elem='DEL')
+        self.assertEqual(returned, data[2])
 
 
-class NonQueriedConfigurator_ADD_Tests(TestCase):
+class ModificationFunctions_Tests(TestCase):
 
     def setUp(self):
-        self.ApiMock = MagicMock()
-        self.PathMock = MagicMock()
-        self.AddAttrMock = PropertyMock( return_value='add' )
-        type(self.PathMock).add = self.AddAttrMock
-        self.TestCls = NonQueriedConfigurator( self.ApiMock, None )
+        self.obj = MagicMock()
+        self.datarow = MagicMock()
+        self.data = MagicMock()
+        self.data.__iter__.return_value = iter( [self.datarow] )
+        self.path = MagicMock()
 
-    def test_calls_api_run_for_every_element_in_rules(self):
-        self.TestCls.ADD( rules=[1]*3, path=self.PathMock )
-        self.assertEqual( self.ApiMock.run.call_count, 3 )
+    def test_dummyDEL_does_not_call_repository_write(self):
+        dummyDEL(self.obj, self.data, self.path)
+        self.assertEqual(self.obj.repository.write.call_count, 0)
 
-    def test_acceses_add_attribute(self):
-        self.TestCls.ADD( rules=[1], path=self.PathMock )
-        self.AddAttrMock.assert_called_once_with()
+    def test_dummySET_does_not_call_repository_write(self):
+        dummySET(self.obj, self.data, self.path)
+        self.assertEqual(self.obj.repository.write.call_count, 0)
 
-    def test_for_every_rule_calls_api_run_with_rule_as_argument(self):
-        self.TestCls.ADD( rules=[1]*2, path=self.PathMock )
-        self.assertEqual( self.ApiMock.run.call_args_list, [call('add', 1)]*2 )
+    def test_dummyADD_does_not_call_repository_write(self):
+        dummyADD(self.obj, self.data, self.path)
+        self.assertEqual(self.obj.repository.write.call_count, 0)
 
+    def test_dummyADD_iterates_over_passed_data(self):
+        dummyADD(self.obj, self.data, self.path)
+        self.data.__iter__.assert_called_once_with()
 
+    def test_dummyDEL_iterates_over_passed_data(self):
+        dummyDEL(self.obj, self.data, self.path)
+        self.data.__iter__.assert_called_once_with()
 
-class DryRunConfigurator_Tests(TestCase):
+    def test_dummySET_iterates_over_passed_data(self):
+        dummySET(self.obj, self.data, self.path)
+        self.data.__iter__.assert_called_once_with()
 
-    def setUp(self):
-        self.logmock = MagicMock()
-        self.apimock = MagicMock()
-        self.TestCls = DryRunConfigurator( self.apimock, self.logmock )
-        self.rules = ({'address':'x.x.x.x','disabled':False}, {'address':'y.y.y.y','disabled':True})
-        self.pathmock = MagicMock()
+    def test_realADD_iterates_over_passed_data(self):
+        realADD(self.obj, self.data, self.path)
+        self.data.__iter__.assert_called_once_with()
 
-    def test_ADD_does_not_call_api_run_method(self):
-        self.TestCls.ADD( rules=self.rules, path=self.pathmock )
-        self.assertEqual( self.apimock.run.call_count, 0 )
+    def test_realDEL_iterates_over_passed_data(self):
+        realDEL(self.obj, self.data, self.path)
+        self.data.__iter__.assert_called_once_with()
 
-    def test_SET_does_not_call_api_run_method(self):
-        self.TestCls.SET( rules=self.rules, path=self.pathmock )
-        self.assertEqual( self.apimock.run.call_count, 0 )
+    def test_realSET_iterates_over_passed_data(self):
+        realSET(self.obj, self.data, self.path)
+        self.data.__iter__.assert_called_once_with()
 
-    def test_DEL_does_not_call_api_run_method(self):
-        self.TestCls.DEL( rules=self.rules, path=self.pathmock )
-        self.assertEqual( self.apimock.run.call_count, 0 )
+    def test_realADD_calls_repository_write_with_data_row(self):
+        realADD(self.obj, self.data, self.path)
+        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path)
