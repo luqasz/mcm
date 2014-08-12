@@ -23,8 +23,8 @@ class CmdPathConfigurator:
 
     def run(self, path, modord):
 
-        master_data = self.repository.read( device=self.master, path=path.path )
-        slave_data = self.repository.read( device=self.slave, path=path.path )
+        master_data = self.repository.read( device=self.master, path=path )
+        slave_data = self.repository.read( device=self.slave, path=path )
         data = slave_data.compare(master_data)
         for action in modord:
             action_data = CmdPathConfigurator.extartActionData( data=data, elem=action )

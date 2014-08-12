@@ -25,19 +25,18 @@ class CmdPathConfigurator_Tests(TestCase):
         self.master_data = map[self.master]
         self.slave_data = map[self.slave]
         self.path = MagicMock()
-        type(self.path).path = PropertyMock()
         self.TestCls = CmdPathConfigurator( repository=self.repository, master=self.master,
                 slave=self.slave, addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_repository_read_with_master_device(self, extractmock):
         self.TestCls.run( path=self.path, modord=tuple() )
-        self.repository.read.assert_any_call(device=self.master, path=self.path.path)
+        self.repository.read.assert_any_call(device=self.master, path=self.path)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_repository_read_with_slave_device(self, extractmock):
         self.TestCls.run( path=self.path, modord=tuple())
-        self.repository.read.assert_any_call(device=self.slave, path=self.path.path)
+        self.repository.read.assert_any_call(device=self.slave, path=self.path)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_compare_on_slave_data_with_passed_master_data(self, extractmock):
