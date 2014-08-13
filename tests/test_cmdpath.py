@@ -140,6 +140,10 @@ class OrderedCmdPath_Tests(TestCase):
         self.TestCls.compare( self.wanted )
         populatemock.assert_called_once_with()
 
+    def test_compare_returns_ADD_SET_DEL_in_order(self, populatemock, decidemock, zipmock):
+        data = self.TestCls.compare( self.wanted )
+        self.assertEqual( data, (self.TestCls.ADD, self.TestCls.SET, self.TestCls.DEL) )
+
     def test_compare_calls_zip_longest_with_wanted_and_present(self, populatemock, decidemock, zipmock):
         self.TestCls.compare( self.wanted )
         fillobj = CmdPathElem( data=dict(), keys=tuple(), split_map=dict() )
@@ -179,6 +183,11 @@ class SingleElementCmdPath_Tests(TestCase):
     def test_compare_does_not_call_populateDEL(self, populatemock, decidemock):
         self.TestCls.compare( self.Wanted )
         self.assertEqual( populatemock.call_count, 0 )
+
+    @patch.object(GenericCmdPath, 'decide')
+    def test_compare_returns_ADD_SET_DEL_in_order(self, decidemock):
+        data = self.TestCls.compare( self.Wanted )
+        self.assertEqual( data, (self.TestCls.ADD, self.TestCls.SET, self.TestCls.DEL) )
 
     @patch.object(GenericCmdPath, 'decide')
     def test_compare_calls_getitem_on_wanted(self, decidemock):
@@ -237,6 +246,13 @@ class UniqueKeyCmdPath_Tests(TestCase):
     def test_compare_calls_search_with_rule(self, decidemock, populatemock, searchmock):
         self.TestCls.compare(self.Wanted)
         searchmock.assert_any_call( self.WantedElem )
+
+    @patch.object(UniqueKeyCmdPath, 'search')
+    @patch.object(GenericCmdPath, 'populateDEL')
+    @patch.object(GenericCmdPath, 'decide')
+    def test_compare_returns_ADD_SET_DEL_in_order(self, decidemock, populatemock, searchmock):
+        data = self.TestCls.compare( self.Wanted )
+        self.assertEqual( data, (self.TestCls.ADD, self.TestCls.SET, self.TestCls.DEL) )
 
     @patch.object(UniqueKeyCmdPath, 'search')
     @patch.object(GenericCmdPath, 'populateDEL')

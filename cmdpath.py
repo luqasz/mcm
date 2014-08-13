@@ -79,6 +79,7 @@ class OrderedCmdPath(GenericCmdPath):
             self.decide( difference=diff, present=prule )
 
         self.populateDEL()
+        return self.ADD, self.SET, self.DEL
 
 
 class SingleElementCmdPath(GenericCmdPath):
@@ -93,6 +94,8 @@ class SingleElementCmdPath(GenericCmdPath):
         present = self.data[0]
         difference = wanted - present
         self.decide( difference, present )
+
+        return self.ADD, self.SET, self.DEL
 
 
 
@@ -110,6 +113,8 @@ class UniqueKeyCmdPath(GenericCmdPath):
             self.decide( difference, found )
 
         self.populateDEL()
+
+        return self.ADD, self.SET, self.DEL
 
 
     def search(self, rule):
