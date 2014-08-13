@@ -43,19 +43,19 @@ class CmdPathConfigurator:
 def realADD(self, data, path):
 
     for row in data:
-        self.repository.write(device=self.slave, data=(row,), path=path)
+        self.repository.write(device=self.slave, data=(row,), path=path.add)
 
 
 def realDEL(self, data, path):
 
     for row in data:
-        pass
+        self.repository.write(device=self.slave, data=(row,), path=path.remove)
 
 
 def realSET(self, data, path):
 
     for row in data:
-        pass
+        self.repository.write(device=self.slave, data=(row,), path=path.set)
 
 
 def dummyADD(self, data, path):
@@ -74,6 +74,20 @@ def dummySET(self, data, path):
 
     for row in data:
         pass
+
+
+
+
+def get_strategy(strategy):
+
+    dry_run = {'addfunc':dummyADD, 'delfunc':dummyDEL, 'setfunc':dummySET}
+    exact = {'addfunc':realADD, 'delfunc':realDEL, 'setfunc':realSET}
+    ensure = {'addfunc':realADD, 'delfunc':dummyDEL, 'setfunc':realSET}
+    map = {'dry_run':dry_run, 'ensure':ensure, 'exact':exact}
+
+    return map[strategy]
+
+
 
 
 class Configurator:

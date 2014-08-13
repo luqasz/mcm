@@ -7,7 +7,7 @@ except ImportError:
 from unittest import TestCase
 
 
-from configurators import CmdPathConfigurator, realADD, realDEL, realSET, dummyDEL, dummySET, dummyADD
+from configurators import CmdPathConfigurator, realADD, realDEL, realSET, dummyDEL, dummySET, dummyADD, get_strategy
 from exc import ConfigRunError
 
 
@@ -114,6 +114,9 @@ class ModificationFunctions_Tests(TestCase):
         self.data = MagicMock()
         self.data.__iter__.return_value = iter( [self.datarow] )
         self.path = MagicMock()
+        type(self.path).add = PropertyMock()
+        type(self.path).set = PropertyMock()
+        type(self.path).remove = PropertyMock()
 
     def test_dummyDEL_does_not_call_repository_write(self):
         dummyDEL(self.obj, self.data, self.path)
@@ -153,4 +156,34 @@ class ModificationFunctions_Tests(TestCase):
 
     def test_realADD_calls_repository_write_with_data_row(self):
         realADD(self.obj, self.data, self.path)
-        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path)
+        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path.add)
+
+    def test_realDEL_calls_repository_write_with_data_row(self):
+        realDEL(self.obj, self.data, self.path)
+        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path.remove)
+
+    def test_realSET_calls_repository_write_with_data_row(self):
+        realSET(self.obj, self.data, self.path)
+        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path.set)
+
+
+
+class Strategy_Factory_Tests(TestCase):
+
+    def setUp(self):
+        self.dry_run = {'addfunc':dummyADD, 'delfunc':dummyDEL, 'setfunc':dummySET}
+        self.exact = {'addfunc':realADD, 'delfunc':realDEL, 'setfunc':realSET}
+        self.ensure = {'addfunc':realADD, 'delfunc':dummyDEL, 'setfunc':realSET}
+
+    def test_get_strategy_returns_all_dummy_functions_when_called_with_dry_run_strategy(self):
+        returned = get_strategy(strategy='dry_run')
+        self.assertEqual( returned, self.dry_run )
+
+    def test_get_strategy_returns_all_real_functions_when_called_with_exact_strategy(self):
+        returned = get_strategy(strategy='exact')
+        self.assertEqual( returned, self.exact )
+
+    def test_get_strategy_returns_all_real_functions_except_delfunc_when_called_with_ensure_strategy(self):
+        returned = get_strategy(strategy='ensure')
+        self.assertEqual( returned, self.ensure )
+
