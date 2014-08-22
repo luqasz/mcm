@@ -23,8 +23,8 @@ class CmdPathConfigurator:
 
     def run(self, path, modord):
 
-        master_data = self.repository.read( device=self.master, path=path )
-        slave_data = self.repository.read( device=self.slave, path=path )
+        master_data = self.readMaster(path)
+        slave_data = self.readSlave(path)
         data = slave_data.compare(master_data)
         for action in modord:
             action_data = CmdPathConfigurator.extartActionData( data=data, elem=action )
@@ -32,11 +32,21 @@ class CmdPathConfigurator:
             func(action_data)
 
 
-    def extartActionData(data, elem):
+    def readMaster(self, path):
+
+        return self.repository.read( device=self.master, path=path )
+
+
+    def readSlave(self, path):
+
+        return self.repository.read( device=self.slave, path=path )
+
+
+    def extartActionData(data, action):
 
         ADD, SET, DEL = data
-        map = {'ADD':ADD, 'SET':SET, 'DEL':DEL}
-        return map[elem]
+        action_map = {'ADD':ADD, 'SET':SET, 'DEL':DEL}
+        return action_map[action]
 
 
 
@@ -83,9 +93,9 @@ def get_strategy(strategy):
     dry_run = {'addfunc':dummyADD, 'delfunc':dummyDEL, 'setfunc':dummySET}
     exact = {'addfunc':realADD, 'delfunc':realDEL, 'setfunc':realSET}
     ensure = {'addfunc':realADD, 'delfunc':dummyDEL, 'setfunc':realSET}
-    map = {'dry_run':dry_run, 'ensure':ensure, 'exact':exact}
+    strategy_map = {'dry_run':dry_run, 'ensure':ensure, 'exact':exact}
 
-    return map[strategy]
+    return strategy_map[strategy]
 
 
 
