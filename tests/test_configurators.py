@@ -96,11 +96,11 @@ class CmdPathConfigurator_Tests(TestCase):
 
     def test_readSlave_calls_respository_read_with_slave_device_and_path(self):
         self.TestCls.readSlave(self.path)
-        self.repository.read.assert_any_call(device=self.slave, path=self.path)
+        self.repository.read.assert_called_once_with(device=self.slave, path=self.path)
 
     def test_readMaster_calls_respository_read_with_master_device_and_path(self):
         self.TestCls.readMaster(self.path)
-        self.repository.read.assert_any_call(device=self.master, path=self.path)
+        self.repository.read.assert_called_once_with(device=self.master, path=self.path)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_modification_functions_in_passed_order(self, extractmock):
