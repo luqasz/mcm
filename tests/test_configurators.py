@@ -43,7 +43,7 @@ class CmdPathConfigurator_Tests(TestCase):
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_addfunc_if_ADD_in_modord(self, extractmock, readMasterMock, readSlaveMock):
         self.TestCls.run( path=self.path, modord=('ADD',) )
-        self.addfunc.assert_called_once_with( self.TestCls, extractmock.return_value )
+        self.addfunc.assert_called_once_with( self.TestCls, extractmock.return_value, self.path )
 
     @patch.object(CmdPathConfigurator, 'readSlave')
     @patch.object(CmdPathConfigurator, 'readMaster')
@@ -57,7 +57,7 @@ class CmdPathConfigurator_Tests(TestCase):
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_setfunc_if_SET_in_modord(self, extractmock, readMasterMock, readSlaveMock):
         self.TestCls.run( path=self.path, modord=('SET',) )
-        self.setfunc.assert_called_once_with( self.TestCls, extractmock.return_value )
+        self.setfunc.assert_called_once_with( self.TestCls, extractmock.return_value, self.path  )
 
     @patch.object(CmdPathConfigurator, 'readSlave')
     @patch.object(CmdPathConfigurator, 'readMaster')
@@ -71,7 +71,7 @@ class CmdPathConfigurator_Tests(TestCase):
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_delfunc_if_DEL_in_modord(self, extractmock, readMasterMock, readSlaveMock):
         self.TestCls.run( path=self.path, modord=('DEL',) )
-        self.delfunc.assert_called_once_with( self.TestCls, extractmock.return_value )
+        self.delfunc.assert_called_once_with( self.TestCls, extractmock.return_value, self.path  )
 
     @patch.object(CmdPathConfigurator, 'readSlave')
     @patch.object(CmdPathConfigurator, 'readMaster')
@@ -109,9 +109,9 @@ class CmdPathConfigurator_Tests(TestCase):
         manager.SET = self.setfunc
         manager.ADD = self.addfunc
         self.TestCls.run( path=self.path, modord=('ADD','SET','DEL') )
-        expected = [call.ADD(self.TestCls, extractmock.return_value),
-                call.SET(self.TestCls, extractmock.return_value),
-                call.DEL(self.TestCls, extractmock.return_value)]
+        expected = [call.ADD(self.TestCls, extractmock.return_value, self.path ),
+                call.SET(self.TestCls, extractmock.return_value, self.path ),
+                call.DEL(self.TestCls, extractmock.return_value, self.path )]
         manager.assert_has_calls(expected)
 
     def test_extractActionData_returns_ADD_data_when_requested(self):

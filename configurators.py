@@ -27,9 +27,9 @@ class CmdPathConfigurator:
         slave_data = self.readSlave(path)
         result = slave_data.compare(master_data)
         for action in modord:
-            action_data = CmdPathConfigurator.extartActionData( data=result, elem=action )
+            action_data = CmdPathConfigurator.extartActionData( data=result, action=action )
             func = getattr(self, action)
-            func(action_data)
+            func(action_data, path)
 
 
     def readMaster(self, path):
