@@ -88,7 +88,7 @@ def dummySET(self, data, path):
 
 
 
-def get_strategy(strategy):
+def getStrategyMethods(strategy):
 
     dry_run = {'addfunc':dummyADD, 'delfunc':dummyDEL, 'setfunc':dummySET}
     exact = {'addfunc':realADD, 'delfunc':realDEL, 'setfunc':realSET}

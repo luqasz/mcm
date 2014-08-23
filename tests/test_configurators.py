@@ -7,7 +7,7 @@ except ImportError:
 from unittest import TestCase
 
 
-from configurators import CmdPathConfigurator, realADD, realDEL, realSET, dummyDEL, dummySET, dummyADD, get_strategy
+from configurators import CmdPathConfigurator, realADD, realDEL, realSET, dummyDEL, dummySET, dummyADD, getStrategyMethods
 from exc import ConfigRunError
 
 
@@ -199,15 +199,15 @@ class Strategy_Factory_Tests(TestCase):
         self.exact = {'addfunc':realADD, 'delfunc':realDEL, 'setfunc':realSET}
         self.ensure = {'addfunc':realADD, 'delfunc':dummyDEL, 'setfunc':realSET}
 
-    def test_get_strategy_returns_all_dummy_functions_when_called_with_dry_run_strategy(self):
-        returned = get_strategy(strategy='dry_run')
+    def test_getStrategyMethods_returns_all_dummy_functions_when_called_with_dry_run_strategy(self):
+        returned = getStrategyMethods(strategy='dry_run')
         self.assertEqual( returned, self.dry_run )
 
-    def test_get_strategy_returns_all_real_functions_when_called_with_exact_strategy(self):
-        returned = get_strategy(strategy='exact')
+    def test_getStrategyMethods_returns_all_real_functions_when_called_with_exact_strategy(self):
+        returned = getStrategyMethods(strategy='exact')
         self.assertEqual( returned, self.exact )
 
-    def test_get_strategy_returns_all_real_functions_except_delfunc_when_called_with_ensure_strategy(self):
-        returned = get_strategy(strategy='ensure')
+    def test_getStrategyMethods_returns_all_real_functions_except_delfunc_when_called_with_ensure_strategy(self):
+        returned = getStrategyMethods(strategy='ensure')
         self.assertEqual( returned, self.ensure )
 
