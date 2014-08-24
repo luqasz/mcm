@@ -37,3 +37,9 @@ class SingleCmdRepo:
     def write(self, device, data, path):
 
         device.write(data, path)
+
+
+def get_repository(type):
+
+    repo_map = {'single':SingleCmdRepo, 'ordered':OrderedCmdRepo, 'uniquekey':UniqueKeyRepo}
+    return repo_map[type]()

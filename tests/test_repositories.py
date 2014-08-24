@@ -6,7 +6,7 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from repositories import UniqueKeyRepo, OrderedCmdRepo, SingleCmdRepo
+from repositories import UniqueKeyRepo, OrderedCmdRepo, SingleCmdRepo, get_repository
 
 class UniqueKeyRepo_Tests(TestCase):
 
@@ -96,4 +96,20 @@ class OrderedCmdRepo_Tests(TestCase):
     def test_write_calls_device_write(self):
         self.TestCls.write( self.IODevice, self.Data, self.Path )
         self.IODevice.write.assert_called_once_with( self.Data, self.Path )
+
+
+
+class Reposotory_Factory_Tests(TestCase):
+
+    def test_get_repository_returns_SingleCmdRepo_instance_when_called_with_single(self):
+        repo = get_repository('single')
+        self.assertIsInstance(repo, SingleCmdRepo)
+
+    def test_get_repository_returns_OrderedCmdRepo_instance_when_called_with_ordered(self):
+        repo = get_repository('ordered')
+        self.assertIsInstance(repo, OrderedCmdRepo)
+
+    def test_get_repository_returns_UniqueCmdRepo_instance_when_called_with_uniquekey(self):
+        repo = get_repository('uniquekey')
+        self.assertIsInstance(repo, UniqueKeyRepo)
 

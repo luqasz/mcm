@@ -11,7 +11,7 @@ ip_address = {
     'split_keys' : [ 'policy' ] }
 }
 
-'type'      Menu type. May be: uniquekey, single, generic.
+'type'      Menu type. May be: uniquekey, single, ordered.
 'keys'      List with key names to treat as uniqie key. May be 1 or more. This field is valid only for 'type' : 'uniquekey'
 'modord'    Modification order. Possible values 'add', 'set', 'del'. This also works as possible actions that can be taken for given menu.
             If eg. 'del' is not specified, delete actions will be skipped.
