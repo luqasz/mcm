@@ -1,20 +1,8 @@
 # -*- coding: UTF-8 -*-
 
 from itertools import zip_longest
-from posixpath import join as pjoin
-from collections import namedtuple
 
 from datastructures import CmdPathElem
-
-CmdPath = namedtuple('CmdPath', ('path', 'remove', 'set', 'add', 'getall', 'type', 'modord', 'keys', 'split_by', 'split_keys') )
-
-
-def mkCmdPath( path, attrs ):
-
-    fields = ('remove', 'set', 'add', 'getall')
-    field_attrs = ( pjoin('/', path), )
-    field_attrs += tuple( pjoin( '/', path, attr ) for attr in fields )
-    return CmdPath( *field_attrs, **attrs )
 
 
 

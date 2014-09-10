@@ -7,54 +7,8 @@ except ImportError:
 from unittest import TestCase
 
 
-from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, GenericCmdPath, mkCmdPath, OrderedCmdPath
+from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, GenericCmdPath, OrderedCmdPath
 from datastructures import CmdPathElem
-
-
-class PathTests(TestCase):
-
-    def setUp(self):
-        self.menu_attributes = { 'type':'withkey', 'modord':['set', 'add', 'del'], 'keys': ['name'], 'split_by':'', 'split_keys':[] }
-        self.path = '/ip/address'
-        self.menu_path = mkCmdPath( path=self.path, attrs=self.menu_attributes )
-
-    def test_path_attribute_returns_absolute_path_without_appended_forward_slash(self):
-        self.assertEqual( self.menu_path.path, '/ip/address' )
-
-    def test_path_attribute_returns_absolute_path_when_passed_path_does_not_begin_with_forward_slash(self):
-        self.path = 'ip/address'
-        self.assertEqual( self.menu_path.path, '/ip/address' )
-
-    def test_path_attribute_returns_absolute_path_when_passed_path_begins_with_forward_slash(self):
-        self.path = '/ip/address'
-        self.assertEqual( self.menu_path.path, '/ip/address' )
-
-    def test_remove_returns_appended_remove_string_without_ending_forward_slash(self):
-        self.assertEqual( self.menu_path.remove, '/ip/address/remove' )
-
-    def test_add_returns_appended_add_string_without_ending_forward_slash(self):
-        self.assertEqual( self.menu_path.add, '/ip/address/add' )
-
-    def test_set_returns_appended_set_string_without_ending_forward_slash(self):
-        self.assertEqual( self.menu_path.set, '/ip/address/set' )
-
-    def test_getall_returns_appended_getall_string_without_ending_forward_slash(self):
-        self.assertEqual( self.menu_path.getall, '/ip/address/getall' )
-
-    def test_type_returns_same_value_as_passed_in_attrs_dictionary(self):
-        self.assertEqual( self.menu_path.type, self.menu_attributes['type'] )
-
-    def test_modord_returns_same_value_as_passed_in_attrs_dictionary(self):
-        self.assertEqual( self.menu_path.modord, self.menu_attributes['modord'] )
-
-    def test_keys_returns_same_value_as_passed_in_attrs_dictionary(self):
-        self.assertEqual( self.menu_path.keys, self.menu_attributes['keys'] )
-
-    def test_split_by_returns_same_value_as_passed_in_attrs_dictionary(self):
-        self.assertEqual( self.menu_path.split_by, self.menu_attributes['split_by'] )
-
-    def test_split_keys_returns_same_value_as_passed_in_attrs_dictionary(self):
-        self.assertEqual( self.menu_path.split_keys, self.menu_attributes['split_keys'] )
 
 
 
