@@ -29,7 +29,6 @@ class UniqueKeyRepo_Tests(TestCase):
 
     @patch('repositories.UniqueKeyCmdPath')
     def test_read_returns_UniqueCmdPath_instance(self, Cmdpath):
-        Cmdpath.return_value = MagicMock()
         returned = self.TestCls.read( device=self.IODevice, path=self.Path )
         self.assertEqual( returned, Cmdpath.return_value )
 
@@ -59,7 +58,6 @@ class SingleCmdRepo_Tests(TestCase):
 
     @patch('repositories.SingleElementCmdPath')
     def test_read_returns_SingleElementCmdPath_instance(self, Cmdpath):
-        Cmdpath.return_value = MagicMock()
         returned = self.TestCls.read( device=self.IODevice, path=self.Path )
         self.assertEqual( returned, Cmdpath.return_value )
 
@@ -89,7 +87,6 @@ class OrderedCmdRepo_Tests(TestCase):
 
     @patch('repositories.OrderedCmdPath')
     def test_read_returns_OrderedCmdPath_instance(self, Cmdpath):
-        Cmdpath.return_value = MagicMock()
         returned = self.TestCls.read( device=self.IODevice, path=self.Path )
         self.assertEqual( returned, Cmdpath.return_value )
 
