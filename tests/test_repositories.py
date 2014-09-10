@@ -11,7 +11,7 @@ from repositories import UniqueKeyRepo, OrderedCmdRepo, SingleCmdRepo, get_repos
 class UniqueKeyRepo_Tests(TestCase):
 
     def setUp(self):
-        self.TestCls = UniqueKeyRepo()
+        self.TestCls = UniqueKeyRepo(keys=None, split_map=None)
         self.IODevice = MagicMock()
         self.Path = MagicMock()
         self.Data = MagicMock()
@@ -41,7 +41,7 @@ class UniqueKeyRepo_Tests(TestCase):
 class SingleCmdRepo_Tests(TestCase):
 
     def setUp(self):
-        self.TestCls = SingleCmdRepo()
+        self.TestCls = SingleCmdRepo(keys=None, split_map=None)
         self.IODevice = MagicMock()
         self.Path = MagicMock()
         self.Data = MagicMock()
@@ -71,7 +71,7 @@ class SingleCmdRepo_Tests(TestCase):
 class OrderedCmdRepo_Tests(TestCase):
 
     def setUp(self):
-        self.TestCls = OrderedCmdRepo()
+        self.TestCls = OrderedCmdRepo(keys=None, split_map=None)
         self.IODevice = MagicMock()
         self.Path = MagicMock()
         self.Data = MagicMock()
@@ -102,14 +102,14 @@ class OrderedCmdRepo_Tests(TestCase):
 class Reposotory_Factory_Tests(TestCase):
 
     def test_get_repository_returns_SingleCmdRepo_instance_when_called_with_single(self):
-        repo = get_repository('single')
+        repo = get_repository(type='single', keys=None, split_map=None)
         self.assertIsInstance(repo, SingleCmdRepo)
 
     def test_get_repository_returns_OrderedCmdRepo_instance_when_called_with_ordered(self):
-        repo = get_repository('ordered')
+        repo = get_repository(type='ordered', keys=None, split_map=None)
         self.assertIsInstance(repo, OrderedCmdRepo)
 
     def test_get_repository_returns_UniqueCmdRepo_instance_when_called_with_uniquekey(self):
-        repo = get_repository('uniquekey')
+        repo = get_repository(type='uniquekey', keys=None, split_map=None)
         self.assertIsInstance(repo, UniqueKeyRepo)
 
