@@ -34,11 +34,13 @@ class CmdPathConfigurator:
 
     def readMaster(self, path):
 
+        path.cmd = path.getall
         return self.repository.read( device=self.master, path=path )
 
 
     def readSlave(self, path):
 
+        path.cmd = path.getall
         return self.repository.read( device=self.slave, path=path )
 
 
@@ -52,20 +54,23 @@ class CmdPathConfigurator:
 
 def realADD(self, data, path):
 
+    path.cmd = path.add
     for row in data:
-        self.repository.write(device=self.slave, data=(row,), path=path.add)
+        self.repository.write(device=self.slave, data=(row,), path=path)
 
 
 def realDEL(self, data, path):
 
+    path.cmd = path.remove
     for row in data:
-        self.repository.write(device=self.slave, data=(row,), path=path.remove)
+        self.repository.write(device=self.slave, data=(row,), path=path)
 
 
 def realSET(self, data, path):
 
+    path.cmd = path.set
     for row in data:
-        self.repository.write(device=self.slave, data=(row,), path=path.set)
+        self.repository.write(device=self.slave, data=(row,), path=path)
 
 
 def dummyADD(self, data, path):

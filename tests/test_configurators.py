@@ -22,7 +22,7 @@ class CmdPathConfigurator_Tests(TestCase):
         self.repository = MagicMock()
         self.path = MagicMock()
         self.TestCls = CmdPathConfigurator( repository=self.repository, master=self.master,
-                slave=self.slave, addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc)
+        slave=self.slave, addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc)
 
     @patch.object(CmdPathConfigurator, 'readSlave')
     @patch.object(CmdPathConfigurator, 'readMaster')
@@ -98,9 +98,17 @@ class CmdPathConfigurator_Tests(TestCase):
         self.TestCls.readSlave(self.path)
         self.repository.read.assert_called_once_with(device=self.slave, path=self.path)
 
+    def test_readSlave_calls_respository_read_with_slave_device_and_sets_path_cmd_to_getall(self):
+        self.TestCls.readSlave(self.path)
+        self.assertEqual(self.path.cmd, self.path.getall)
+
     def test_readMaster_calls_respository_read_with_master_device_and_path(self):
         self.TestCls.readMaster(self.path)
         self.repository.read.assert_called_once_with(device=self.master, path=self.path)
+
+    def test_readMaster_calls_respository_read_with_master_device_and_sets_path_cmd_to_getall(self):
+        self.TestCls.readMaster(self.path)
+        self.assertEqual(self.path.cmd, self.path.getall)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_run_calls_modification_functions_in_passed_order(self, extractmock):
@@ -138,9 +146,6 @@ class ModificationFunctions_Tests(TestCase):
         self.data = MagicMock()
         self.data.__iter__.return_value = iter( [self.datarow] )
         self.path = MagicMock()
-        type(self.path).add = PropertyMock()
-        type(self.path).set = PropertyMock()
-        type(self.path).remove = PropertyMock()
 
     def test_dummyDEL_does_not_call_repository_write(self):
         dummyDEL(self.obj, self.data, self.path)
@@ -180,15 +185,27 @@ class ModificationFunctions_Tests(TestCase):
 
     def test_realADD_calls_repository_write_with_data_row(self):
         realADD(self.obj, self.data, self.path)
-        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path.add)
+        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path)
+
+    def test_realADD_sets_path_cmd_to_add(self):
+        realADD(self.obj, self.data, self.path)
+        self.assertEqual(self.path.cmd, self.path.add)
 
     def test_realDEL_calls_repository_write_with_data_row(self):
         realDEL(self.obj, self.data, self.path)
-        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path.remove)
+        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path)
+
+    def test_realDEL_sets_path_cmd_to_remove(self):
+        realDEL(self.obj, self.data, self.path)
+        self.assertEqual(self.path.cmd, self.path.remove)
 
     def test_realSET_calls_repository_write_with_data_row(self):
         realSET(self.obj, self.data, self.path)
-        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path.set)
+        self.obj.repository.write.assert_any_call(device=self.obj.slave, data=(self.datarow,), path=self.path)
+
+    def test_realSET_sets_path_cmd_to_set(self):
+        realSET(self.obj, self.data, self.path)
+        self.assertEqual(self.path.cmd, self.path.set)
 
 
 
