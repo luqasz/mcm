@@ -1,5 +1,22 @@
 # -*- coding: UTF-8 -*-
 
+from posixpath import join as pjoin
+
+
+
+class CmdPath:
+
+
+    def __init__(self, base):
+        self.base = pjoin('/', base ).rstrip('/')
+        self.cmd = None
+        self.remove = pjoin('/', self.base, 'remove')
+        self.add = pjoin('/', self.base, 'add')
+        self.set = pjoin('/', self.base, 'set')
+        self.getall = pjoin('/', self.base, 'getall')
+
+
+
 class CmdPathElem:
 
     def __init__(self, data, keys=tuple(), split_map=dict()):

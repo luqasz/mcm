@@ -6,7 +6,41 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from datastructures import CmdPathElem
+from datastructures import CmdPathElem, CmdPath
+
+
+
+class CmdPath_Tests(TestCase):
+
+    def setUp(self):
+        self.cmd_path = CmdPath(base='/ip/address')
+
+    def test_path_attribute_returns_absolute_path_without_appended_forward_slash(self):
+        self.cmd_path = CmdPath(base='/ip/address/')
+        self.assertEqual( self.cmd_path.base, '/ip/address' )
+
+    def test_path_attribute_returns_absolute_path_when_passed_path_does_not_begin_with_forward_slash(self):
+        self.cmd_path = CmdPath(base='ip/address')
+        self.assertEqual( self.cmd_path.base, '/ip/address' )
+
+    def test_path_attribute_returns_absolute_path_when_passed_path_begins_with_forward_slash(self):
+        self.cmd_path = CmdPath(base='/ip/address')
+        self.assertEqual( self.cmd_path.base, '/ip/address' )
+
+    def test_remove_returns_appended_remove_string_without_ending_forward_slash(self):
+        self.assertEqual( self.cmd_path.remove, '/ip/address/remove' )
+
+    def test_add_returns_appended_add_string_without_ending_forward_slash(self):
+        self.assertEqual( self.cmd_path.add, '/ip/address/add' )
+
+    def test_set_returns_appended_set_string_without_ending_forward_slash(self):
+        self.assertEqual( self.cmd_path.set, '/ip/address/set' )
+
+    def test_getall_returns_appended_getall_string_without_ending_forward_slash(self):
+        self.assertEqual( self.cmd_path.getall, '/ip/address/getall' )
+
+
+
 
 class CmdPathElemTests(TestCase):
 
