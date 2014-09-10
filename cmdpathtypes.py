@@ -12,20 +12,16 @@ ip_address = {
 }
 
 'type'      Menu type. May be: uniquekey, single, ordered.
-'keys'      List with key names to treat as uniqie key. May be 1 or more. This field is valid only for 'type' : 'uniquekey'
+'keys'      Optional list with key names to treat as uniqie key. May be 1 or more. This field is valid only for 'type' : 'uniquekey'
 'modord'    Modification order. Possible values 'add', 'set', 'del'. This also works as possible actions that can be taken for given menu.
             If eg. 'del' is not specified, delete actions will be skipped.
-'split'     Rules 'fields' may be split 'by' to make exact comparison. Eg. in /user/group policy value may be split by ','.
-            This would result in: 'split' : { 'by' : ',', 'fields' : [ 'policy' ] }
+'split_map' Rules 'fields' may be split to make exact comparison. Eg. in /user/group policy attribute value may be split by ','.
 '''
 
-# Menu paths will inherit from DEFAULT
-DEFAULT = { 'type':'uniquekey', 'modord':['set', 'add', 'del'], 'keys': ['name'], 'split_by':'', 'split_keys':[] }
+DEFAULT = { 'type':'uniquekey', 'modord':['set', 'add', 'del'], 'keys': ['name'], 'split_map':{}}
 
 
-
-# Menu paths that override default values.
-
+# All listed paths inherite from DEFAULT
 MENU_PATHS = {
     '/interface/ethernet': { 'type':'uniquekey', 'modord':['set'] },
 
@@ -35,7 +31,7 @@ MENU_PATHS = {
     '/routing/ospf/network' : { 'type':'uniquekey', 'keys':['network'] },
 
     '/user' : { 'type':'uniquekey', 'modord':['add', 'set', 'del'] },
-    '/user/group' : { 'type':'uniquekey', 'modord':['add', 'set', 'del'], 'split_by':',', 'split_keys':['policy'] },
+    '/user/group' : { 'type':'uniquekey', 'modord':['add', 'set', 'del'], 'split_map':{'policy':',' }},
 
     '/ip/firewall/service-port' : { 'type':'uniquekey', 'modord':['set'] },
     '/ip/hotspot/service-port' : { 'type':'uniquekey', 'modord':['set'] },
