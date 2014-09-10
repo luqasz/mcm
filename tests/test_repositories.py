@@ -19,23 +19,23 @@ class UniqueKeyRepo_Tests(TestCase):
     @patch('repositories.UniqueKeyCmdPath')
     def test_read_calls_read_on_passed_device_instance(self, Cmdpath):
         self.TestCls.read( self.IODevice, self.Path )
-        self.IODevice.read.assert_called_once_with( self.Path )
+        self.IODevice.read.assert_called_once_with( path=self.Path )
 
     @patch('repositories.UniqueKeyCmdPath')
     def test_read_instantiates_UniqueCmdPath_with_read_content_from_device(self, Cmdpath):
         data = self.IODevice.read.return_value = MagicMock()
-        self.TestCls.read( self.IODevice, self.Path )
-        Cmdpath.assert_called_once_with( data )
+        self.TestCls.read( device=self.IODevice, path=self.Path )
+        Cmdpath.assert_called_once_with( data=data )
 
     @patch('repositories.UniqueKeyCmdPath')
     def test_read_returns_UniqueCmdPath_instance(self, Cmdpath):
         Cmdpath.return_value = MagicMock()
-        returned = self.TestCls.read( self.IODevice, self.Path )
+        returned = self.TestCls.read( device=self.IODevice, path=self.Path )
         self.assertEqual( returned, Cmdpath.return_value )
 
     def test_write_calls_device_write(self):
-        self.TestCls.write( self.IODevice, self.Data, self.Path )
-        self.IODevice.write.assert_called_once_with( self.Data, self.Path )
+        self.TestCls.write( device=self.IODevice, data=self.Data, path=self.Path )
+        self.IODevice.write.assert_called_once_with( data=self.Data, path=self.Path )
 
 
 class SingleCmdRepo_Tests(TestCase):
@@ -48,24 +48,24 @@ class SingleCmdRepo_Tests(TestCase):
 
     @patch('repositories.SingleElementCmdPath')
     def test_read_calls_read_on_passed_device_instance(self, Cmdpath):
-        self.TestCls.read( self.IODevice, self.Path )
-        self.IODevice.read.assert_called_once_with( self.Path )
+        self.TestCls.read( device=self.IODevice, path=self.Path )
+        self.IODevice.read.assert_called_once_with( path=self.Path )
 
     @patch('repositories.SingleElementCmdPath')
     def test_read_instantiates_SingleElementCmdPath_with_read_content_from_device(self, Cmdpath):
         data = self.IODevice.read.return_value = MagicMock()
-        self.TestCls.read( self.IODevice, self.Path )
-        Cmdpath.assert_called_once_with( data )
+        self.TestCls.read( device=self.IODevice, path=self.Path )
+        Cmdpath.assert_called_once_with( data=data )
 
     @patch('repositories.SingleElementCmdPath')
     def test_read_returns_SingleElementCmdPath_instance(self, Cmdpath):
         Cmdpath.return_value = MagicMock()
-        returned = self.TestCls.read( self.IODevice, self.Path )
+        returned = self.TestCls.read( device=self.IODevice, path=self.Path )
         self.assertEqual( returned, Cmdpath.return_value )
 
     def test_write_calls_device_write(self):
-        self.TestCls.write( self.IODevice, self.Data, self.Path )
-        self.IODevice.write.assert_called_once_with( self.Data, self.Path )
+        self.TestCls.write( device=self.IODevice, data=self.Data, path=self.Path )
+        self.IODevice.write.assert_called_once_with( data=self.Data, path=self.Path )
 
 
 class OrderedCmdRepo_Tests(TestCase):
@@ -78,24 +78,24 @@ class OrderedCmdRepo_Tests(TestCase):
 
     @patch('repositories.OrderedCmdPath')
     def test_read_calls_read_on_passed_device_instance(self, Cmdpath):
-        self.TestCls.read( self.IODevice, self.Path )
-        self.IODevice.read.assert_called_once_with( self.Path )
+        self.TestCls.read( device=self.IODevice, path=self.Path )
+        self.IODevice.read.assert_called_once_with( path=self.Path )
 
     @patch('repositories.OrderedCmdPath')
     def test_read_instantiates_OrderedCmdPath_with_read_content_from_device(self, Cmdpath):
         data = self.IODevice.read.return_value = MagicMock()
-        self.TestCls.read( self.IODevice, self.Path )
-        Cmdpath.assert_called_once_with( data )
+        self.TestCls.read( device=self.IODevice, path=self.Path )
+        Cmdpath.assert_called_once_with( data=data )
 
     @patch('repositories.OrderedCmdPath')
     def test_read_returns_OrderedCmdPath_instance(self, Cmdpath):
         Cmdpath.return_value = MagicMock()
-        returned = self.TestCls.read( self.IODevice, self.Path )
+        returned = self.TestCls.read( device=self.IODevice, path=self.Path )
         self.assertEqual( returned, Cmdpath.return_value )
 
     def test_write_calls_device_write(self):
-        self.TestCls.write( self.IODevice, self.Data, self.Path )
-        self.IODevice.write.assert_called_once_with( self.Data, self.Path )
+        self.TestCls.write( device=self.IODevice, data=self.Data, path=self.Path )
+        self.IODevice.write.assert_called_once_with( data=self.Data, path=self.Path )
 
 
 

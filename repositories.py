@@ -7,36 +7,36 @@ class UniqueKeyRepo:
 
     def read(self, device, path):
 
-        content = device.read( path )
-        return UniqueKeyCmdPath( content )
+        content = device.read( path=path )
+        return UniqueKeyCmdPath( data=content )
 
     def write(self, device, data, path):
 
-        device.write(data, path)
+        device.write(data=data, path=path)
 
 
 class OrderedCmdRepo:
 
     def read(self, device, path):
 
-        content = device.read( path )
-        return OrderedCmdPath( content )
+        content = device.read( path=path )
+        return OrderedCmdPath( data=content )
 
     def write(self, device, data, path):
 
-        device.write(data, path)
+        device.write(data=data, path=path)
 
 
 class SingleCmdRepo:
 
     def read(self, device, path):
 
-        content = device.read( path )
-        return SingleElementCmdPath( content )
+        content = device.read( path=path )
+        return SingleElementCmdPath( data=content )
 
     def write(self, device, data, path):
 
-        device.write(data, path)
+        device.write(data=data, path=path)
 
 
 def get_repository(type):
