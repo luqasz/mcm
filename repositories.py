@@ -1,66 +1,74 @@
 # -*- coding: UTF-8 -*-
 
 from cmdpath import UniqueKeyCmdPath, OrderedCmdPath, SingleElementCmdPath
+from datastructures import CmdPathElem
 
+class GenericRepo:
 
-class UniqueKeyRepo:
-
-
-    def __init__(self, keys, split_map):
+    def __init__(self, class_type, keys, split_map):
+        self.class_type = class_type
         self.split_map = split_map
         self.keys = keys
 
+
     def read(self, device, path):
 
         content = device.read( path=path )
-        return UniqueKeyCmdPath( data=content )
+        content = self.assembleData(data=content)
+        return self.class_type(data=content)
 
 
     def write(self, device, data, path):
 
-        device.write(data=data, path=path)
+        content = self.disassembleData(data=data)
+        device.write(data=content, path=path)
+
+
+    def assembleData(self, data):
+
+        return [CmdPathElem(data=elem, keys=self.keys, split_map=self.split_map) for elem in data]
+
+
+    def disassembleData(self, data):
+
+        return [elem.data for elem in data]
 
 
 
-class OrderedCmdRepo:
+class UniqueKeyRepo(GenericRepo):
 
-
-    def __init__(self, keys, split_map):
+    def __init__(self, class_type, keys, split_map):
+        self.class_type = class_type
         self.split_map = split_map
-
-
-    def read(self, device, path):
-
-        content = device.read( path=path )
-        return OrderedCmdPath( data=content )
-
-
-    def write(self, device, data, path):
-
-        device.write(data=data, path=path)
+        self.keys = keys
 
 
 
-class SingleCmdRepo:
+class OrderedCmdRepo(GenericRepo):
 
 
-    def __init__(self, keys, split_map):
+    def __init__(self, class_type, keys, split_map):
+        self.class_type = class_type
         self.split_map = split_map
+        self.keys = tuple()
 
 
-    def read(self, device, path):
 
-        content = device.read( path=path )
-        return SingleElementCmdPath( data=content )
+class SingleCmdRepo(GenericRepo):
 
 
-    def write(self, device, data, path):
+    def __init__(self, class_type, keys, split_map):
+        self.class_type = class_type
+        self.split_map = split_map
+        self.keys = tuple()
 
-        device.write(data=data, path=path)
 
 
 
 def get_repository(type, keys, split_map):
 
     repo_map = {'single':SingleCmdRepo, 'ordered':OrderedCmdRepo, 'uniquekey':UniqueKeyRepo}
-    return repo_map[type](keys=keys, split_map=split_map)
+    cmdpath_map = {'single':SingleElementCmdPath, 'ordered':OrderedCmdPath, 'uniquekey':UniqueKeyCmdPath}
+    cls = repo_map[type]
+    cls_type = cmdpath_map[type]
+    return cls(class_type=cls_type, keys=keys, split_map=split_map)
