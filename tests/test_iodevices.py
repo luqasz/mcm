@@ -11,7 +11,7 @@ from iodevices import JsonFileConfig, RouterOsAPIDevice
 
 
 
-class FileConfig_Tests(TestCase):
+class JsonFileConfig_Tests(TestCase):
 
     def setUp(self):
         self.TestCls = JsonFileConfig(file=MagicMock())
