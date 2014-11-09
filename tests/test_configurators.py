@@ -24,103 +24,104 @@ class CmdPathConfigurator_Tests(TestCase):
         self.TestCls = CmdPathConfigurator( repository=self.repository, master=self.master,
         slave=self.slave, addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc)
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
-    @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_compare_on_slave_data_with_passed_master_data(self, extractmock, master_data, slave_data):
+    @patch.object(CmdPathConfigurator, 'applyData')
+    @patch.object(CmdPathConfigurator, 'compareData')
+    @patch.object(CmdPathConfigurator, 'readData')
+    def test_run_calls_readData_with_path(self, readData_mock, compare_mock, apply_mock):
+        readData_mock.return_value = MagicMock(), MagicMock()
         self.TestCls.run( path=self.path, modord=tuple() )
-        slave_data.return_value.compare.assert_called_once_with( master_data.return_value )
+        readData_mock.assert_called_once_with( self.path )
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
+    @patch.object(CmdPathConfigurator, 'applyData')
+    @patch.object(CmdPathConfigurator, 'compareData')
+    @patch.object(CmdPathConfigurator, 'readData')
+    def test_run_calls_compareData_with_data_from_readData(self, readData_mock, compare_mock, apply_mock):
+        data = readData_mock.return_value = MagicMock()
+        self.TestCls.run( path=self.path, modord=tuple() )
+        compare_mock.assert_called_once_with(data)
+        
+    @patch.object(CmdPathConfigurator, 'applyData')
+    @patch.object(CmdPathConfigurator, 'compareData')
+    @patch.object(CmdPathConfigurator, 'readData')
+    def test_run_calls_applyData(self, readData_mock, compare_mock, apply_mock):
+        data = compare_mock.return_value = MagicMock()
+        mod_mock = MagicMock()
+        self.TestCls.run( path=self.path, modord=mod_mock )
+        apply_mock.assert_called_once_with(path=self.path, data=data, modord=mod_mock)
+
+
+    def test_compareData_calls_compare_on_slave_data_with_passed_master_data(self):
+        master_data = MagicMock()
+        slave_data = MagicMock()
+        self.TestCls.compareData( (master_data, slave_data) )
+        slave_data.compare.assert_called_once_with( master_data )
+
+
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_extartActionData_three_times_if_modord_has_three_actions(self, extractmock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=('ADD','SET','DEL') )
+    def test_applyData_calls_extartActionData_three_times_if_modord_has_three_actions(self, extractmock ):
+        self.TestCls.applyData( path=self.path, modord=('ADD','SET','DEL'), data=MagicMock() )
         self.assertEqual( extractmock.call_count, 3 )
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_addfunc_if_ADD_in_modord(self, extractmock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=('ADD',) )
+    def test_applyData_calls_addfunc_if_ADD_in_modord(self, extractmock):
+        self.TestCls.applyData( path=self.path, modord=('ADD',), data=MagicMock() )
         self.addfunc.assert_called_once_with( self.TestCls, extractmock.return_value, self.path )
-
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
+    
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_does_not_call_addfunc_if_ADD_not_in_modord(self, extractmock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=('DEL','SET') )
+    def test_applyData_does_not_call_addfunc_if_ADD_not_in_modord(self, extractmock):
+        self.TestCls.applyData( path=self.path, modord=('DEL','SET'), data=MagicMock() )
         self.assertEqual( self.addfunc.call_count, 0 )
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_setfunc_if_SET_in_modord(self, extractmock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=('SET',) )
+    def test_applyData_calls_setfunc_if_SET_in_modord(self, extractmock):
+        self.TestCls.applyData( path=self.path, modord=('SET',), data=MagicMock() )
         self.setfunc.assert_called_once_with( self.TestCls, extractmock.return_value, self.path  )
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_does_not_call_setfunc_if_SET_not_in_modord(self, extractmock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=('DEL','ADD') )
+    def test_applyData_does_not_call_setfunc_if_SET_not_in_modord(self, extractmock):
+        self.TestCls.applyData( path=self.path, modord=('DEL','ADD'), data=MagicMock() )
         self.assertEqual( self.setfunc.call_count, 0 )
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_delfunc_if_DEL_in_modord(self, extractmock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=('DEL',) )
+    def test_applyData_calls_delfunc_if_DEL_in_modord(self, extractmock):
+        self.TestCls.applyData( path=self.path, modord=('DEL',), data=MagicMock() )
         self.delfunc.assert_called_once_with( self.TestCls, extractmock.return_value, self.path  )
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_does_not_call_delfunc_if_DEL_not_in_modord(self, extractmock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=('ADD','SET') )
+    def test_applyData_does_not_call_delfunc_if_DEL_not_in_modord(self, extractmock):
+        self.TestCls.applyData( path=self.path, modord=('ADD','SET'), data=MagicMock() )
         self.assertEqual( self.delfunc.call_count, 0 )
 
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
     @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_readSlave_with_passed_path(self, extractMock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=MagicMock() )
-        readSlaveMock.assert_called_once_with(self.path)
-
-    @patch.object(CmdPathConfigurator, 'readSlave')
-    @patch.object(CmdPathConfigurator, 'readMaster')
-    @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_readMaster_with_passed_path(self, extractMock, readMasterMock, readSlaveMock):
-        self.TestCls.run( path=self.path, modord=MagicMock() )
-        readMasterMock.assert_called_once_with(self.path)
+    def test_applyData_calls_modification_functions_in_passed_order(self, extractmock):
+        manager = MagicMock()
+        manager.DEL = self.delfunc
+        manager.SET = self.setfunc
+        manager.ADD = self.addfunc
+        self.TestCls.applyData( path=self.path, modord=('ADD','SET','DEL'), data=MagicMock() )
+        expected = [call.ADD(self.TestCls, extractmock.return_value, self.path ),
+                call.SET(self.TestCls, extractmock.return_value, self.path ),
+                call.DEL(self.TestCls, extractmock.return_value, self.path )]
+        manager.assert_has_calls(expected)
+        
 
     def test_readSlave_calls_respository_read_with_slave_device_and_path(self):
         self.TestCls.readSlave(self.path)
         self.repository.read.assert_called_once_with(device=self.slave, path=self.path)
 
-    def test_readSlave_calls_respository_read_with_slave_device_and_sets_path_cmd_to_getall(self):
+    def test_readSlave_sets_path_cmd_to_getall(self):
         self.TestCls.readSlave(self.path)
         self.assertEqual(self.path.cmd, self.path.getall)
+
 
     def test_readMaster_calls_respository_read_with_master_device_and_path(self):
         self.TestCls.readMaster(self.path)
         self.repository.read.assert_called_once_with(device=self.master, path=self.path)
 
-    def test_readMaster_calls_respository_read_with_master_device_and_sets_path_cmd_to_getall(self):
+    def test_readMaster_sets_path_cmd_to_getall(self):
         self.TestCls.readMaster(self.path)
         self.assertEqual(self.path.cmd, self.path.getall)
 
-    @patch.object(CmdPathConfigurator, 'extartActionData')
-    def test_run_calls_modification_functions_in_passed_order(self, extractmock):
-        manager = MagicMock()
-        manager.DEL = self.delfunc
-        manager.SET = self.setfunc
-        manager.ADD = self.addfunc
-        self.TestCls.run( path=self.path, modord=('ADD','SET','DEL') )
-        expected = [call.ADD(self.TestCls, extractmock.return_value, self.path ),
-                call.SET(self.TestCls, extractmock.return_value, self.path ),
-                call.DEL(self.TestCls, extractmock.return_value, self.path )]
-        manager.assert_has_calls(expected)
 
     def test_extractActionData_returns_ADD_data_when_requested(self):
         data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )

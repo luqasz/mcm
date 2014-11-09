@@ -23,13 +23,31 @@ class CmdPathConfigurator:
 
     def run(self, path, modord):
 
-        master_data = self.readMaster(path)
-        slave_data = self.readSlave(path)
-        result = slave_data.compare(master_data)
+        data = self.readData(path)
+        result = self.compareData(data)
+        self.applyData(path=path, data=result, modord=modord)
+
+
+    def applyData(self, path, data, modord):
+        
         for action in modord:
-            action_data = CmdPathConfigurator.extartActionData( data=result, action=action )
+            action_data = CmdPathConfigurator.extartActionData( data=data, action=action )
             action_method = getattr(self, action)
             action_method(action_data, path)
+
+
+    def compareData(self, data):
+
+        master_data, slave_data = data
+        result = slave_data.compare(master_data)
+        return result
+
+
+    def readData(self, path):
+
+        master_data = self.readMaster(path)
+        slave_data = self.readSlave(path)
+        return master_data, slave_data
 
 
     def readMaster(self, path):
