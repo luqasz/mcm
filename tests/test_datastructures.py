@@ -62,6 +62,18 @@ class CmdPathElemTests(TestCase):
     def test_not_equal_calls_ne_magic_method_on_data(self):
         self.TestCls != self.Other
         self.TestCls.data.__ne__.assert_called_once_with(self.Other.data)
+        
+    def test_getitem_calls_getitem_on_data(self):
+        self.TestCls['some_key']
+        self.TestCls.data.__getitem__.assert_called_once_with( 'some_key' )
+
+    def test_setitem_calls_setitem_on_data(self):
+        self.TestCls['some_key'] = 'value'
+        self.TestCls.data.__setitem__.assert_called_once_with( 'some_key', 'value' )
+
+    def test_bool_calls_bool_on_data(self):
+        bool(self.TestCls)
+        self.TestCls.data.__bool__.assert_called_once_with()
 
     @patch.object(CmdPathElem, 'difference')
     def test_sub_calls_difference(self, diffmock):
@@ -114,18 +126,6 @@ class CmdPathElemTests(TestCase):
         # this variable must be as is. python is unpredictable how it will order hashed items
         desired = ','.join( {'3','2'} )
         self.assertEqual( retval, desired )
-
-    def test_getitem_calls_getitem_on_data(self):
-        self.TestCls['some_key']
-        self.TestCls.data.__getitem__.assert_called_once_with( 'some_key' )
-
-    def test_setitem_calls_setitem_on_data(self):
-        self.TestCls['some_key'] = 'value'
-        self.TestCls.data.__setitem__.assert_called_once_with( 'some_key', 'value' )
-
-    def test_bool_calls_bool_on_data(self):
-        bool(self.TestCls)
-        self.TestCls.data.__bool__.assert_called_once_with()
 
     def test_isunique_returns_True_if_all_key_value_pairs_are_present_in_other(self):
         self.Other.data = self.TestCls.data = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
