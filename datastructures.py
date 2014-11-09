@@ -92,7 +92,7 @@ class CmdPathElem:
         return CmdPathElem( data=diff, keys=self.keys, split_map=self.split_map )
 
 
-    def difference( wanted, present, split_map=dict() ):
+    def difference( wanted, present, split_map ):
         '''
         Return elements in wanted that are not in present. Additional comparison is made using split_map.
         '''

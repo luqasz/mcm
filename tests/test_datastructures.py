@@ -104,7 +104,7 @@ class CmdPathElemTests(TestCase):
     def test_difference_returns_elements_in_wanted_not_listed_in_present(self):
         wanted = dict(interface='ether1')
         present = dict(interface='ether2')
-        result = CmdPathElem.difference( wanted=wanted, present=present)
+        result = CmdPathElem.difference( wanted=wanted, present=present, split_map=dict() )
         self.assertEqual( result, dict(interface='ether1') )
 
     @patch.object(CmdPathElem, 'strdiff', return_value=MagicMock())
@@ -118,7 +118,7 @@ class CmdPathElemTests(TestCase):
     def test_difference_does_not_call_strdiff_when_split_map_is_empty_dict(self, strdiffmock):
         wanted = dict(attrs='1,2,3', interface='ether1')
         present = dict(attrs='1,2', interface='ether1')
-        CmdPathElem.difference( wanted=wanted, present=present )
+        CmdPathElem.difference( wanted=wanted, present=present, split_map=dict() )
         self.assertFalse( strdiffmock.called )
 
     def test_strdiff_returns_elements_from_wanted_not_listed_in_present(self):
