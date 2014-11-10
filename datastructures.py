@@ -88,22 +88,16 @@ class CmdPathElem:
             CmdPathElem instance
         '''
 
-        diff = CmdPathElem.difference( wanted=self.data, present=other.data, split_map=self.split_map )
+        diff = CmdPathElem.difference( wanted=self.data, present=other.data )
         return CmdPathElem( data=diff, keys=self.keys, split_map=self.split_map )
 
 
-    def difference( wanted, present, split_map ):
+    def difference( wanted, present ):
         '''
-        Return elements in wanted that are not in present. Additional comparison is made using split_map.
+        Return elements in wanted that are not in present.
         '''
 
-        diff = dict(set(wanted.items()) - set(present.items()))
-
-        for split_key, split_char in split_map.items():
-            if diff.get(split_key) and present.get(split_key):
-                diff[split_key] = CmdPathElem.strdiff( diff[split_key], present[split_key], split_char )
-
-        return diff
+        return dict(set(wanted.items()) - set(present.items()))
 
 
     def strdiff( wanted, present, splchr ):

@@ -78,7 +78,7 @@ class CmdPathElemTests(TestCase):
     @patch.object(CmdPathElem, 'difference')
     def test_sub_calls_difference(self, diffmock):
         self.TestCls - self.Other
-        diffmock.assert_called_once_with( wanted=self.TestCls.data, present=self.Other.data, split_map=self.TestCls.split_map )
+        diffmock.assert_called_once_with( wanted=self.TestCls.data, present=self.Other.data )
 
     @patch.object(CmdPathElem, 'difference', return_value=MagicMock())
     def test_sub_returns_CmdPathElem_instance(self, diffmock):
@@ -104,22 +104,8 @@ class CmdPathElemTests(TestCase):
     def test_difference_returns_elements_in_wanted_not_listed_in_present(self):
         wanted = dict(interface='ether1')
         present = dict(interface='ether2')
-        result = CmdPathElem.difference( wanted=wanted, present=present, split_map=dict() )
+        result = CmdPathElem.difference( wanted=wanted, present=present  )
         self.assertEqual( result, dict(interface='ether1') )
-
-    @patch.object(CmdPathElem, 'strdiff', return_value=MagicMock())
-    def test_difference_calls_strdiff_when_split_map_is_provided(self, strdiffmock):
-        wanted = dict(attrs='1,2,3', interface='ether1')
-        present = dict(attrs='1,2', interface='ether1')
-        CmdPathElem.difference( wanted=wanted, present=present, split_map={'attrs':','} )
-        strdiffmock.assert_called_once_with( '1,2,3', '1,2', ',' )
-
-    @patch.object(CmdPathElem, 'strdiff', return_value=MagicMock())
-    def test_difference_does_not_call_strdiff_when_split_map_is_empty_dict(self, strdiffmock):
-        wanted = dict(attrs='1,2,3', interface='ether1')
-        present = dict(attrs='1,2', interface='ether1')
-        CmdPathElem.difference( wanted=wanted, present=present, split_map=dict() )
-        self.assertFalse( strdiffmock.called )
 
     def test_strdiff_returns_elements_from_wanted_not_listed_in_present(self):
         retval = CmdPathElem.strdiff( '1,2,3', '1', ',' )
