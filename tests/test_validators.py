@@ -7,7 +7,7 @@ except ImportError:
 from unittest import TestCase
 
 from validators import validate_list, validate_value, validate_type
-from exc import ValidateError
+from exceptions import ValidateError
 
 
 class ValidateListTests(TestCase):

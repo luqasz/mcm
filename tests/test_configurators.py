@@ -8,7 +8,6 @@ from unittest import TestCase
 
 
 from configurators import CmdPathConfigurator, realADD, realDEL, realSET, dummyDEL, dummySET, dummyADD, getStrategyMethods
-from exc import ConfigRunError
 
 
 class CmdPathConfigurator_Tests(TestCase):
@@ -39,7 +38,7 @@ class CmdPathConfigurator_Tests(TestCase):
         data = readData_mock.return_value = MagicMock()
         self.TestCls.run( path=self.path, modord=tuple() )
         compare_mock.assert_called_once_with(data)
-        
+
     @patch.object(CmdPathConfigurator, 'applyData')
     @patch.object(CmdPathConfigurator, 'compareData')
     @patch.object(CmdPathConfigurator, 'readData')
@@ -66,7 +65,7 @@ class CmdPathConfigurator_Tests(TestCase):
     def test_applyData_calls_addfunc_if_ADD_in_modord(self, extractmock):
         self.TestCls.applyData( path=self.path, modord=('ADD',), data=MagicMock() )
         self.addfunc.assert_called_once_with( self.TestCls, extractmock.return_value, self.path )
-    
+
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_does_not_call_addfunc_if_ADD_not_in_modord(self, extractmock):
         self.TestCls.applyData( path=self.path, modord=('DEL','SET'), data=MagicMock() )
@@ -103,7 +102,7 @@ class CmdPathConfigurator_Tests(TestCase):
                 call.SET(self.TestCls, extractmock.return_value, self.path ),
                 call.DEL(self.TestCls, extractmock.return_value, self.path )]
         manager.assert_has_calls(expected)
-        
+
 
     def test_readSlave_calls_respository_read_with_slave_device_and_path(self):
         self.TestCls.readSlave(self.path)

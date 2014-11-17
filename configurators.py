@@ -6,7 +6,6 @@ Module that holds configuration classes and helpers.
 
 from types import MethodType
 
-from exc import ConfigRunError
 
 
 class CmdPathConfigurator:
@@ -29,7 +28,7 @@ class CmdPathConfigurator:
 
 
     def applyData(self, path, data, modord):
-        
+
         for action in modord:
             action_data = CmdPathConfigurator.extartActionData( data=data, action=action )
             action_method = getattr(self, action)

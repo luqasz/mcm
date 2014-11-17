@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from exc import ValidateError
+from exceptions import ValidateError
 
 
 def validate_list(lst, allowed):
