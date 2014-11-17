@@ -15,7 +15,6 @@ ip_address = {
 'keys'      Optional list with key names to treat as uniqie key. May be 1 or more. This field is valid only for 'type' : 'uniquekey'
 'modord'    Modification order. Possible values 'add', 'set', 'del'. This also works as possible actions that can be taken for given menu.
             If eg. 'del' is not specified, delete actions will be skipped.
-'split_map' Rules 'fields' may be split to make exact comparison. Eg. in /user/group policy attribute value may be split by ','.
 '''
 
 DEFAULT = { 'type':'uniquekey', 'modord':['set', 'add', 'del'], 'keys': ['name'], 'split_map':{}}
@@ -31,7 +30,7 @@ MENU_PATHS = {
     '/routing/ospf/network' : { 'type':'uniquekey', 'keys':['network'] },
 
     '/user' : { 'type':'uniquekey', 'modord':['add', 'set', 'del'] },
-    '/user/group' : { 'type':'uniquekey', 'modord':['add', 'set', 'del'], 'split_map':{'policy':',' }},
+    '/user/group' : { 'type':'uniquekey', 'modord':['add', 'set', 'del'] },
 
     '/ip/firewall/service-port' : { 'type':'uniquekey', 'modord':['set'] },
     '/ip/hotspot/service-port' : { 'type':'uniquekey', 'modord':['set'] },

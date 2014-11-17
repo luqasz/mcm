@@ -19,19 +19,16 @@ class CmdPath:
 
 class CmdPathElem:
 
-    def __init__(self, data, keys=tuple(), split_map=dict()):
+    def __init__(self, data, keys=tuple()):
         '''
         data
             Dict with read data.
         keys
             Tuple with key names.
-        split_map
-            Dictionary with split_key, split_char.
         '''
 
         self.data = data
         self.keys = keys
-        self.split_map = split_map
 
 
     def isunique(self, other):
@@ -89,7 +86,7 @@ class CmdPathElem:
         '''
 
         diff = CmdPathElem.difference( wanted=self.data, present=other.data )
-        return CmdPathElem( data=diff, keys=self.keys, split_map=self.split_map )
+        return CmdPathElem( data=diff, keys=self.keys )
 
 
     def difference( wanted, present ):

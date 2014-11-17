@@ -45,8 +45,8 @@ class CmdPath_Tests(TestCase):
 class CmdPathElemTests(TestCase):
 
     def setUp(self):
-        self.TestCls = CmdPathElem(data=MagicMock(), keys=MagicMock(), split_map=MagicMock())
-        self.Other = CmdPathElem(data=MagicMock(), keys=MagicMock(), split_map=MagicMock())
+        self.TestCls = CmdPathElem(data=MagicMock(), keys=MagicMock())
+        self.Other = CmdPathElem(data=MagicMock(), keys=MagicMock())
 
     def test_str_on_instance_returns_string(self):
         self.assertIsInstance( str(self.TestCls), str )
@@ -95,11 +95,6 @@ class CmdPathElemTests(TestCase):
     def test_sub_returns_CmdPathElem_instance_with_copied_keys_from_wanted(self, diffmock):
         returned = self.TestCls - self.Other
         self.assertEqual( returned.keys, self.TestCls.keys )
-
-    @patch.object(CmdPathElem, 'difference', return_value=MagicMock())
-    def test_sub_returns_CmdPathElem_instance_with_copied_split_map_from_wanted(self, diffmock):
-        returned = self.TestCls - self.Other
-        self.assertEqual( returned.split_map, self.TestCls.split_map )
 
     def test_difference_returns_elements_in_wanted_not_listed_in_present(self):
         wanted = dict(interface='ether1')

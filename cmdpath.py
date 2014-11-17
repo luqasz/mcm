@@ -61,7 +61,7 @@ class OrderedCmdPath(GenericCmdPath):
 
     def compare(self, wanted):
 
-        fillobj = CmdPathElem( data=dict(), keys=tuple(), split_map=dict() )
+        fillobj = CmdPathElem( data=dict(), keys=tuple() )
         for prule, wrule in zip_longest(self.data, wanted, fillvalue=fillobj):
             diff = wrule - prule
             self.decide( difference=diff, present=prule )
@@ -114,4 +114,4 @@ class UniqueKeyCmdPath(GenericCmdPath):
             if elem.isunique( rule ):
                 return elem
         else:
-            return CmdPathElem( data=dict(), keys=tuple(), split_map=dict() )
+            return CmdPathElem( data=dict(), keys=tuple() )

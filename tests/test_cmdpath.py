@@ -100,7 +100,7 @@ class OrderedCmdPath_Tests(TestCase):
 
     def test_compare_calls_zip_longest_with_wanted_and_present(self, populatemock, decidemock, zipmock):
         self.TestCls.compare( self.wanted )
-        fillobj = CmdPathElem( data=dict(), keys=tuple(), split_map=dict() )
+        fillobj = CmdPathElem( data=dict(), keys=tuple() )
         zipmock.assert_called_once_with( self.DataMock, self.wanted, fillvalue=fillobj )
 
     def test_compare_calls_sub_on_wanted(self, populatemock, decidemock, zipmock):
