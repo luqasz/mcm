@@ -5,9 +5,8 @@ from datastructures import CmdPathElem
 
 class GenericRepo:
 
-    def __init__(self, class_type, keys, split_map):
+    def __init__(self, class_type, keys):
         self.class_type = class_type
-        self.split_map = split_map
         self.keys = keys
 
 
@@ -26,7 +25,7 @@ class GenericRepo:
 
     def assembleData(self, data):
 
-        return [CmdPathElem(data=elem, keys=self.keys, split_map=self.split_map) for elem in data]
+        return [CmdPathElem(data=elem, keys=self.keys) for elem in data]
 
 
     def disassembleData(self, data):
@@ -37,9 +36,8 @@ class GenericRepo:
 
 class UniqueKeyRepo(GenericRepo):
 
-    def __init__(self, class_type, keys, split_map):
+    def __init__(self, class_type, keys):
         self.class_type = class_type
-        self.split_map = split_map
         self.keys = keys
 
 
@@ -47,9 +45,8 @@ class UniqueKeyRepo(GenericRepo):
 class OrderedCmdRepo(GenericRepo):
 
 
-    def __init__(self, class_type, keys, split_map):
+    def __init__(self, class_type, keys):
         self.class_type = class_type
-        self.split_map = split_map
         self.keys = tuple()
 
 
@@ -57,18 +54,17 @@ class OrderedCmdRepo(GenericRepo):
 class SingleCmdRepo(GenericRepo):
 
 
-    def __init__(self, class_type, keys, split_map):
+    def __init__(self, class_type, keys):
         self.class_type = class_type
-        self.split_map = split_map
         self.keys = tuple()
 
 
 
 
-def get_repository(type, keys, split_map):
+def get_repository(type, keys):
 
     repo_map = {'single':SingleCmdRepo, 'ordered':OrderedCmdRepo, 'uniquekey':UniqueKeyRepo}
     cmdpath_map = {'single':SingleElementCmdPath, 'ordered':OrderedCmdPath, 'uniquekey':UniqueKeyCmdPath}
     cls = repo_map[type]
     cls_type = cmdpath_map[type]
-    return cls(class_type=cls_type, keys=keys, split_map=split_map)
+    return cls(class_type=cls_type, keys=keys)
