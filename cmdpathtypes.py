@@ -17,7 +17,7 @@ ip_address = {
             If eg. 'del' is not specified, delete actions will be skipped.
 '''
 
-DEFAULT = { 'type':'uniquekey', 'modord':['set', 'add', 'del'], 'keys': ['name'], 'split_map':{}}
+DEFAULT = { 'type':'uniquekey', 'modord':['set', 'add', 'del'], 'keys': ['name']}
 
 
 # All listed paths inherite from DEFAULT
