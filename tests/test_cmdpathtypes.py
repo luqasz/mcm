@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from cmdpathtypes import MENU_PATHS
 
-class CmdPathTypes_DataStructuresTests(TestCase):
+class CmdPathTypes_DataStructures_Tests(TestCase):
 
     def setUp(self):
         self.paths = MENU_PATHS.items()
