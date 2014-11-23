@@ -19,25 +19,13 @@ class CmdPath:
 
 class CmdPathElem:
 
-    def __init__(self, data, keys=tuple()):
+    def __init__(self, data):
         '''
         data
             Dict with read data.
-        keys
-            Tuple with key names.
         '''
 
         self.data = data
-        self.keys = keys
-
-
-    def isunique(self, other):
-        '''
-        Test whether self is a Unique rule. That is all self.keys and their values are in other.
-        '''
-
-        pairs = set( (key,self[key]) for key in self.keys )
-        return pairs <= set(other.data.items())
 
 
     def __str__(self):
@@ -86,7 +74,7 @@ class CmdPathElem:
         '''
 
         diff = CmdPathElem.difference( wanted=self.data, present=other.data )
-        return CmdPathElem( data=diff, keys=self.keys )
+        return CmdPathElem( data=diff )
 
 
     def difference( wanted, present ):
@@ -95,26 +83,3 @@ class CmdPathElem:
         '''
 
         return dict(set(wanted.items()) - set(present.items()))
-
-
-    def strdiff( wanted, present, splchr ):
-        '''
-        Compare two strings and return items from wanted not present in present.
-        Items from present,wanted are splitted by splchr and compared.
-        Returns string joined by splchr. strdiff('1,2,3','1',',') may return
-        '3,2' or '2,3'.
-
-        wanted
-            String containing elements.
-        present
-            String containing elements.
-        splchr
-            Split character to split wanted and present by.
-        '''
-
-        wanted_splitted = wanted.split( splchr )
-        present_splitted = present.split( splchr )
-        diff = set( wanted_splitted ) - set( present_splitted )
-
-        return splchr.join( diff )
-

@@ -1,12 +1,12 @@
 # -*- coding: UTF-8 -*-
 
 try:
-    from unittest.mock import MagicMock, patch, PropertyMock
+    from unittest.mock import MagicMock, patch
 except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from datastructures import CmdPathElem, CmdPath
+from datastructures import CmdPathRow, CmdPath
 
 
 
@@ -42,11 +42,11 @@ class CmdPath_Tests(TestCase):
 
 
 
-class CmdPathElemTests(TestCase):
+class CmdPathRow_Tests(TestCase):
 
     def setUp(self):
-        self.TestCls = CmdPathElem(data=MagicMock(), keys=MagicMock())
-        self.Other = CmdPathElem(data=MagicMock(), keys=MagicMock())
+        self.TestCls = CmdPathRow(data=MagicMock())
+        self.Other = CmdPathRow(data=MagicMock())
 
     def test_str_on_instance_returns_string(self):
         self.assertIsInstance( str(self.TestCls), str )
@@ -62,7 +62,7 @@ class CmdPathElemTests(TestCase):
     def test_not_equal_calls_ne_magic_method_on_data(self):
         self.TestCls != self.Other
         self.TestCls.data.__ne__.assert_called_once_with(self.Other.data)
-        
+
     def test_getitem_calls_getitem_on_data(self):
         self.TestCls['some_key']
         self.TestCls.data.__getitem__.assert_called_once_with( 'some_key' )
@@ -75,46 +75,24 @@ class CmdPathElemTests(TestCase):
         bool(self.TestCls)
         self.TestCls.data.__bool__.assert_called_once_with()
 
-    @patch.object(CmdPathElem, 'difference')
+    @patch.object(CmdPathRow, 'difference')
     def test_sub_calls_difference(self, diffmock):
         self.TestCls - self.Other
         diffmock.assert_called_once_with( wanted=self.TestCls.data, present=self.Other.data )
 
-    @patch.object(CmdPathElem, 'difference', return_value=MagicMock())
-    def test_sub_returns_CmdPathElem_instance(self, diffmock):
+    @patch.object(CmdPathRow, 'difference', return_value=MagicMock())
+    def test_sub_returns_CmdPathRow_instance(self, diffmock):
         returned = self.TestCls - self.Other
-        self.assertIsInstance( returned, CmdPathElem )
+        self.assertIsInstance( returned, CmdPathRow )
 
-    @patch.object(CmdPathElem, 'difference', return_value=MagicMock())
-    def test_sub_returns_CmdPathElem_instance_with_data_returned_from_difference(self, diffmock):
+    @patch.object(CmdPathRow, 'difference', return_value=MagicMock())
+    def test_sub_returns_CmdPathRow_instance_with_data_returned_from_difference(self, diffmock):
         datamock = diffmock.return_value = MagicMock()
         returned = self.TestCls - self.Other
         self.assertEqual( returned.data, datamock )
 
-    @patch.object(CmdPathElem, 'difference', return_value=MagicMock())
-    def test_sub_returns_CmdPathElem_instance_with_copied_keys_from_wanted(self, diffmock):
-        returned = self.TestCls - self.Other
-        self.assertEqual( returned.keys, self.TestCls.keys )
-
     def test_difference_returns_elements_in_wanted_not_listed_in_present(self):
         wanted = dict(interface='ether1')
         present = dict(interface='ether2')
-        result = CmdPathElem.difference( wanted=wanted, present=present  )
+        result = CmdPathRow.difference( wanted=wanted, present=present  )
         self.assertEqual( result, dict(interface='ether1') )
-
-    def test_strdiff_returns_elements_from_wanted_not_listed_in_present(self):
-        retval = CmdPathElem.strdiff( '1,2,3', '1', ',' )
-        # this variable must be as is. python is unpredictable how it will order hashed items
-        desired = ','.join( {'3','2'} )
-        self.assertEqual( retval, desired )
-
-    def test_isunique_returns_True_if_all_key_value_pairs_are_present_in_other(self):
-        self.Other.data = self.TestCls.data = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
-        self.Other.keys = self.TestCls.keys = ('address', 'disabled')
-        self.assertTrue( self.TestCls.isunique( self.Other ) )
-
-    def test_isunique_returns_False_if_at_least_one_key_value_pair_is_not_present_in_other(self):
-        self.Other.data = {'address': 'x.x', 'disabled': False, 'dynamic': False, 'list': 'testlist'}
-        self.TestCls.data = {'address': 'x.x', 'disabled': True, 'dynamic': False, 'list': 'testlist'}
-        self.Other.keys = self.TestCls.keys = ('address', 'disabled')
-        self.assertFalse( self.TestCls.isunique( self.Other ) )
