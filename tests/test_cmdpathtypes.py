@@ -1,5 +1,9 @@
 # -*- coding: UTF-8 -*-
 
+try:
+    from unittest.mock import MagicMock, patch
+except ImportError:
+    from mock import MagicMock, patch
 from unittest import TestCase
 
 from cmdpathtypes import MENU_PATHS
@@ -35,7 +39,7 @@ class CmdPathTypes_modord_value_Tests(TestCase):
     def setUp(self):
         self.paths = MENU_PATHS.items()
         self.addTypeEqualityFunc(tuple, self.ModordCheck)
-        self.valid_modord = ('set', 'add', 'del')
+        self.valid_modord = ('SET', 'ADD', 'DEL')
 
     def ModordCheck(self, tested, valid, msg=None):
         result = set(tested) - set(valid)
@@ -46,3 +50,4 @@ class CmdPathTypes_modord_value_Tests(TestCase):
     def test_modord_has_valid_attributes(self):
         for path, attributes in self.paths:
             self.assertEqual(attributes['modord'], self.valid_modord, msg='found in {}'.format(path))
+
