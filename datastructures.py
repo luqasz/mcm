@@ -1,23 +1,28 @@
 # -*- coding: UTF-8 -*-
 
 from posixpath import join as pjoin
+from collections import namedtuple
+
+from cmdpathtypes import MENU_PATHS
+
+
+CmdPath = namedtuple('CmdPath', ('relative', 'type', 'keys', 'modord', 'strategy'))
+
+def make_cmdpath(path, strategy):
+    attrs = dict()
+    attrs['relative'] = pjoin('/', path ).rstrip('/')
+    attrs['strategy'] = strategy
+    path_attrs = MENU_PATHS[path]
+    attrs['keys'] = path_attrs['keys']
+    attrs['type'] = path_attrs['type']
+    attrs['modord'] = path_attrs['modord']
+
+    return CmdPath(**attrs)
 
 
 
-class CmdPath:
 
-
-    def __init__(self, base):
-        self.base = pjoin('/', base ).rstrip('/')
-        self.cmd = None
-        self.remove = pjoin('/', self.base, 'remove')
-        self.add = pjoin('/', self.base, 'add')
-        self.set = pjoin('/', self.base, 'set')
-        self.getall = pjoin('/', self.base, 'getall')
-
-
-
-class CmdPathElem:
+class CmdPathRow:
 
     def __init__(self, data):
         '''
@@ -32,23 +37,14 @@ class CmdPathElem:
         '''
         Return ready for logging data.
         '''
-
         return ' '.join('{}={}'.format(key, value) for key, value in self.data.items())
 
 
     def __eq__(self, other):
-        '''
-        other
-            CmdPathElem instance
-        '''
         return self.data == other.data
 
 
     def __ne__(self, other):
-        '''
-        other
-            CmdPathElem instance
-        '''
         return self.data != other.data
 
 
@@ -61,20 +57,23 @@ class CmdPathElem:
 
 
     def __getitem__(self, key):
-
         return self.data[key]
 
 
+    def __hash__(self):
+        return hash(self.data.items())
+
+
     def __sub__(self, other):
-        '''
-        Return a new CmdPathElem with elements in self that are not in other.
 
-        other
-            CmdPathElem instance
-        '''
+        diff = CmdPathRow.difference( wanted=self.data, present=other.data )
+        return CmdPathRow( data=diff )
 
-        diff = CmdPathElem.difference( wanted=self.data, present=other.data )
-        return CmdPathElem( data=diff )
+
+    def isunique(self, other, keys):
+
+        pairs = set( (key,self[key]) for key in keys )
+        return pairs <= set(other.data.items())
 
 
     def difference( wanted, present ):

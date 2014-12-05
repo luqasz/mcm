@@ -6,39 +6,36 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from datastructures import CmdPathRow, CmdPath
+from datastructures import CmdPathRow, make_cmdpath
 
 
-
+@patch('datastructures.MENU_PATHS')
 class CmdPath_Tests(TestCase):
 
-    def setUp(self):
-        self.cmd_path = CmdPath(base='/ip/address')
+    def test_relative_attribute_returns_absolute_path_without_appended_forward_slash(self, paths_mock):
+        cmd_path = make_cmdpath('/ip/address/', strategy=None)
+        self.assertEqual( cmd_path.relative, '/ip/address' )
 
-    def test_path_attribute_returns_absolute_path_without_appended_forward_slash(self):
-        self.cmd_path = CmdPath(base='/ip/address/')
-        self.assertEqual( self.cmd_path.base, '/ip/address' )
+    def test_relative_attribute_returns_absolute_path_when_passed_path_does_not_begin_with_forward_slash(self, paths_mock):
+        cmd_path = make_cmdpath('ip/address', strategy=None)
+        self.assertEqual( cmd_path.relative, '/ip/address' )
 
-    def test_path_attribute_returns_absolute_path_when_passed_path_does_not_begin_with_forward_slash(self):
-        self.cmd_path = CmdPath(base='ip/address')
-        self.assertEqual( self.cmd_path.base, '/ip/address' )
+    def test_relative_attribute_returns_absolute_path_when_passed_path_begins_with_forward_slash(self, paths_mock):
+        cmd_path = make_cmdpath('/ip/address', strategy=None)
+        self.assertEqual( cmd_path.relative, '/ip/address' )
 
-    def test_path_attribute_returns_absolute_path_when_passed_path_begins_with_forward_slash(self):
-        self.cmd_path = CmdPath(base='/ip/address')
-        self.assertEqual( self.cmd_path.base, '/ip/address' )
+    def test_strategy_attribute_is_the_same_as_passed_in_function_call(self, paths_mock):
+        cmd_path = make_cmdpath('/ip/address', strategy='exact')
+        self.assertEqual(cmd_path.strategy, 'exact')
 
-    def test_remove_returns_appended_remove_string_without_ending_forward_slash(self):
-        self.assertEqual( self.cmd_path.remove, '/ip/address/remove' )
+    def test_calls_getitem_on_paths_data_structure(self, paths_mock):
+        make_cmdpath('/ip/address', strategy='exact')
+        paths_mock.__getitem__.assert_called_once_with('/ip/address')
 
-    def test_add_returns_appended_add_string_without_ending_forward_slash(self):
-        self.assertEqual( self.cmd_path.add, '/ip/address/add' )
-
-    def test_set_returns_appended_set_string_without_ending_forward_slash(self):
-        self.assertEqual( self.cmd_path.set, '/ip/address/set' )
-
-    def test_getall_returns_appended_getall_string_without_ending_forward_slash(self):
-        self.assertEqual( self.cmd_path.getall, '/ip/address/getall' )
-
+    def test_calling_getitem_on_paths_data_structure_riases_KeyError_when_path_is_missing(self, paths_mock):
+        paths_mock.__getitem__.side_effect = KeyError
+        with self.assertRaises(KeyError):
+            make_cmdpath('/ip/address', 'exact')
 
 
 
@@ -75,6 +72,11 @@ class CmdPathRow_Tests(TestCase):
         bool(self.TestCls)
         self.TestCls.data.__bool__.assert_called_once_with()
 
+    @patch('builtins.hash')
+    def test_hash_calls_hash_on_data_items(self,hashmock):
+        self.TestCls.__hash__()
+        hashmock.assert_called_once_with(self.TestCls.data.items.return_value)
+
     @patch.object(CmdPathRow, 'difference')
     def test_sub_calls_difference(self, diffmock):
         self.TestCls - self.Other
@@ -90,6 +92,34 @@ class CmdPathRow_Tests(TestCase):
         datamock = diffmock.return_value = MagicMock()
         returned = self.TestCls - self.Other
         self.assertEqual( returned.data, datamock )
+
+    def test_isunique_returns_True_when_keys_and_its_values_match_in_both_rules(self):
+        rule1 = dict(interface='ether2', disabled=False)
+        rule2 = dict(interface='ether2', disabled=False)
+        self.TestCls.data = rule1
+        self.Other.data = rule2
+        self.assertTrue( self.TestCls.isunique(self.Other, keys=('interface',)) )
+
+    def test_isunique_returns_True_when_all_keys_and_its_values_match_in_both_rules(self):
+        rule1 = dict(interface='ether2', disabled=False)
+        rule2 = dict(interface='ether2', disabled=False)
+        self.TestCls.data = rule1
+        self.Other.data = rule2
+        self.assertTrue( self.TestCls.isunique(self.Other, keys=('interface','disabled')) )
+
+    def test_isunique_returns_False_when_keys_and_its_values_do_not_match_in_both_rules(self):
+        rule1 = dict(interface='ether1', disabled=False)
+        rule2 = dict(interface='ether2', disabled=False)
+        self.TestCls.data = rule1
+        self.Other.data = rule2
+        self.assertFalse( self.TestCls.isunique(self.Other, keys=('interface',)) )
+
+    def test_isunique_returns_False_when_at_least_one_key_value_pait_do_not_match_in_both_rules(self):
+        rule1 = dict(interface='ether1', disabled=False)
+        rule2 = dict(interface='ether2', disabled=False)
+        self.TestCls.data = rule1
+        self.Other.data = rule2
+        self.assertFalse( self.TestCls.isunique(self.Other, keys=('interface','disabled')) )
 
     def test_difference_returns_elements_in_wanted_not_listed_in_present(self):
         wanted = dict(interface='ether1')
