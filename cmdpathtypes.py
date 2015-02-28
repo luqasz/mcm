@@ -13,6 +13,11 @@ MENU_PATHS = {
     'modord': ('SET',),
     'type': 'uniquekey'
     },
+'/ip/address': {
+    'keys': ('address',),
+    'modord': ('SET', 'ADD', 'DEL'),
+    'type': 'uniquekey'
+    },
 '/ip/dhcp-client': {
     'keys': ('interface',),
     'modord': ('SET', 'ADD', 'DEL'),
@@ -70,6 +75,16 @@ MENU_PATHS = {
     },
 '/ppp/profile': {
     'keys': ('interface',),
+    'modord': ('SET', 'ADD', 'DEL'),
+    'type': 'uniquekey'
+    },
+'/system/ntp/client': {
+    'keys': (),
+    'modord': ('SET',),
+    'type': 'single'
+    },
+'/queue/simple': {
+    'keys': ('name',),
     'modord': ('SET', 'ADD', 'DEL'),
     'type': 'uniquekey'
     },
