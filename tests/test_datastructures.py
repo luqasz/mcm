@@ -48,34 +48,42 @@ class CmdPathRow_Tests(TestCase):
     def test_str_on_instance_returns_string(self):
         self.assertIsInstance( str(self.TestCls), str )
 
-    def test_str_on_instance_calls_data_items_method(self):
-        str(self.TestCls)
-        self.TestCls.data.items.assert_called_once_with()
+    def test_equal_returns_True_when_data_is_same(self):
+        self.TestCls.data = dict(some_key='value')
+        self.Other.data = dict(some_key='value')
+        self.assertTrue( self.TestCls == self.Other )
 
-    def test_equal_calls_eq_magic_method_on_data(self):
-        self.TestCls == self.Other
-        self.TestCls.data.__eq__.assert_called_once_with(self.Other.data)
+    def test_equal_returns_False_when_data_is_different(self):
+        self.TestCls.data = dict(some_key='value1')
+        self.Other.data = dict(some_key='value')
+        self.assertFalse( self.TestCls == self.Other )
 
-    def test_not_equal_calls_ne_magic_method_on_data(self):
-        self.TestCls != self.Other
-        self.TestCls.data.__ne__.assert_called_once_with(self.Other.data)
+    def test_not_equal_returns_True_when_data_is_different(self):
+        self.TestCls.data = dict(some_key='value')
+        self.Other.data = dict(some_key='value1')
+        self.assertTrue( self.TestCls != self.Other )
 
-    def test_getitem_calls_getitem_on_data(self):
-        self.TestCls['some_key']
-        self.TestCls.data.__getitem__.assert_called_once_with( 'some_key' )
+    def test_not_equal_returns_False_when_data_is_same(self):
+        self.TestCls.data = dict(some_key='value')
+        self.Other.data = dict(some_key='value')
+        self.assertFalse( self.TestCls != self.Other )
 
-    def test_setitem_calls_setitem_on_data(self):
+    def test_getting_key_value_gets_from_data(self):
+        self.TestCls.data = dict(some_key='value')
+        self.assertEqual( self.TestCls['some_key'], 'value' )
+
+    def test_setting_key_sets_data_key(self):
+        self.TestCls.data = dict()
         self.TestCls['some_key'] = 'value'
-        self.TestCls.data.__setitem__.assert_called_once_with( 'some_key', 'value' )
+        self.assertEqual( self.TestCls.data['some_key'], 'value' )
 
-    def test_bool_calls_bool_on_data(self):
-        bool(self.TestCls)
-        self.TestCls.data.__bool__.assert_called_once_with()
+    def test_bool_returns_True_if_data_is_not_empty(self):
+        self.TestCls.data = dict(interface='ether1')
+        self.assertTrue( self.TestCls )
 
-    @patch('builtins.hash')
-    def test_hash_calls_hash_on_data_items(self,hashmock):
-        self.TestCls.__hash__()
-        hashmock.assert_called_once_with(self.TestCls.data.items.return_value)
+    def test_bool_returns_False_if_data_is_empty(self):
+        self.TestCls.data = dict()
+        self.assertFalse( self.TestCls )
 
     @patch.object(CmdPathRow, 'difference')
     def test_sub_calls_difference(self, diffmock):
