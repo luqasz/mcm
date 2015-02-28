@@ -1,19 +1,18 @@
 # -*- coding: UTF-8 -*-
 
+from posixpath import join as pjoin
 
-class JsonFileConfig:
 
 
-    def __init__(self, file):
-        self.file = file
+class ParsedFileConfig:
+
+
+    def __init__(self, data):
+        self.data = data
 
 
     def read(self, path):
-        pass
-
-
-    def write(self, data, path):
-        raise NotImplementedError
+        return self.data[path]
 
 
 
@@ -25,8 +24,22 @@ class RouterOsAPIDevice:
 
 
     def read(self, path):
-        return self.api.run(cmd=path.cmd)
+        cmd = cmd_action_join(path=path.relative, action='GET')
+        data = self.api.run(cmd=cmd)
+        return filter_dynamic(data)
 
 
-    def write(self, data, path):
-        self.api.run(cmd=path.cmd, args=data)
+    def write(self, path, cmd, data):
+        command = cmd_action_join(path=path.relative, action=cmd)
+        self.api.run(cmd=command, args=data)
+
+
+
+
+def cmd_action_join(path, action):
+    actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
+    return pjoin(path, actions[action])
+
+
+def filter_dynamic(data):
+    return tuple(row for row in data if not row.get('dynamic'))
