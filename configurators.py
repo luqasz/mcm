@@ -1,9 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-'''
-Module that holds configuration classes and helpers.
-'''
-
 from types import MethodType
 
 
@@ -11,28 +7,27 @@ from types import MethodType
 class CmdPathConfigurator:
 
 
-    def __init__(self, **kwargs):
-        self.repository = kwargs['repository']
-        self.master = kwargs['master']
-        self.slave = kwargs['slave']
-        self.ADD = MethodType( kwargs['addfunc'], self )
-        self.DEL = MethodType( kwargs['delfunc'], self )
-        self.SET = MethodType( kwargs['setfunc'], self )
+    def __init__(self, configurator, path, addfunc, setfunc, delfunc):
+        self.configurator = configurator
+        self.path = path
+        self.ADD = MethodType( addfunc, self )
+        self.DEL = MethodType( delfunc, self )
+        self.SET = MethodType( setfunc, self )
 
 
-    def run(self, path, modord):
+    def run(self):
 
-        data = self.readData(path)
+        data = self.readData()
         result = self.compareData(data)
-        self.applyData(path=path, data=result, modord=modord)
+        self.applyData(data=result)
 
 
-    def applyData(self, path, data, modord):
+    def applyData(self, data):
 
-        for action in modord:
+        for action in self.path.modord:
             action_data = CmdPathConfigurator.extartActionData( data=data, action=action )
             action_method = getattr(self, action)
-            action_method(action_data, path)
+            action_method(action, action_data)
 
 
     def compareData(self, data):
@@ -42,23 +37,11 @@ class CmdPathConfigurator:
         return result
 
 
-    def readData(self, path):
+    def readData(self):
 
-        master_data = self.readMaster(path)
-        slave_data = self.readSlave(path)
+        master_data = self.configurator.master.read( path=self.path )
+        slave_data = self.configurator.slave.read( path=self.path )
         return master_data, slave_data
-
-
-    def readMaster(self, path):
-
-        path.cmd = path.getall
-        return self.repository.read( device=self.master, path=path )
-
-
-    def readSlave(self, path):
-
-        path.cmd = path.getall
-        return self.repository.read( device=self.slave, path=path )
 
 
     def extartActionData(data, action):
@@ -69,58 +52,43 @@ class CmdPathConfigurator:
 
 
 
-def realADD(self, data, path):
 
-    path.cmd = path.add
-    for row in data:
-        self.repository.write(device=self.slave, data=(row,), path=path)
+def real_action(self, action, data):
 
-
-def realDEL(self, data, path):
-
-    path.cmd = path.remove
-    for row in data:
-        self.repository.write(device=self.slave, data=(row,), path=path)
+    self.configurator.slave.write(data=data, path=self.path, action=action)
 
 
-def realSET(self, data, path):
-
-    path.cmd = path.set
-    for row in data:
-        self.repository.write(device=self.slave, data=(row,), path=path)
-
-
-def dummyADD(self, data, path):
-
-    for row in data:
-        pass
-
-
-def dummyDEL(self, data, path):
-
-    for row in data:
-        pass
-
-
-def dummySET(self, data, path):
-
-    for row in data:
-        pass
-
+def no_action(self, action, data):
+    pass
 
 
 
 def getStrategyMethods(strategy):
 
-    dry_run = {'addfunc':dummyADD, 'delfunc':dummyDEL, 'setfunc':dummySET}
-    exact = {'addfunc':realADD, 'delfunc':realDEL, 'setfunc':realSET}
-    ensure = {'addfunc':realADD, 'delfunc':dummyDEL, 'setfunc':realSET}
-    strategy_map = {'dry_run':dry_run, 'ensure':ensure, 'exact':exact}
+    exact = real_action, real_action, real_action
+    ensure = real_action, no_action, real_action
+    strategy_map = {'ensure':ensure, 'exact':exact}
 
     return strategy_map[strategy]
+
+
+def mkCmdPathConfigurator(configurator, path):
+    addmethod, delmethod, setmethod = getStrategyMethods(strategy=path.strategy)
+    return CmdPathConfigurator(path=path, configurator=configurator, addfunc=addmethod, setfunc=setmethod, delfunc=delmethod)
 
 
 
 
 class Configurator:
-    pass
+
+
+    def __init__(self, master, slave):
+        self.master = master
+        self.slave = slave
+
+
+    def run(self, paths):
+        for path in paths:
+            configurator = mkCmdPathConfigurator(configurator=self, path=path)
+            configurator.run()
+
