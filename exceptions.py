@@ -9,3 +9,8 @@ class ConfigRunError(Exception):
     '''
     Exception raised when configuration run fails for some reason.
     '''
+
+class ParseError(Exception):
+    '''
+    Exception raised when parsing configuration fails.
+    '''
