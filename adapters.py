@@ -1,70 +1,48 @@
 # -*- coding: UTF-8 -*-
 
-from cmdpath import UniqueKeyCmdPath, OrderedCmdPath, SingleElementCmdPath
-from datastructures import CmdPathElem
-
-class GenericRepo:
-
-    def __init__(self, class_type, keys):
-        self.class_type = class_type
-        self.keys = keys
-
-
-    def read(self, device, path):
-
-        content = device.read( path=path )
-        content = self.assembleData(data=content)
-        return self.class_type(data=content)
-
-
-    def write(self, device, data, path):
-
-        content = self.disassembleData(data=data)
-        device.write(data=content, path=path)
-
-
-    def assembleData(self, data):
-
-        return [CmdPathElem(data=elem, keys=self.keys) for elem in data]
-
-
-    def disassembleData(self, data):
-
-        return [elem.data for elem in data]
+from cmdpath import get_cmd_path
+from datastructures import CmdPathRow
 
 
 
-class UniqueKeyRepo(GenericRepo):
-
-    def __init__(self, class_type, keys):
-        self.class_type = class_type
-        self.keys = keys
+class MasterAdapter:
 
 
+    def __init__(self, device):
+        self.device = device
 
-class OrderedCmdRepo(GenericRepo):
 
-
-    def __init__(self, class_type, keys):
-        self.class_type = class_type
-        self.keys = tuple()
+    def read(self, path):
+        content = self.device.read(path)
+        content = assemble_data(data=content)
+        return get_cmd_path(path, data=content)
 
 
 
-class SingleCmdRepo(GenericRepo):
+class SlaveAdapter:
 
 
-    def __init__(self, class_type, keys):
-        self.class_type = class_type
-        self.keys = tuple()
+    def __init__(self, device):
+        self.device = device
+
+
+    def read(self, path):
+        content = self.device.read(path)
+        content = assemble_data(data=content)
+        return get_cmd_path(path, data=content)
+
+
+    def write(self, path, action, data):
+        for row in disassemble_data(data=data):
+            self.device.write(path=path, cmd=action, data=row)
 
 
 
 
-def get_repository(type, keys):
 
-    repo_map = {'single':SingleCmdRepo, 'ordered':OrderedCmdRepo, 'uniquekey':UniqueKeyRepo}
-    cmdpath_map = {'single':SingleElementCmdPath, 'ordered':OrderedCmdPath, 'uniquekey':UniqueKeyCmdPath}
-    cls = repo_map[type]
-    cls_type = cmdpath_map[type]
-    return cls(class_type=cls_type, keys=keys)
+def assemble_data(data):
+    return tuple(CmdPathRow(data=elem) for elem in data)
+
+
+def disassemble_data(data):
+    return tuple(elem.data for elem in data)
