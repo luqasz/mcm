@@ -8,6 +8,7 @@ from cmdpathtypes import MENU_PATHS
 
 CmdPath = namedtuple('CmdPath', ('relative', 'type', 'keys', 'modord', 'strategy'))
 
+
 def make_cmdpath(path, strategy):
     attrs = dict()
     attrs['relative'] = pjoin('/', path ).rstrip('/')
@@ -52,16 +53,16 @@ class CmdPathRow:
         return bool(self.data)
 
 
+    def __hash__(self):
+        return hash(tuple(self.data.items()))
+
+
     def __setitem__(self, key, value):
         self.data[key] = value
 
 
     def __getitem__(self, key):
         return self.data[key]
-
-
-    def __hash__(self):
-        return hash(self.data.items())
 
 
     def __sub__(self, other):
