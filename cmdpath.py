@@ -2,24 +2,29 @@
 
 from itertools import zip_longest
 
-from datastructures import CmdPathElem
+from datastructures import CmdPathRow
 
+
+
+def get_cmd_path(path, data):
+    if path.type == 'single':
+        return SingleElementCmdPath(data=data)
+    elif path.type == 'ordered':
+        return OrderedCmdPath(data=data)
+    elif path.type == 'uniquekey':
+        return UniqueKeyCmdPath(data=data, keys=path.keys)
 
 
 class GenericCmdPath:
 
+    def __iter__(self):
+        return iter(self.data)
+
+
+class OrderedCmdPath(GenericCmdPath):
+
 
     def __init__(self, data):
-        '''
-        DEL
-            list with rules to delete
-        SET
-            List with rules to set. Each element is a tuple (present,difference)
-        ADD
-            list with rules to add
-        data
-            Read previously data for given cmd path
-        '''
 
         self.DEL = []
         self.SET= []
@@ -27,91 +32,83 @@ class GenericCmdPath:
         self.data = data
 
 
-    def decide(self, difference, present):
+    def decide(self, wanted, difference, present):
 
-        if difference and not present:
-            self.ADD.append( difference )
-        elif present and not difference:
+        if wanted and difference and not present:
+            self.ADD.append( wanted )
+        elif not wanted and not difference and present:
             self.DEL.append( present )
-        elif present and difference:
-            try:
-                difference['ID'] = present['ID']
-            except KeyError:
-                pass
-            finally:
-                self.SET.append( (present, difference) )
-
-
-    def populateDEL(self):
-        '''
-        Add rows from self.data that are not present in saved. That is they were not added to SET by decide method.
-        '''
-
-        saved = tuple( elem[0] for elem in self.SET )
-        for row in self.data:
-            if row in saved:
-                self.DEL.append( row )
-
-
-class OrderedCmdPath(GenericCmdPath):
-    '''
-    This class is used to compare ordered command paths. Such as /ip/firewall/filter
-    '''
+        elif wanted and difference and present:
+            difference['ID'] = present['ID']
+            self.SET.append( difference )
 
 
     def compare(self, wanted):
 
-        fillobj = CmdPathElem( data=dict(), keys=tuple() )
-        for prule, wrule in zip_longest(self.data, wanted, fillvalue=fillobj):
-            diff = wrule - prule
-            self.decide( difference=diff, present=prule )
+        fillval = CmdPathRow(data=dict())
+        for wanted_rule, present_rule in zip_longest(wanted, self, fillvalue=fillval):
+            diff = wanted_rule - present_rule
+            self.decide(wanted_rule, diff, present_rule)
 
-        self.populateDEL()
-        return self.ADD, self.SET, self.DEL
+        return tuple(self.ADD), tuple(self.SET), tuple(self.DEL)
+
 
 
 class SingleElementCmdPath(GenericCmdPath):
-    '''
-    This class is used to compare single element menus. Such as /snmp,/system/ntp/client
-    '''
+
+
+    def __init__(self, data):
+        self.data = data
 
 
     def compare(self, wanted):
+        for wanted_row, present_row in zip(wanted, self):
+            diff = wanted_row - present_row
+            SET = (diff,) if diff else tuple()
 
-        wanted = wanted[0]
-        present = self.data[0]
-        difference = wanted - present
-        self.decide( difference, present )
-
-        return self.ADD, self.SET, self.DEL
+        return tuple(), SET, tuple()
 
 
 
 class UniqueKeyCmdPath(GenericCmdPath):
-    '''
-    This class holds methods for comparing unique key,value command paths.
-    '''
+
+
+    def __init__(self, data, keys):
+
+        self.data = data
+        self.keys = keys
+        self.SET = []
+        self.ADD = []
+        self.NO_DELETE = []
 
 
     def compare(self, wanted):
 
-        for rule in wanted:
-            found = self.search( rule )
-            difference = rule - found
-            self.decide( difference, found )
+        for wanted_rule in wanted:
+            present_rule = self.findPair(searched=wanted_rule)
+            diff = wanted_rule - present_rule
+            self.decide(wanted_rule, diff, present_rule)
 
-        self.populateDEL()
+        DEL = set(self.data) - set(self.NO_DELETE)
+        return tuple(self.ADD), tuple(self.SET), tuple(DEL)
 
-        return self.ADD, self.SET, self.DEL
+
+    def decide(self, wanted, difference, present):
+
+        if wanted and difference and not present:
+            self.ADD.append( wanted )
+        elif wanted and difference and present:
+            self.NO_DELETE.append(present)
+            difference['ID'] = present['ID']
+            self.SET.append( difference )
+        elif wanted and not difference and present:
+            self.NO_DELETE.append(present)
 
 
-    def search(self, rule):
-        '''
-        Return first found item in self that is unique to rule.
-        '''
+    def findPair(self, searched):
 
-        for elem in self.data:
-            if elem.isunique( rule ):
-                return elem
+        for row in self:
+            if row.isunique(other=searched, keys=self.keys):
+                return row
         else:
-            return CmdPathElem( data=dict(), keys=tuple() )
+            return CmdPathRow(data=dict())

@@ -1,122 +1,71 @@
 # -*- coding: UTF-8 -*-
 
 try:
-    from unittest.mock import MagicMock, patch, PropertyMock
+    from unittest.mock import MagicMock
 except ImportError:
-    from mock import MagicMock, patch
+    from mock import MagicMock
 from unittest import TestCase
 
 
-from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, GenericCmdPath, OrderedCmdPath
-from datastructures import CmdPathElem
+from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, OrderedCmdPath
+from datastructures import CmdPathRow
 
 
 
-class GenericCmdPath_Tests(TestCase):
-
-    def setUp(self):
-        DataMock = MagicMock()
-        self.DataElemMock = MagicMock()
-        DataMock.__iter__.return_value = iter( [self.DataElemMock] )
-
-        self.TestCls = GenericCmdPath( data=DataMock )
-        self.TestCls.SET = MagicMock()
-        self.SETElemMock = MagicMock()
-        self.TestCls.SET.__iter__.return_value = iter( [self.SETElemMock] )
-
-        self.TestCls.DEL = MagicMock()
-        self.TestCls.ADD = MagicMock()
-        self.Diffmock = MagicMock()
-        self.PresentMock = MagicMock()
-
-    def test_decide_calls_appen_on_ADD_when_not_present_and_difference(self):
-        self.TestCls.decide( self.Diffmock, None )
-        self.TestCls.ADD.append.assert_called_once_with( self.Diffmock )
-
-    def test_decide_calls_append_on_DEL_when_not_difference_and_present(self):
-        self.TestCls.decide( None, self.PresentMock )
-        self.TestCls.DEL.append.assert_called_once_with( self.PresentMock )
-
-    def test_decide_calls_append_on_SET_when_difference_and_present(self):
-        self.TestCls.decide( self.Diffmock, self.PresentMock )
-        self.TestCls.SET.append.assert_called_once_with( (self.PresentMock,self.Diffmock) )
-
-    def test_decide_calls_getitem_on_present_when_difference_and_present(self):
-        self.TestCls.decide( self.Diffmock, self.PresentMock )
-        self.PresentMock.__getitem__.assert_called_once_with( 'ID' )
-
-    def test_decide_calls_setitem_on_difference_when_difference_and_present(self):
-        id = self.PresentMock.__getitem__.return_value = MagicMock()
-        self.TestCls.decide( self.Diffmock, self.PresentMock )
-        self.Diffmock.__setitem__.assert_called_once_with( 'ID', id )
-
-    def test_decide_getitem_on_present_when_raises_KeyError_does_not_call_setitem_on_difference(self):
-        self.PresentMock.__getitem__.side_effect = KeyError
-        self.TestCls.decide( self.Diffmock, self.PresentMock )
-        self.assertEqual( self.Diffmock.__setitem__.call_count, 0 )
-
-    def test_populateDEL_iterates_over_data(self):
-        self.TestCls.populateDEL()
-        self.TestCls.data.__iter__.assert_called_once_with()
-
-    def test_populateDEL_iterates_over_SET(self):
-        self.TestCls.populateDEL()
-        self.TestCls.SET.__iter__.assert_called_once_with()
-
-    def test_populateDEL_calls_getitem_0_on_element_in_SET(self):
-        self.TestCls.populateDEL()
-        self.SETElemMock.__getitem__.assert_called_once_with( 0 )
-
-    def test_populateDEL_calls_append_on_DEL_if_row_from_data_is_found_in_SET(self):
-        self.DataElemMock.__eq__.return_value = True
-        self.TestCls.populateDEL()
-        self.TestCls.DEL.append.assert_any_call( self.DataElemMock )
-
-    def test_populateDEL_does_not_call_append_on_DEL_if_row_is_not_found_in_SET(self):
-        self.DataElemMock.__eq__.return_value = False
-        self.TestCls.populateDEL()
-        self.assertEqual( self.TestCls.DEL.append.call_count, 0 )
-
-
-
-
-@patch('cmdpath.zip_longest', return_value=MagicMock() )
-@patch.object(GenericCmdPath, 'decide')
-@patch.object(GenericCmdPath, 'populateDEL')
 class OrderedCmdPath_Tests(TestCase):
 
     def setUp(self):
-        self.DataMock = MagicMock()
+        self.TestCls = OrderedCmdPath( data=None )
+        self.TestCls.SET = MagicMock()
+        self.TestCls.DEL = MagicMock()
+        self.TestCls.ADD = MagicMock()
+        self.difference = MagicMock()
+        self.present = MagicMock()
         self.wanted = MagicMock()
-        self.TestCls = OrderedCmdPath( data=self.DataMock )
 
-    def test_compare_calls_populateDEL(self, populatemock, decidemock, zipmock):
-        self.TestCls.compare( self.wanted )
-        populatemock.assert_called_once_with()
+    def test_decide_calls_appen_on_ADD_when_wanted_no_present_and_difference(self):
+        self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=None )
+        self.TestCls.ADD.append.assert_called_once_with( self.wanted )
 
-    def test_compare_returns_ADD_SET_DEL_in_order(self, populatemock, decidemock, zipmock):
-        data = self.TestCls.compare( self.wanted )
-        self.assertEqual( data, (self.TestCls.ADD, self.TestCls.SET, self.TestCls.DEL) )
+    def test_decide_calls_append_on_DEL_when_no_wanted_no_difference_and_present(self):
+        self.TestCls.decide(wanted=None, difference=None, present=self.present )
+        self.TestCls.DEL.append.assert_called_once_with( self.present )
 
-    def test_compare_calls_zip_longest_with_wanted_and_present(self, populatemock, decidemock, zipmock):
-        self.TestCls.compare( self.wanted )
-        fillobj = CmdPathElem( data=dict(), keys=tuple() )
-        zipmock.assert_called_once_with( self.DataMock, self.wanted, fillvalue=fillobj )
+    def test_decide_calls_append_on_SET_when_wanted_difference_and_present(self):
+        self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=self.present )
+        self.TestCls.SET.append.assert_called_once_with( self.difference )
 
-    def test_compare_calls_sub_on_wanted(self, populatemock, decidemock, zipmock):
-        wanted_mock = MagicMock(name='wanted_mock')
-        present_mock = MagicMock(name='present_mock')
-        zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
-        self.TestCls.compare( self.wanted )
-        wanted_mock.__sub__.assert_called_once_with( present_mock )
+    def test_decide_updates_differences_ID_with_presents_ID(self):
+        difference = dict(group='full')
+        present = dict(ID=2)
+        self.TestCls.decide(wanted=self.wanted, difference=difference, present=present )
+        self.assertEqual(difference['ID'], present['ID'])
 
-    def test_compare_calls_decide(self, populatemock, decidemock, zipmock):
-        wanted_mock = MagicMock(name='wanted_mock')
-        diff = wanted_mock.__sub__.return_value = MagicMock()
-        present_mock = MagicMock(name='present_mock')
-        zipmock.return_value.__iter__.return_value = [( present_mock, wanted_mock )]
-        self.TestCls.compare( self.wanted )
-        decidemock.assert_called_once_with( difference=diff, present=present_mock )
+
+class OrderedCmdPath_compare_Tests(TestCase):
+
+    def setUp(self):
+        self.wanted_row = CmdPathRow(data=dict(name='admin', group='read'))
+        self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
+        self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
+        self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
+        self.TestCls = OrderedCmdPath( data=(self.present_row,self.unwanted_row) )
+
+    def test_compare_returns_unwanted_row_in_DEL(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        self.assertEqual(DEL, (self.unwanted_row,))
+
+    def test_compare_returns_all_rows_from_present_in_DEL_when_empty_wanted(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=())
+        self.assertEqual(DEL, (self.present_row,self.unwanted_row))
+
+    def test_compare_returns_empty_ADD(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        self.assertEqual(ADD, tuple())
+
+    def test_compare_returns_difference_in_SET(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        self.assertEqual(SET, (self.difference,))
 
 
 
@@ -124,127 +73,98 @@ class OrderedCmdPath_Tests(TestCase):
 class SingleElementCmdPath_Tests(TestCase):
 
     def setUp(self):
-        self.Wanted = MagicMock()
-        self.WantedElem = MagicMock()
-        self.Wanted.__getitem__.return_value = self.WantedElem
-        self.DataMock = MagicMock()
-        self.DateElemMock = MagicMock()
-        self.DataMock.__getitem__.return_value = self.DateElemMock
-        self.TestCls = SingleElementCmdPath( data=self.DataMock )
+        self.present = CmdPathRow(data=dict(group='full'))
+        self.wanted = CmdPathRow(data=dict(group='read'))
+        self.difference = CmdPathRow(data=dict(group='read'))
+        self.TestCls = SingleElementCmdPath( data=(self.present,) )
 
-    @patch.object(GenericCmdPath, 'decide')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    def test_compare_does_not_call_populateDEL(self, populatemock, decidemock):
-        self.TestCls.compare( self.Wanted )
-        self.assertEqual( populatemock.call_count, 0 )
+    def test_compare_returns_difference_in_SET_when_difference(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,))
+        self.assertEqual(SET, (self.difference,))
 
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_returns_ADD_SET_DEL_in_order(self, decidemock):
-        data = self.TestCls.compare( self.Wanted )
-        self.assertEqual( data, (self.TestCls.ADD, self.TestCls.SET, self.TestCls.DEL) )
+    def test_compare_returns_empty_SET_when_no_difference(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.present,))
+        self.assertEqual(SET, tuple())
 
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_getitem_on_wanted(self, decidemock):
-        self.TestCls.compare( self.Wanted )
-        self.Wanted.__getitem__.assert_called_once_with(0)
+    def test_compare_returns_empty_ADD(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,))
+        self.assertEqual(ADD, tuple())
 
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_getitem_on_data(self, decidemock):
-        self.TestCls.compare( self.Wanted )
-        self.DataMock.__getitem__.assert_called_once_with(0)
+    def test_compare_returns_empty_DEL(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,))
+        self.assertEqual(DEL, tuple())
 
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_sub_on_WantedElem(self, decidemock):
-        self.TestCls.compare( self.Wanted )
-        self.WantedElem.__sub__.assert_called_once_with(self.DateElemMock)
 
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_decide_with_sub_result_and_present(self, decidemock):
-        diffmock = self.WantedElem.__sub__.return_value = MagicMock()
-        self.TestCls.compare( self.Wanted )
-        decidemock.assert_called_once_with( diffmock, self.DateElemMock )
-
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_does_not_iterate_over_wanted(self, decidemock):
-        self.TestCls.compare( self.Wanted )
-        self.assertEqual( self.Wanted.__iter__.call_count, 0)
-
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_does_not_iterate_over_data(self, decidemock):
-        self.TestCls.compare( self.Wanted )
-        self.assertEqual( self.DataMock.__iter__.call_count, 0)
 
 
 class UniqueKeyCmdPath_Tests(TestCase):
 
     def setUp(self):
-        self.RuleMock = MagicMock()
-        self.Wanted = MagicMock()
-        self.WantedElem = MagicMock()
-        self.Wanted.__iter__.return_value = iter([ self.WantedElem ])
-        self.DataMock = MagicMock()
-        self.DateElemMock = MagicMock()
-        self.DataMock.__iter__.return_value = iter([ self.DateElemMock ])
-        self.TestCls = UniqueKeyCmdPath( data=self.DataMock )
+        self.present = CmdPathRow(data=dict(group='full', ID='*2', name='admin'))
+        self.wanted = CmdPathRow(data=dict(name='admin', group='read'))
+        self.difference = CmdPathRow(data=dict(group='read'))
+        self.TestCls = UniqueKeyCmdPath( data=[self.present], keys=('name',) )
+        self.TestCls.ADD = MagicMock()
+        self.TestCls.SET = MagicMock()
+        self.TestCls.NO_DELETE = MagicMock()
 
-    @patch.object(UniqueKeyCmdPath, 'search')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_iterates_over_wanted(self, decidemock, populatemock, searchmock):
-        self.TestCls.compare(self.Wanted)
-        self.Wanted.__iter__.assert_called_once_with()
+    def test_decide_calls_append_on_ADD_when_wanted_no_present_and_difference(self):
+        self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=None )
+        self.TestCls.ADD.append.assert_called_once_with( self.wanted)
 
-    @patch.object(UniqueKeyCmdPath, 'search')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_search_with_rule(self, decidemock, populatemock, searchmock):
-        self.TestCls.compare(self.Wanted)
-        searchmock.assert_any_call( self.WantedElem )
+    def test_decide_calls_append_on_SET_when_wanted_difference_and_present(self):
+        self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=self.present )
+        self.TestCls.SET.append.assert_called_once_with( self.difference )
 
-    @patch.object(UniqueKeyCmdPath, 'search')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_returns_ADD_SET_DEL_in_order(self, decidemock, populatemock, searchmock):
-        data = self.TestCls.compare( self.Wanted )
-        self.assertEqual( data, (self.TestCls.ADD, self.TestCls.SET, self.TestCls.DEL) )
+    def test_decide_calls_append_on_NO_DELETE_when_wanted_difference_and_present(self):
+        self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=self.present )
+        self.TestCls.NO_DELETE.append.assert_called_once_with( self.present )
 
-    @patch.object(UniqueKeyCmdPath, 'search')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_sub_on_WantedElem(self, decidemock, populatemock, searchmock):
-        found = searchmock.return_value = MagicMock()
-        self.TestCls.compare(self.Wanted)
-        self.WantedElem.__sub__.assert_any_call( found )
+    def test_decide_calls_append_on_NO_DELETE_when_wanted_not_difference_and_present(self):
+        self.TestCls.decide(wanted=self.wanted, difference=None, present=self.present )
+        self.TestCls.NO_DELETE.append.assert_called_once_with( self.present )
 
-    @patch.object(UniqueKeyCmdPath, 'search')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_decide_with_sub_result_and_present(self, decidemock, populatemock, searchmock):
-        result = self.WantedElem.__sub__.return_value = MagicMock()
-        found = searchmock.return_value = MagicMock()
-        self.TestCls.compare(self.Wanted)
-        decidemock.assert_any_call( result, found )
+    def test_decide_updates_differences_ID_with_presents_ID(self):
+        self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=self.present )
+        self.assertEqual(self.difference['ID'], self.present['ID'])
 
-    @patch.object(UniqueKeyCmdPath, 'search')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_calls_populateDEL(self, decidemock, populatemock, searchmock):
-        self.TestCls.compare(self.Wanted)
-        populatemock.assert_called_once_with()
 
-    @patch.object(UniqueKeyCmdPath, 'search')
-    @patch.object(GenericCmdPath, 'populateDEL')
-    @patch.object(GenericCmdPath, 'decide')
-    def test_compare_does_not_iterate_over_data(self, decidemock, populatemock, searchmock):
-        self.TestCls.compare( self.Wanted )
-        self.assertEqual( self.DataMock.__iter__.call_count, 0)
+    def test_findPair_returns_found_row(self):
+        found = self.TestCls.findPair(searched=self.wanted)
+        self.assertEqual(found, self.present)
 
-    def test_search_returns_CmdPathElem_instane_if_no_match_have_been_found(self):
-        self.DateElemMock.isunique.return_value = False
-        retval = self.TestCls.search( self.RuleMock )
-        self.assertIsInstance( retval, CmdPathElem )
+    def test_findPair_returns_empty_CmdPathRow_when_searched_row_is_not_found(self):
+        present = CmdPathRow(data=dict(group='full', ID='*2', name='operator'))
+        self.TestCls.data = [present]
+        row = self.TestCls.findPair(searched=self.wanted)
+        self.assertEqual(row.data, dict())
 
-    def test_search_calls_DataElem_isunique(self):
-        self.TestCls.search( self.RuleMock )
-        self.DateElemMock.isunique.assert_called_once_with( self.RuleMock )
+
+
+class UniqueKeyCmdPath_compare_Tests(TestCase):
+
+    def setUp(self):
+        self.wanted_row = CmdPathRow(data=dict(name='admin', group='read'))
+        self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
+        self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
+        self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
+        self.TestCls = UniqueKeyCmdPath( data=(self.unwanted_row, self.present_row), keys=('name',) )
+
+    def test_compare_returns_unwanted_row_in_DEL(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        self.assertEqual(DEL, (self.unwanted_row,))
+
+    def test_compare_returns_all_rows_from_present_in_DEL_when_empty_wanted(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=())
+        # objects in DEL may be returned in any order
+        self.assertEqual(set(DEL), set((self.unwanted_row,self.present_row)))
+
+    def test_compare_returns_difference_in_SET(self):
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        self.assertEqual(SET, (self.difference,))
+
+    def test_compare_returns_new_row_in_ADD(self):
+        new_row = CmdPathRow(data=dict(name='service', group='read'))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(new_row,))
+        self.assertEqual(ADD, (new_row,))
 
