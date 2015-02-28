@@ -1,16 +1,16 @@
 # -*- coding: UTF-8 -*-
 
 try:
-    from unittest.mock import MagicMock, patch, call, PropertyMock
+    from unittest.mock import patch
 except ImportError:
-    from mock import MagicMock, patch, call, PropertyMock
+    from mock import patch
 from unittest import TestCase, skipIf
 from sys import version_info
 
 try:
-    from time import monotonic as test_timer
+    from time import monotonic
 except ImportError:
-    from time import time as test_timer
+    from time import time
 import operator
 
 
@@ -20,70 +20,63 @@ from tools import StopWatch, timer, vcmp
 
 class TimerFunctionImport(TestCase):
 
-    @skipIf( version_info.major >= 3 and version_info.minor < 3, 'monotonic timer available only on python => 3.3' )
-    def test_module_uses_monotonic_timer(self):
-        self.assertTrue( timer == test_timer )
+    @skipIf( version_info.major >= 3 and version_info.minor < 3, 'Requires python >= 3.3' )
+    def test_module_uses_monotonic_as_timer(self):
+        '''Assert that time.monotonic is used.'''
+        self.assertTrue( timer == monotonic )
 
-    @skipIf( version_info.major >= 3 and version_info.minor > 3, 'using python >= 3.3' )
-    def test_module_fallbacks_to_time_function(self):
-        self.assertTrue( timer == test_timer )
+    @skipIf( version_info.major >= 3 and version_info.minor > 3, 'Using python >= 3.3' )
+    def test_module_uses_time_as_timer(self):
+        '''Assert that time.time is used when time.monotonic is not available.'''
+        self.assertTrue( timer == time )
 
 
 
 
+@patch('tools.timer', side_effect=[14705.275287508, 14711.190629636])
 class StopWatchTests(TestCase):
 
-    def test_runtime_attribute_is_None_after_instantiation(self):
-        st = StopWatch()
-        self.assertEqual(st.runtime, None)
+    def setUp(self):
+        self.TestCls = StopWatch()
 
-    @patch.object(StopWatch, 'calc')
-    @patch('tools.timer')
-    def test_enter_calls_timer_function(self, timermock, calcmock):
-        StopWatch().__enter__()
-        timermock.assert_called_once_with()
+    def test_sets_start_value_on_entering(self, timermock):
+        with self.TestCls as st:
+            self.assertEqual(st.start, 14705.275287508)
 
-    @patch.object(StopWatch, 'calc')
-    @patch('tools.timer')
-    def test_exit_calls_timer_function(self, timermock, calcmock):
-        StopWatch().__exit__(None,None,None)
-        timermock.assert_called_once_with()
+    def test_sets_stop_value_on_exiting(self, timermock):
+        with self.TestCls as st:
+            pass
+        self.assertEqual(st.stop, 14711.190629636)
 
-    @patch.object(StopWatch, 'calc')
-    @patch('tools.timer')
-    def test_exit_calls_calc(self, timermock, calcmock):
-        StopWatch().__exit__(None, None, None)
-        calcmock.assert_called_once_with()
-
-    def test_calc_calculates_value_rounded_to_2_digits(self):
-        st = StopWatch()
-        st.start = 14705.275287508
-        st.stop = 14711.190629636
-        st.calc()
+    def test_calculates_runtime_value_rounded_to_2_digits(self, timermock):
+        with self.TestCls as st:
+            pass
         self.assertEqual( st.runtime, 5.92 )
 
 
 
 class VersionCompareTests(TestCase):
 
-    def test_greater_then_comparison_returns_True(self):
+    def test_greater_then_returns_True(self):
+        """Return True when first is greater than second."""
         result = vcmp( '4.11', '3.12', operator.gt )
         self.assertTrue( result )
 
-    def test_greater_then_comparison_returns_False(self):
+    def test_greater_then_returns_False(self):
+        """Return False when first is not greater than second."""
         result = vcmp( '4.11', '5.12', operator.gt )
         self.assertFalse( result )
 
 
-    def test_greater_or_equel_comparison_returns_True_when_same_versions(self):
+    def test_greater_or_equel_returns_True_when_same_versions(self):
         result = vcmp( '4.11', '4.11', operator.ge )
         self.assertTrue( result )
 
-    def test_greater_or_equel_comparison_returns_True_when_different_versions(self):
+    def test_greater_or_equel_returns_True_when_different_versions(self):
         result = vcmp( '4.14', '4.11', operator.ge )
         self.assertTrue( result )
 
-    def test_greater_or_equal_comparison_returns_False(self):
+    def test_greater_or_equal_returns_False(self):
         result = vcmp( '4.11', '5.12', operator.ge )
         self.assertFalse( result )
 

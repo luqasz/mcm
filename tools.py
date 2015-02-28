@@ -12,21 +12,14 @@ from distutils.version import LooseVersion
 
 class StopWatch:
 
-    runtime = None
-    stop = None
-    start = None
-
     def __enter__(self):
         self.start = timer()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop = timer()
-        self.calc()
-        return False
-
-    def calc(self):
         self.runtime = round( (self.stop - self.start), 2 )
+        return False
 
 
 def vcmp(v1, v2, op):
