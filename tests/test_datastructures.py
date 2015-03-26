@@ -12,17 +12,17 @@ from datastructures import CmdPathRow, make_cmdpath
 @patch('datastructures.MENU_PATHS')
 class CmdPath_Tests(TestCase):
 
-    def test_relative_attribute_returns_absolute_path_without_appended_forward_slash(self, paths_mock):
+    def test_absolute_attribute_returns_absolute_path_without_appended_forward_slash(self, paths_mock):
         cmd_path = make_cmdpath('/ip/address/', strategy=None)
-        self.assertEqual( cmd_path.relative, '/ip/address' )
+        self.assertEqual( cmd_path.absolute, '/ip/address' )
 
-    def test_relative_attribute_returns_absolute_path_when_passed_path_does_not_begin_with_forward_slash(self, paths_mock):
+    def test_absolute_attribute_returns_absolute_path_when_passed_path_does_not_begin_with_forward_slash(self, paths_mock):
         cmd_path = make_cmdpath('ip/address', strategy=None)
-        self.assertEqual( cmd_path.relative, '/ip/address' )
+        self.assertEqual( cmd_path.absolute, '/ip/address' )
 
-    def test_relative_attribute_returns_absolute_path_when_passed_path_begins_with_forward_slash(self, paths_mock):
+    def test_absolute_attribute_returns_absolute_path_when_passed_path_begins_with_forward_slash(self, paths_mock):
         cmd_path = make_cmdpath('/ip/address', strategy=None)
-        self.assertEqual( cmd_path.relative, '/ip/address' )
+        self.assertEqual( cmd_path.absolute, '/ip/address' )
 
     def test_strategy_attribute_is_the_same_as_passed_in_function_call(self, paths_mock):
         cmd_path = make_cmdpath('/ip/address', strategy='exact')

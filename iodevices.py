@@ -24,13 +24,13 @@ class RouterOsAPIDevice:
 
 
     def read(self, path):
-        cmd = cmd_action_join(path=path.relative, action='GET')
+        cmd = cmd_action_join(path=path.absolute, action='GET')
         data = self.api.run(cmd=cmd)
         return filter_dynamic(data)
 
 
     def write(self, path, cmd, data):
-        command = cmd_action_join(path=path.relative, action=cmd)
+        command = cmd_action_join(path=path.absolute, action=cmd)
         self.api.run(cmd=command, args=data)
 
 

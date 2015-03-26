@@ -6,12 +6,12 @@ from collections import namedtuple
 from cmdpathtypes import MENU_PATHS
 
 
-CmdPath = namedtuple('CmdPath', ('relative', 'type', 'keys', 'modord', 'strategy'))
+CmdPath = namedtuple('CmdPath', ('absolute', 'type', 'keys', 'modord', 'strategy'))
 
 
 def make_cmdpath(path, strategy):
     attrs = dict()
-    attrs['relative'] = pjoin('/', path ).rstrip('/')
+    attrs['absolute'] = pjoin('/', path ).rstrip('/')
     attrs['strategy'] = strategy
     path_attrs = MENU_PATHS[path]
     attrs['keys'] = path_attrs['keys']
