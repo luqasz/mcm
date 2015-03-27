@@ -4,7 +4,7 @@ from posixpath import join as pjoin
 
 
 
-class ParsedFileConfig:
+class StaticConfig:
 
 
     def __init__(self, data):

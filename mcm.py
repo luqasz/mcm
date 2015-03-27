@@ -7,7 +7,7 @@ from librouteros import LoginError, connect, ConnError
 
 from parsers import JsonParser
 from args import get_arguments
-from iodevices import ParsedFileConfig, RouterOsAPIDevice
+from iodevices import StaticConfig, RouterOsAPIDevice
 from adapters import SlaveAdapter, MasterAdapter
 from configurators import Configurator
 
@@ -25,7 +25,7 @@ def mk_slave(user, host):
 
 
 def mk_master(config):
-    iodevice = ParsedFileConfig(data=config)
+    iodevice = StaticConfig(data=config)
     master = MasterAdapter(device=iodevice)
     return master
 
