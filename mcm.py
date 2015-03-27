@@ -38,8 +38,12 @@ if __name__ == '__main__':
 
     try:
         slave = mk_slave(user=args.username, host=args.host)
-    except (ConnError, LoginError) as error:
-        exit(error)
+    except ConnError as error:
+        print('Connection error: {}'.format(error))
+        exit(1)
+    except LoginError as error:
+        print('Failed to login: {}'.format(error))
+        exit(1)
 
     configurator = Configurator(master=master, slave=slave)
     configurator.run(paths=(path for path,rules in parsed_config))
