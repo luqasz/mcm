@@ -29,7 +29,7 @@ class RouterOsAPIDevice_Tests(TestCase):
     @patch('iodevices.cmd_action_join')
     def test_read_calls_cmd_action_join(self, joinmock, filter_mock):
         self.TestCls.read(self.pathmock)
-        joinmock.assert_called_once_with(path=self.pathmock.absolute, action='GET')
+        joinmock.assert_called_once_with(path=self.pathmock, action='GET')
 
     @patch('iodevices.filter_dynamic')
     @patch('iodevices.cmd_action_join')
@@ -40,7 +40,7 @@ class RouterOsAPIDevice_Tests(TestCase):
     @patch('iodevices.cmd_action_join')
     def test_write_calls_cmd_action_join(self, joinmock):
         self.TestCls.write(path=self.pathmock, cmd='cmd', data=None)
-        joinmock.assert_called_once_with(path=self.pathmock.absolute, action='cmd')
+        joinmock.assert_called_once_with(path=self.pathmock, action='cmd')
 
     @patch('iodevices.cmd_action_join')
     def test_write_calls_api_run_method(self, joinmock):
