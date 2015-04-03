@@ -12,7 +12,9 @@ class StaticConfig:
 
 
     def read(self, path):
-        return self.data[path]
+        for searched_path, rules in self.data.items():
+            if searched_path.absolute == path:
+                return rules
 
 
 
@@ -24,13 +26,13 @@ class RouterOsAPIDevice:
 
 
     def read(self, path):
-        cmd = cmd_action_join(path=path.absolute, action='GET')
+        cmd = cmd_action_join(path=path, action='GET')
         data = self.api.run(cmd=cmd)
         return filter_dynamic(data)
 
 
     def write(self, path, cmd, data):
-        command = cmd_action_join(path=path.absolute, action=cmd)
+        command = cmd_action_join(path=path, action=cmd)
         self.api.run(cmd=command, args=data)
 
 

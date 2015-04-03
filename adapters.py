@@ -13,7 +13,7 @@ class MasterAdapter:
 
 
     def read(self, path):
-        content = self.device.read(path)
+        content = self.device.read(path.absolute)
         content = assemble_data(data=content)
         return get_cmd_path(path, data=content)
 
@@ -27,14 +27,14 @@ class SlaveAdapter:
 
 
     def read(self, path):
-        content = self.device.read(path)
+        content = self.device.read(path.absolute)
         content = assemble_data(data=content)
         return get_cmd_path(path, data=content)
 
 
     def write(self, path, action, data):
         for row in disassemble_data(data=data):
-            self.device.write(path=path, cmd=action, data=row)
+            self.device.write(path=path.absolute, cmd=action, data=row)
 
 
 
