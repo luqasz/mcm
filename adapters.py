@@ -19,17 +19,7 @@ class MasterAdapter:
 
 
 
-class SlaveAdapter:
-
-
-    def __init__(self, device):
-        self.device = device
-
-
-    def read(self, path):
-        content = self.device.read(path.absolute)
-        content = assemble_data(data=content)
-        return get_cmd_path(path, data=content)
+class SlaveAdapter(MasterAdapter):
 
 
     def write(self, path, action, data):
