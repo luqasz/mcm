@@ -7,15 +7,15 @@ except ImportError:
 from unittest import TestCase
 
 
-from cmdpath import UniqueKeyCmdPath, SingleElementCmdPath, OrderedCmdPath
+from comparators import UniqueKeyComparator, SingleElementComparator, OrderedComparator
 from datastructures import CmdPathRow
 
 
 
-class OrderedCmdPath_Tests(TestCase):
+class OrderedComparator_Tests(TestCase):
 
     def setUp(self):
-        self.TestCls = OrderedCmdPath( data=None )
+        self.TestCls = OrderedComparator( data=None )
         self.TestCls.SET = MagicMock()
         self.TestCls.DEL = MagicMock()
         self.TestCls.ADD = MagicMock()
@@ -42,14 +42,14 @@ class OrderedCmdPath_Tests(TestCase):
         self.assertEqual(difference['ID'], present['ID'])
 
 
-class OrderedCmdPath_compare_Tests(TestCase):
+class OrderedComparator_compare_Tests(TestCase):
 
     def setUp(self):
         self.wanted_row = CmdPathRow(data=dict(name='admin', group='read'))
         self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
         self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
         self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
-        self.TestCls = OrderedCmdPath( data=(self.present_row,self.unwanted_row) )
+        self.TestCls = OrderedComparator( data=(self.present_row,self.unwanted_row) )
 
     def test_compare_returns_unwanted_row_in_DEL(self):
         ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
@@ -70,13 +70,13 @@ class OrderedCmdPath_compare_Tests(TestCase):
 
 
 
-class SingleElementCmdPath_Tests(TestCase):
+class SingleElementComparator_Tests(TestCase):
 
     def setUp(self):
         self.present = CmdPathRow(data=dict(group='full'))
         self.wanted = CmdPathRow(data=dict(group='read'))
         self.difference = CmdPathRow(data=dict(group='read'))
-        self.TestCls = SingleElementCmdPath( data=(self.present,) )
+        self.TestCls = SingleElementComparator( data=(self.present,) )
 
     def test_compare_returns_difference_in_SET_when_difference(self):
         ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,))
@@ -97,13 +97,13 @@ class SingleElementCmdPath_Tests(TestCase):
 
 
 
-class UniqueKeyCmdPath_Tests(TestCase):
+class UniqueKeyComparator_Tests(TestCase):
 
     def setUp(self):
         self.present = CmdPathRow(data=dict(group='full', ID='*2', name='admin'))
         self.wanted = CmdPathRow(data=dict(name='admin', group='read'))
         self.difference = CmdPathRow(data=dict(group='read'))
-        self.TestCls = UniqueKeyCmdPath( data=[self.present], keys=('name',) )
+        self.TestCls = UniqueKeyComparator( data=[self.present], keys=('name',) )
         self.TestCls.ADD = MagicMock()
         self.TestCls.SET = MagicMock()
         self.TestCls.NO_DELETE = MagicMock()
@@ -141,14 +141,14 @@ class UniqueKeyCmdPath_Tests(TestCase):
 
 
 
-class UniqueKeyCmdPath_compare_Tests(TestCase):
+class UniqueKeyComparator_compare_Tests(TestCase):
 
     def setUp(self):
         self.wanted_row = CmdPathRow(data=dict(name='admin', group='read'))
         self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
         self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
         self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
-        self.TestCls = UniqueKeyCmdPath( data=(self.unwanted_row, self.present_row), keys=('name',) )
+        self.TestCls = UniqueKeyComparator( data=(self.unwanted_row, self.present_row), keys=('name',) )
 
     def test_compare_returns_unwanted_row_in_DEL(self):
         ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))

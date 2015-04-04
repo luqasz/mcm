@@ -6,22 +6,22 @@ from datastructures import CmdPathRow
 
 
 
-def get_cmd_path(path, data):
+def get_comparator(path, data):
     if path.type == 'single':
-        return SingleElementCmdPath(data=data)
+        return SingleElementComparator(data=data)
     elif path.type == 'ordered':
-        return OrderedCmdPath(data=data)
+        return OrderedComparator(data=data)
     elif path.type == 'uniquekey':
-        return UniqueKeyCmdPath(data=data, keys=path.keys)
+        return UniqueKeyComparator(data=data, keys=path.keys)
 
 
-class GenericCmdPath:
+class GenericComparator:
 
     def __iter__(self):
         return iter(self.data)
 
 
-class OrderedCmdPath(GenericCmdPath):
+class OrderedComparator(GenericComparator):
 
 
     def __init__(self, data):
@@ -54,7 +54,7 @@ class OrderedCmdPath(GenericCmdPath):
 
 
 
-class SingleElementCmdPath(GenericCmdPath):
+class SingleElementComparator(GenericComparator):
 
 
     def __init__(self, data):
@@ -70,7 +70,7 @@ class SingleElementCmdPath(GenericCmdPath):
 
 
 
-class UniqueKeyCmdPath(GenericCmdPath):
+class UniqueKeyComparator(GenericComparator):
 
 
     def __init__(self, data, keys):
