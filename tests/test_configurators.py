@@ -105,17 +105,17 @@ class CmdPathConfigurator_Tests(TestCase):
 
     def test_extractActionData_returns_ADD_data_when_requested(self):
         data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
-        returned = CmdPathConfigurator.extartActionData(data=data, action='ADD')
+        returned = self.TestCls.extartActionData(data=data, action='ADD')
         self.assertEqual(returned, ADD)
 
     def test_extractActionData_returns_SET_data_when_requested(self):
         data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
-        returned = CmdPathConfigurator.extartActionData(data=data, action='SET')
+        returned = self.TestCls.extartActionData(data=data, action='SET')
         self.assertEqual(returned, SET)
 
     def test_extractActionData_returns_DEL_data_when_requested(self):
         data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
-        returned = CmdPathConfigurator.extartActionData(data=data, action='DEL')
+        returned = self.TestCls.extartActionData(data=data, action='DEL')
         self.assertEqual(returned, DEL)
 
 

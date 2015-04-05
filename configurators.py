@@ -25,7 +25,7 @@ class CmdPathConfigurator:
     def applyData(self, data):
 
         for action in self.path.modord:
-            action_data = CmdPathConfigurator.extartActionData( data=data, action=action )
+            action_data = self.extartActionData( data=data, action=action )
             action_method = getattr(self, action)
             action_method(action, action_data)
 
@@ -44,6 +44,7 @@ class CmdPathConfigurator:
         return master_data, slave_data
 
 
+    @staticmethod
     def extartActionData(data, action):
 
         ADD, SET, DEL = data
