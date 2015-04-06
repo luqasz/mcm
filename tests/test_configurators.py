@@ -150,26 +150,34 @@ class Strategy_Factory_Tests(TestCase):
         self.assertEqual( returned, self.ensure )
 
 
+@patch('configurators.CmdPathConfigurator')
+@patch('configurators.getStrategyMethods', return_value=('add', 'del', 'set'))
+@patch('configurators.get_comparator')
+class CmdPathConfigurator_factory_tests(TestCase):
+
+    def setUp(self):
+        self.Configurator = MagicMock()
+        self.Path = MagicMock()
+
+    def test_mkCmdPathConfigurator_calls_getStrategyMethods(self, comparator_mock, methods_mock, configurator_mock):
+        mkCmdPathConfigurator(configurator=self.Configurator, path=self.Path)
+        methods_mock.assert_called_once_with(strategy=self.Path.strategy)
+
+    def test_mkCmdPathConfigurator_calls_get_comparator(self, comparator_mock, methods_mock, configurator_mock):
+        mkCmdPathConfigurator(configurator=self.Configurator, path=self.Path)
+        comparator_mock.assert_called_once_with(path=self.Path)
+
+    def test_mkCmdPathConfigurator_calls_CmdPathConfigurator(self, comparator_mock, methods_mock, configurator_mock):
+        mkCmdPathConfigurator(configurator=self.Configurator, path=self.Path)
+        configurator_mock.assert_called_once_with(configurator=self.Configurator, comparator=comparator_mock.return_value, path=self.Path, addfunc='add', setfunc='set', delfunc='del')
+
+
+
+
 class Configurator_Tests(TestCase):
 
     def setUp(self):
         self.TestCls = Configurator(master=MagicMock(), slave=MagicMock())
-
-    @patch('configurators.CmdPathConfigurator')
-    @patch('configurators.getStrategyMethods')
-    def test_mkCmdPathConfigurator_calls_getStrategyMethods(self, methods_mock, configurator_mock):
-        path_mock = MagicMock()
-        methods_mock.return_value = ('add', 'del', 'set')
-        mkCmdPathConfigurator(configurator=MagicMock(), path=path_mock)
-        methods_mock.assert_called_once_with(strategy=path_mock.strategy)
-
-    @patch('configurators.getStrategyMethods')
-    @patch('configurators.CmdPathConfigurator')
-    def test_mkCmdPathConfigurator_instantiates_CmdPathConfigurator(self, configurator_mock, methods_mock):
-        path_mock = MagicMock()
-        methods_mock.return_value = ('add', 'del', 'set')
-        mkCmdPathConfigurator(configurator=self.TestCls, path=path_mock)
-        configurator_mock.assert_called_once_with(configurator=self.TestCls, path=path_mock, addfunc='add', setfunc='set', delfunc='del')
 
     @patch('configurators.mkCmdPathConfigurator')
     def test_run_calls_mkCmdPathConfigurator(self, mk_cmd_mock):
