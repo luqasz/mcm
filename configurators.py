@@ -2,14 +2,17 @@
 
 from types import MethodType
 
+from comparators import get_comparator
+
 
 
 class CmdPathConfigurator:
 
 
-    def __init__(self, configurator, path, addfunc, setfunc, delfunc):
+    def __init__(self, configurator, path, comparator, addfunc, setfunc, delfunc):
         self.configurator = configurator
         self.path = path
+        self.comparator = comparator
         self.ADD = MethodType( addfunc, self )
         self.DEL = MethodType( delfunc, self )
         self.SET = MethodType( setfunc, self )
@@ -33,8 +36,7 @@ class CmdPathConfigurator:
     def compareData(self, data):
 
         master_data, slave_data = data
-        result = slave_data.compare(master_data)
-        return result
+        return self.comparator.compare(wanted=master_data, present=slave_data)
 
 
     def readData(self):
@@ -75,7 +77,8 @@ def getStrategyMethods(strategy):
 
 def mkCmdPathConfigurator(configurator, path):
     addmethod, delmethod, setmethod = getStrategyMethods(strategy=path.strategy)
-    return CmdPathConfigurator(path=path, configurator=configurator, addfunc=addmethod, setfunc=setmethod, delfunc=delmethod)
+    comparator = get_comparator(path=path)
+    return CmdPathConfigurator(path=path, comparator=comparator, configurator=configurator, addfunc=addmethod, setfunc=setmethod, delfunc=delmethod)
 
 
 

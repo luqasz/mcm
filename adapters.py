@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-from comparators import get_comparator
 from datastructures import CmdPathRow
 
 
@@ -14,8 +13,7 @@ class MasterAdapter:
 
     def read(self, path):
         content = self.device.read(path.absolute)
-        content = assemble_data(data=content)
-        return get_comparator(path, data=content)
+        return assemble_data(data=content)
 
 
 

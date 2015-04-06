@@ -15,7 +15,7 @@ from datastructures import CmdPathRow
 class OrderedComparator_Tests(TestCase):
 
     def setUp(self):
-        self.TestCls = OrderedComparator( data=None )
+        self.TestCls = OrderedComparator()
         self.TestCls.SET = MagicMock()
         self.TestCls.DEL = MagicMock()
         self.TestCls.ADD = MagicMock()
@@ -49,22 +49,24 @@ class OrderedComparator_compare_Tests(TestCase):
         self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
         self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
         self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
-        self.TestCls = OrderedComparator( data=(self.present_row,self.unwanted_row) )
+        self.TestCls = OrderedComparator()
+        self.wanted_data = (self.wanted_row,)
+        self.present_data = (self.present_row, self.unwanted_row)
 
     def test_compare_returns_unwanted_row_in_DEL(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=self.wanted_data, present=self.present_data)
         self.assertEqual(DEL, (self.unwanted_row,))
 
     def test_compare_returns_all_rows_from_present_in_DEL_when_empty_wanted(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=())
+        ADD, SET, DEL = self.TestCls.compare(wanted=(), present=self.present_data)
         self.assertEqual(DEL, (self.present_row,self.unwanted_row))
 
     def test_compare_returns_empty_ADD(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(), present=self.present_data)
         self.assertEqual(ADD, tuple())
 
     def test_compare_returns_difference_in_SET(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=self.wanted_data, present=self.present_data)
         self.assertEqual(SET, (self.difference,))
 
 
@@ -76,22 +78,22 @@ class SingleElementComparator_Tests(TestCase):
         self.present = CmdPathRow(data=dict(group='full'))
         self.wanted = CmdPathRow(data=dict(group='read'))
         self.difference = CmdPathRow(data=dict(group='read'))
-        self.TestCls = SingleElementComparator( data=(self.present,) )
+        self.TestCls = SingleElementComparator()
 
     def test_compare_returns_difference_in_SET_when_difference(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,), present=(self.present,))
         self.assertEqual(SET, (self.difference,))
 
     def test_compare_returns_empty_SET_when_no_difference(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.present,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.present,), present=(self.present,))
         self.assertEqual(SET, tuple())
 
     def test_compare_returns_empty_ADD(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,), present=(self.present,))
         self.assertEqual(ADD, tuple())
 
     def test_compare_returns_empty_DEL(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted,), present=(self.present,))
         self.assertEqual(DEL, tuple())
 
 
@@ -103,7 +105,7 @@ class UniqueKeyComparator_Tests(TestCase):
         self.present = CmdPathRow(data=dict(group='full', ID='*2', name='admin'))
         self.wanted = CmdPathRow(data=dict(name='admin', group='read'))
         self.difference = CmdPathRow(data=dict(group='read'))
-        self.TestCls = UniqueKeyComparator( data=[self.present], keys=('name',) )
+        self.TestCls = UniqueKeyComparator( keys=('name',) )
         self.TestCls.ADD = MagicMock()
         self.TestCls.SET = MagicMock()
         self.TestCls.NO_DELETE = MagicMock()
@@ -130,13 +132,12 @@ class UniqueKeyComparator_Tests(TestCase):
 
 
     def test_findPair_returns_found_row(self):
-        found = self.TestCls.findPair(searched=self.wanted)
+        found = self.TestCls.findPair(searched=self.wanted, present=(self.present,))
         self.assertEqual(found, self.present)
 
     def test_findPair_returns_empty_CmdPathRow_when_searched_row_is_not_found(self):
         present = CmdPathRow(data=dict(group='full', ID='*2', name='operator'))
-        self.TestCls.data = [present]
-        row = self.TestCls.findPair(searched=self.wanted)
+        row = self.TestCls.findPair(searched=self.wanted, present=(present,))
         self.assertEqual(row.data, dict())
 
 
@@ -148,23 +149,24 @@ class UniqueKeyComparator_compare_Tests(TestCase):
         self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
         self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
         self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
-        self.TestCls = UniqueKeyComparator( data=(self.unwanted_row, self.present_row), keys=('name',) )
+        self.TestCls = UniqueKeyComparator( keys=('name',) )
+        self.present = (self.unwanted_row, self.present_row)
 
     def test_compare_returns_unwanted_row_in_DEL(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,), present=self.present)
         self.assertEqual(DEL, (self.unwanted_row,))
 
     def test_compare_returns_all_rows_from_present_in_DEL_when_empty_wanted(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=())
+        ADD, SET, DEL = self.TestCls.compare(wanted=(), present=self.present)
         # objects in DEL may be returned in any order
         self.assertEqual(set(DEL), set((self.unwanted_row,self.present_row)))
 
     def test_compare_returns_difference_in_SET(self):
-        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,), present=self.present)
         self.assertEqual(SET, (self.difference,))
 
     def test_compare_returns_new_row_in_ADD(self):
         new_row = CmdPathRow(data=dict(name='service', group='read'))
-        ADD, SET, DEL = self.TestCls.compare(wanted=(new_row,))
+        ADD, SET, DEL = self.TestCls.compare(wanted=(new_row,), present=self.present)
         self.assertEqual(ADD, (new_row,))
 

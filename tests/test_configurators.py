@@ -16,7 +16,7 @@ class CmdPathConfigurator_Tests(TestCase):
         self.addfunc = MagicMock()
         self.delfunc = MagicMock()
         self.setfunc = MagicMock()
-        self.TestCls = CmdPathConfigurator( path=MagicMock(), configurator=MagicMock(), addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc )
+        self.TestCls = CmdPathConfigurator( path=MagicMock(), configurator=MagicMock(), comparator=MagicMock(), addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc )
 
     @patch.object(CmdPathConfigurator, 'applyData')
     @patch.object(CmdPathConfigurator, 'compareData')
@@ -46,7 +46,7 @@ class CmdPathConfigurator_Tests(TestCase):
         master_data = MagicMock()
         slave_data = MagicMock()
         self.TestCls.compareData( (master_data, slave_data) )
-        slave_data.compare.assert_called_once_with( master_data )
+        self.TestCls.comparator.compare.assert_called_once_with( wanted=master_data, present=slave_data )
 
 
     @patch.object(CmdPathConfigurator, 'extartActionData')

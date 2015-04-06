@@ -6,30 +6,24 @@ from datastructures import CmdPathRow
 
 
 
-def get_comparator(path, data):
+def get_comparator(path):
     if path.type == 'single':
-        return SingleElementComparator(data=data)
+        return SingleElementComparator()
     elif path.type == 'ordered':
-        return OrderedComparator(data=data)
+        return OrderedComparator()
     elif path.type == 'uniquekey':
-        return UniqueKeyComparator(data=data, keys=path.keys)
+        return UniqueKeyComparator(keys=path.keys)
 
 
-class GenericComparator:
 
-    def __iter__(self):
-        return iter(self.data)
+class OrderedComparator:
 
 
-class OrderedComparator(GenericComparator):
-
-
-    def __init__(self, data):
+    def __init__(self):
 
         self.DEL = []
         self.SET= []
         self.ADD = []
-        self.data = data
 
 
     def decide(self, wanted, difference, present):
@@ -43,10 +37,10 @@ class OrderedComparator(GenericComparator):
             self.SET.append( difference )
 
 
-    def compare(self, wanted):
+    def compare(self, wanted, present):
 
         fillval = CmdPathRow(data=dict())
-        for wanted_rule, present_rule in zip_longest(wanted, self, fillvalue=fillval):
+        for wanted_rule, present_rule in zip_longest(wanted, present, fillvalue=fillval):
             diff = wanted_rule - present_rule
             self.decide(wanted_rule, diff, present_rule)
 
@@ -54,15 +48,11 @@ class OrderedComparator(GenericComparator):
 
 
 
-class SingleElementComparator(GenericComparator):
+class SingleElementComparator:
 
 
-    def __init__(self, data):
-        self.data = data
-
-
-    def compare(self, wanted):
-        for wanted_row, present_row in zip(wanted, self):
+    def compare(self, wanted, present):
+        for wanted_row, present_row in zip(wanted, present):
             diff = wanted_row - present_row
             SET = (diff,) if diff else tuple()
 
@@ -70,26 +60,25 @@ class SingleElementComparator(GenericComparator):
 
 
 
-class UniqueKeyComparator(GenericComparator):
+class UniqueKeyComparator:
 
 
-    def __init__(self, data, keys):
+    def __init__(self, keys):
 
-        self.data = data
         self.keys = keys
         self.SET = []
         self.ADD = []
         self.NO_DELETE = []
 
 
-    def compare(self, wanted):
+    def compare(self, wanted, present):
 
         for wanted_rule in wanted:
-            present_rule = self.findPair(searched=wanted_rule)
+            present_rule = self.findPair(searched=wanted_rule, present=present)
             diff = wanted_rule - present_rule
             self.decide(wanted_rule, diff, present_rule)
 
-        DEL = set(self.data) - set(self.NO_DELETE)
+        DEL = set(present) - set(self.NO_DELETE)
         return tuple(self.ADD), tuple(self.SET), tuple(DEL)
 
 
@@ -105,9 +94,9 @@ class UniqueKeyComparator(GenericComparator):
             self.NO_DELETE.append(present)
 
 
-    def findPair(self, searched):
+    def findPair(self, searched, present):
 
-        for row in self:
+        for row in present:
             if row.isunique(other=searched, keys=self.keys):
                 return row
         else:
