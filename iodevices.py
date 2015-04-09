@@ -31,9 +31,9 @@ class RouterOsAPIDevice:
         return filter_dynamic(data)
 
 
-    def write(self, path, cmd, data):
-        command = cmd_action_join(path=path, action=cmd)
-        method = getattr(self, cmd)
+    def write(self, path, action, data):
+        command = cmd_action_join(path=path, action=action)
+        method = getattr(self, action)
         method(command=command, data=data)
 
 

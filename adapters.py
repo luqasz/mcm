@@ -22,7 +22,7 @@ class SlaveAdapter(MasterAdapter):
 
     def write(self, path, action, data):
         for row in disassemble_data(data=data):
-            self.device.write(path=path.absolute, cmd=action, data=row)
+            self.device.write(path=path.absolute, action=action, data=row)
 
 
 

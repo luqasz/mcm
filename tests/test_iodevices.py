@@ -40,26 +40,26 @@ class RouterOsAPIDevice_Tests(TestCase):
     @patch.object(RouterOsAPIDevice, 'ADD')
     @patch('iodevices.cmd_action_join')
     def test_write_calls_cmd_action_join(self, joinmock, addmock):
-        self.TestCls.write(path=self.pathmock, cmd='ADD', data=None)
+        self.TestCls.write(path=self.pathmock, action='ADD', data=None)
         joinmock.assert_called_once_with(path=self.pathmock, action='ADD')
 
 
     @patch.object(RouterOsAPIDevice, 'DEL')
     @patch('iodevices.cmd_action_join')
     def test_write_calls_DEL_when_cmd_is_DEL(self, joinmock, delmock):
-        self.TestCls.write(data='data', path=self.pathmock, cmd='DEL')
+        self.TestCls.write(data='data', path=self.pathmock, action='DEL')
         delmock.assert_called_once_with(command=joinmock.return_value, data='data')
 
     @patch.object(RouterOsAPIDevice, 'ADD')
     @patch('iodevices.cmd_action_join')
     def test_write_calls_ADD_when_cmd_is_ADD(self, joinmock, addmock):
-        self.TestCls.write(data='data', path=self.pathmock, cmd='ADD')
+        self.TestCls.write(data='data', path=self.pathmock, action='ADD')
         addmock.assert_called_once_with(command=joinmock.return_value, data='data')
 
     @patch.object(RouterOsAPIDevice, 'SET')
     @patch('iodevices.cmd_action_join')
     def test_write_calls_SET_when_cmd_is_SET(self, joinmock, setmock):
-        self.TestCls.write(data='data', path=self.pathmock, cmd='SET')
+        self.TestCls.write(data='data', path=self.pathmock, action='SET')
         setmock.assert_called_once_with(command=joinmock.return_value, data='data')
 
 
