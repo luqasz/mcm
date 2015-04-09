@@ -108,7 +108,7 @@ class filter_dynamic_Tests(TestCase):
 
     def test_returns_only_static(self):
         result = filter_dynamic(self.data)
-        self.assertTrue(result, (self.static,))
+        self.assertEqual(result, (self.static,))
 
     def test_returns_tuple(self):
         result = filter_dynamic(self.data)
