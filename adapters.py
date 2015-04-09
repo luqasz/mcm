@@ -12,8 +12,13 @@ class MasterAdapter:
 
 
     def read(self, path):
-        content = self.device.read(path.absolute)
-        return assemble_data(data=content)
+        content = self.device.read(path=path.absolute)
+        return self.assemble_data(data=content)
+
+
+    @staticmethod
+    def assemble_data(data):
+        return tuple(CmdPathRow(data=elem) for elem in data)
 
 
 
@@ -21,16 +26,15 @@ class SlaveAdapter(MasterAdapter):
 
 
     def write(self, path, action, data):
-        for row in disassemble_data(data=data):
+        for row in self.disassemble_data(data=data):
             self.device.write(path=path.absolute, action=action, data=row)
 
 
+    @staticmethod
+    def disassemble_data(data):
+        return tuple(elem.data for elem in data)
 
 
 
-def assemble_data(data):
-    return tuple(CmdPathRow(data=elem) for elem in data)
 
 
-def disassemble_data(data):
-    return tuple(elem.data for elem in data)
