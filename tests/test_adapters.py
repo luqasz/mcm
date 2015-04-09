@@ -39,7 +39,7 @@ class MasterAdapter_Tests(TestCase):
         self.assertIs(type(returned), tuple)
 
 
-class DisassembleData_Tests(TestCase):
+class SlaveAdapter_Tests(TestCase):
 
     def setUp(self):
         self.TestCls = SlaveAdapter(device=MagicMock())
