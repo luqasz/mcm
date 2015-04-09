@@ -44,26 +44,10 @@ class SlaveAdapter_Tests(TestCase):
     def setUp(self):
         self.TestCls = SlaveAdapter(device=MagicMock())
         self.path = MagicMock()
-        self.elem1 = MagicMock()
-        self.elem2 = MagicMock()
-        self.elem1.data = 1
-        self.elem2.data = 2
+        self.row = MagicMock()
+        self.row.data = MagicMock()
+        self.data = (self.row, )
 
-    def test_disassemble_data_extracts_data_attribute(self):
-        returned = self.TestCls.disassemble_data(data=(self.elem1,self.elem2))
-        self.assertEqual(returned, (1,2))
-
-    def test_disassemble_data_returns_tuple(self):
-        returned = self.TestCls.disassemble_data(data=(self.elem1,self.elem2))
-        self.assertIs(type(returned), tuple)
-
-    @patch.object(SlaveAdapter, 'disassemble_data')
-    def test_write_calls_disassemble_data(self, disassemblemock):
-        self.TestCls.write(path=None, action=None, data=(self.elem1,))
-        disassemblemock.assert_called_once_with(data=(self.elem1,))
-
-    @patch.object(SlaveAdapter, 'disassemble_data')
-    def test_write_calls_device_write_with_absolute_path(self, disassemblemock):
-        disassemblemock.return_value = (self.elem1,)
-        self.TestCls.write(path=self.path, action=None, data=None)
-        self.TestCls.device.write.assert_called_once_with(path=self.path.absolute, action=None, data=self.elem1)
+    def test_write_calls_device_write_with_absolute_path_and_rows_data(self):
+        self.TestCls.write(path=self.path, action=None, data=self.data)
+        self.TestCls.device.write.assert_any_call(path=self.path.absolute, action=None, data=self.row.data)

@@ -26,15 +26,7 @@ class SlaveAdapter(MasterAdapter):
 
 
     def write(self, path, action, data):
-        for row in self.disassemble_data(data=data):
-            self.device.write(path=path.absolute, action=action, data=row)
-
-
-    @staticmethod
-    def disassemble_data(data):
-        return tuple(elem.data for elem in data)
-
-
-
+        for row in data:
+            self.device.write(path=path.absolute, action=action, data=row.data)
 
 
