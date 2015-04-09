@@ -37,15 +37,46 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.read(self.pathmock)
         filter_mock.assert_called_once_with(self.TestCls.api.run.return_value)
 
+    @patch.object(RouterOsAPIDevice, 'ADD')
     @patch('iodevices.cmd_action_join')
-    def test_write_calls_cmd_action_join(self, joinmock):
-        self.TestCls.write(path=self.pathmock, cmd='cmd', data=None)
-        joinmock.assert_called_once_with(path=self.pathmock, action='cmd')
+    def test_write_calls_cmd_action_join(self, joinmock, addmock):
+        self.TestCls.write(path=self.pathmock, cmd='ADD', data=None)
+        joinmock.assert_called_once_with(path=self.pathmock, action='ADD')
 
+
+    @patch.object(RouterOsAPIDevice, 'DEL')
     @patch('iodevices.cmd_action_join')
-    def test_write_calls_api_run_method(self, joinmock):
-        self.TestCls.write(data='data', path=self.pathmock.absolute, cmd='cmd')
-        self.TestCls.api.run.assert_called_once_with(cmd=joinmock.return_value, args='data')
+    def test_write_calls_DEL_when_cmd_is_DEL(self, joinmock, delmock):
+        self.TestCls.write(data='data', path=self.pathmock, cmd='DEL')
+        delmock.assert_called_once_with(command=joinmock.return_value, data='data')
+
+    @patch.object(RouterOsAPIDevice, 'ADD')
+    @patch('iodevices.cmd_action_join')
+    def test_write_calls_ADD_when_cmd_is_ADD(self, joinmock, addmock):
+        self.TestCls.write(data='data', path=self.pathmock, cmd='ADD')
+        addmock.assert_called_once_with(command=joinmock.return_value, data='data')
+
+    @patch.object(RouterOsAPIDevice, 'SET')
+    @patch('iodevices.cmd_action_join')
+    def test_write_calls_SET_when_cmd_is_SET(self, joinmock, setmock):
+        self.TestCls.write(data='data', path=self.pathmock, cmd='SET')
+        setmock.assert_called_once_with(command=joinmock.return_value, data='data')
+
+
+    def test_DEL_calls_api_run_only_with_ID(self):
+        data = dict(ID='*1', address='1.1.1.1/24')
+        self.TestCls.DEL(command='/ip/address/remove', data=data)
+        self.TestCls.api.run.assert_called_once_with(cmd='/ip/address/remove', args=dict(ID='*1'))
+
+    def test_ADD_calls_api_run(self):
+        data, command = MagicMock(), MagicMock()
+        self.TestCls.ADD(command=command, data=data)
+        self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
+
+    def test_SET_calls_api_run(self):
+        data, command = MagicMock(), MagicMock()
+        self.TestCls.SET(command=command, data=data)
+        self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
 
 
 

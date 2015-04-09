@@ -33,6 +33,20 @@ class RouterOsAPIDevice:
 
     def write(self, path, cmd, data):
         command = cmd_action_join(path=path, action=cmd)
+        method = getattr(self, cmd)
+        method(command=command, data=data)
+
+
+    def DEL(self, command, data):
+        ID = {'ID':data['ID']}
+        self.api.run(cmd=command, args=ID)
+
+
+    def SET(self, command, data):
+        self.api.run(cmd=command, args=data)
+
+
+    def ADD(self, command, data):
         self.api.run(cmd=command, args=data)
 
 
