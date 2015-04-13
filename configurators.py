@@ -18,6 +18,19 @@ class CmdPathConfigurator:
         self.SET = MethodType( setfunc, self )
 
 
+    @classmethod
+    def with_ensure(cls, configurator, path):
+        comparator = get_comparator(path=path)
+        return cls(configurator=configurator, path=path, comparator=comparator,
+                addfunc=real_action, setfunc=real_action, delfunc=no_action)
+
+    @classmethod
+    def with_exact(cls, configurator, path):
+        comparator = get_comparator(path=path)
+        return cls(configurator=configurator, path=path, comparator=comparator,
+                addfunc=real_action, setfunc=real_action, delfunc=real_action)
+
+
     def run(self):
 
         data = self.readData()
@@ -66,20 +79,6 @@ def no_action(self, action, data):
 
 
 
-def getStrategyMethods(strategy):
-
-    exact = real_action, real_action, real_action
-    ensure = real_action, no_action, real_action
-    strategy_map = {'ensure':ensure, 'exact':exact}
-
-    return strategy_map[strategy]
-
-
-def mkCmdPathConfigurator(configurator, path):
-    addmethod, delmethod, setmethod = getStrategyMethods(strategy=path.strategy)
-    comparator = get_comparator(path=path)
-    return CmdPathConfigurator(path=path, comparator=comparator, configurator=configurator, addfunc=addmethod, setfunc=setmethod, delfunc=delmethod)
-
 
 
 
@@ -93,6 +92,11 @@ class Configurator:
 
     def run(self, paths):
         for path in paths:
-            configurator = mkCmdPathConfigurator(configurator=self, path=path)
+            configurator = self.getPathConfigurator(path=path)
             configurator.run()
 
+
+    def getPathConfigurator(self, path):
+        strategy = 'with_' + path.strategy
+        constructor = getattr(CmdPathConfigurator, strategy)
+        return constructor(configurator=self, path=path)

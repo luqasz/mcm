@@ -1,13 +1,13 @@
 # -*- coding: UTF-8 -*-
 
 try:
-    from unittest.mock import MagicMock, patch, call
+    from unittest.mock import MagicMock, patch
 except ImportError:
-    from mock import MagicMock, patch, call
+    from mock import MagicMock, patch
 from unittest import TestCase
 
 
-from configurators import CmdPathConfigurator, real_action, no_action, getStrategyMethods, Configurator, mkCmdPathConfigurator
+from configurators import CmdPathConfigurator, real_action, no_action, Configurator
 
 
 class CmdPathConfigurator_Tests(TestCase):
@@ -119,6 +119,26 @@ class CmdPathConfigurator_Tests(TestCase):
         self.assertEqual(returned, DEL)
 
 
+
+@patch('configurators.get_comparator')
+@patch.object(CmdPathConfigurator, '__init__', return_value=None)
+class Strategy_Factory_Tests(TestCase):
+
+    def setUp(self):
+        self.path, self.configurator = MagicMock(), MagicMock()
+
+    def test_with_ensure_calls_init_with_appropriate_methods(self, initmock, cmpmock):
+        CmdPathConfigurator.with_ensure(path=self.path, configurator=self.configurator)
+        initmock.assert_called_once_with(path=self.path, comparator=cmpmock.return_value, configurator=self.configurator,
+                addfunc=real_action, delfunc=no_action, setfunc=real_action)
+
+    def test_with_exact_calls_init_with_appropriate_methods(self, initmock, cmpmock):
+        CmdPathConfigurator.with_exact(path=self.path, configurator=self.configurator)
+        initmock.assert_called_once_with(path=self.path, comparator=cmpmock.return_value, configurator=self.configurator,
+                addfunc=real_action, delfunc=real_action, setfunc=real_action)
+
+
+
 class StrategyMethods_Tests(TestCase):
 
     def setUp(self):
@@ -135,56 +155,34 @@ class StrategyMethods_Tests(TestCase):
 
 
 
-class Strategy_Factory_Tests(TestCase):
-
-    def setUp(self):
-        self.exact = real_action, real_action, real_action
-        self.ensure = real_action, no_action, real_action
-
-    def test_exact_returns_valid_functions(self):
-        returned = getStrategyMethods(strategy='exact')
-        self.assertEqual( returned, self.exact )
-
-    def test_ensure_returns_valid_functions(self):
-        returned = getStrategyMethods(strategy='ensure')
-        self.assertEqual( returned, self.ensure )
-
-
-@patch('configurators.CmdPathConfigurator')
-@patch('configurators.getStrategyMethods', return_value=('add', 'del', 'set'))
-@patch('configurators.get_comparator')
-class CmdPathConfigurator_factory_tests(TestCase):
-
-    def setUp(self):
-        self.Configurator = MagicMock()
-        self.Path = MagicMock()
-
-    def test_mkCmdPathConfigurator_calls_getStrategyMethods(self, comparator_mock, methods_mock, configurator_mock):
-        mkCmdPathConfigurator(configurator=self.Configurator, path=self.Path)
-        methods_mock.assert_called_once_with(strategy=self.Path.strategy)
-
-    def test_mkCmdPathConfigurator_calls_get_comparator(self, comparator_mock, methods_mock, configurator_mock):
-        mkCmdPathConfigurator(configurator=self.Configurator, path=self.Path)
-        comparator_mock.assert_called_once_with(path=self.Path)
-
-    def test_mkCmdPathConfigurator_calls_CmdPathConfigurator(self, comparator_mock, methods_mock, configurator_mock):
-        mkCmdPathConfigurator(configurator=self.Configurator, path=self.Path)
-        configurator_mock.assert_called_once_with(configurator=self.Configurator, comparator=comparator_mock.return_value, path=self.Path, addfunc='add', setfunc='set', delfunc='del')
-
-
-
-
 class Configurator_Tests(TestCase):
 
     def setUp(self):
         self.TestCls = Configurator(master=MagicMock(), slave=MagicMock())
+        self.path = MagicMock()
 
-    @patch('configurators.mkCmdPathConfigurator')
-    def test_run_calls_mkCmdPathConfigurator(self, mk_cmd_mock):
-        self.TestCls.run(paths=(1,2))
-        mk_cmd_mock.assert_any_call(configurator=self.TestCls, path=1)
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_calls_getPathConfigurator(self, pathcfgmock):
+        self.TestCls.run(paths=(self.path,))
+        pathcfgmock.assert_any_call(path=self.path)
 
-    @patch('configurators.mkCmdPathConfigurator')
-    def test_run_calls_CmdPathConfigurator_run(self, mk_cmd_mock):
-        self.TestCls.run(paths=(1,2))
-        mk_cmd_mock.return_value.run.assert_any_call()
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_calls_run(self, pathcfgmock):
+        '''After calling getPathConfigurator, assert that its run() was called.'''
+        self.TestCls.run(paths=(self.path,))
+        pathcfgmock.return_value.run.assert_called_once_with()
+
+    @patch.object(CmdPathConfigurator, 'with_ensure')
+    def test_getPathConfigurator_calls_with_ensure(self, ensuremock):
+        '''When strategy is ensure assert that with_ensure is called.'''
+        self.path.strategy = 'ensure'
+        self.TestCls.getPathConfigurator(path=self.path)
+        ensuremock.assert_called_once_with(configurator=self.TestCls, path=self.path)
+
+    @patch.object(CmdPathConfigurator, 'with_exact')
+    def test_getPathConfigurator_calls_with_exact(self, exactmock):
+        '''When strategy is exact assert that with_exact is called.'''
+        self.path.strategy = 'exact'
+        self.TestCls.getPathConfigurator(path=self.path)
+        exactmock.assert_called_once_with(configurator=self.TestCls, path=self.path)
+
