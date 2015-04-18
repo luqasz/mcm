@@ -1,9 +1,12 @@
 # -*- coding: UTF-8 -*-
 
 from types import MethodType
+from logging import getLogger
 
 from comparators import get_comparator
+from exceptions import ReadError
 
+logger = getLogger('mcm.' + __name__)
 
 
 class CmdPathConfigurator:
@@ -93,7 +96,11 @@ class Configurator:
     def run(self, paths):
         for path in paths:
             configurator = self.getPathConfigurator(path=path)
-            configurator.run()
+            try:
+                configurator.run()
+            except ReadError as error:
+                msg = 'Failed to read {path} {reason}'.format(path=path.absolute, reason=error)
+                logger.error(msg)
 
 
     def getPathConfigurator(self, path):

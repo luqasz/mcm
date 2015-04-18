@@ -8,6 +8,8 @@ from unittest import TestCase
 
 
 from iodevices import RouterOsAPIDevice, cmd_action_join, filter_dynamic
+from librouteros import CmdError
+from exceptions import ReadError, WriteError
 
 
 
@@ -24,6 +26,12 @@ class RouterOsAPIDevice_Tests(TestCase):
     def test_read_calls_api_run_method(self, joinmock, filter_mock):
         self.TestCls.read(self.pathmock)
         self.TestCls.api.run.assert_called_once_with(cmd=joinmock.return_value)
+
+    @patch('iodevices.cmd_action_join')
+    def test_read_raises_ReadError(self, joinmock):
+        self.TestCls.api.run.side_effect = CmdError
+        with self.assertRaises(ReadError):
+            self.TestCls.read(path=MagicMock())
 
     @patch('iodevices.filter_dynamic')
     @patch('iodevices.cmd_action_join')
@@ -68,15 +76,30 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.DEL(command='/ip/address/remove', data=data)
         self.TestCls.api.run.assert_called_once_with(cmd='/ip/address/remove', args=dict(ID='*1'))
 
+    def test_DEL_raises_WriteError(self):
+        self.TestCls.api.run.side_effect = CmdError
+        with self.assertRaises(WriteError):
+            self.TestCls.DEL(command=MagicMock(), data=MagicMock())
+
     def test_ADD_calls_api_run(self):
         data, command = MagicMock(), MagicMock()
         self.TestCls.ADD(command=command, data=data)
         self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
 
+    def test_ADD_raises_WriteError(self):
+        self.TestCls.api.run.side_effect = CmdError
+        with self.assertRaises(WriteError):
+            self.TestCls.ADD(command=MagicMock(), data=MagicMock())
+
     def test_SET_calls_api_run(self):
         data, command = MagicMock(), MagicMock()
         self.TestCls.SET(command=command, data=data)
         self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
+
+    def test_SET_raises_WriteError(self):
+        self.TestCls.api.run.side_effect = CmdError
+        with self.assertRaises(WriteError):
+            self.TestCls.SET(command=MagicMock(), data=MagicMock())
 
 
 

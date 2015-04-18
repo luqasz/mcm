@@ -7,6 +7,7 @@ except ImportError:
 from unittest import TestCase
 
 from adapters import MasterAdapter, SlaveAdapter
+from exceptions import WriteError
 
 
 
@@ -51,3 +52,10 @@ class SlaveAdapter_Tests(TestCase):
     def test_write_calls_device_write_with_absolute_path_and_rows_data(self):
         self.TestCls.write(path=self.path, action=None, data=self.data)
         self.TestCls.device.write.assert_any_call(path=self.path.absolute, action=None, data=self.row.data)
+
+    def test_Write_catches_WriteError(self):
+        self.TestCls.device.write.side_effect = WriteError
+        try:
+            self.TestCls.write(path=self.path, action=None, data=self.data)
+        except:
+            self.fail('Unexpected exception raised!')

@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 
 from posixpath import join as pjoin
+from librouteros import CmdError
+from exceptions import ReadError, WriteError
 
 
 
@@ -27,7 +29,10 @@ class RouterOsAPIDevice:
 
     def read(self, path):
         cmd = cmd_action_join(path=path, action='GET')
-        data = self.api.run(cmd=cmd)
+        try:
+            data = self.api.run(cmd=cmd)
+        except CmdError as error:
+            raise ReadError(error)
         return filter_dynamic(data)
 
 
@@ -39,15 +44,24 @@ class RouterOsAPIDevice:
 
     def DEL(self, command, data):
         ID = {'ID':data['ID']}
-        self.api.run(cmd=command, args=ID)
+        try:
+            self.api.run(cmd=command, args=ID)
+        except CmdError as error:
+            raise WriteError(error)
 
 
     def SET(self, command, data):
-        self.api.run(cmd=command, args=data)
+        try:
+            self.api.run(cmd=command, args=data)
+        except CmdError as error:
+            raise WriteError(error)
 
 
     def ADD(self, command, data):
-        self.api.run(cmd=command, args=data)
+        try:
+            self.api.run(cmd=command, args=data)
+        except CmdError as error:
+            raise WriteError(error)
 
 
 

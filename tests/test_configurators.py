@@ -6,7 +6,6 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-
 from configurators import CmdPathConfigurator, real_action, no_action, Configurator
 
 
@@ -96,7 +95,6 @@ class CmdPathConfigurator_Tests(TestCase):
     def test_readData_calls_slave_read(self):
         self.TestCls.readData()
         self.TestCls.configurator.slave.read.assert_called_once_with(path=self.TestCls.path)
-
 
     def test_readData_calls_master_read(self):
         self.TestCls.readData()
