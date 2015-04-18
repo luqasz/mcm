@@ -132,5 +132,5 @@ class CmdPathRow_Tests(TestCase):
     def test_difference_returns_elements_in_wanted_not_listed_in_present(self):
         wanted = dict(interface='ether1')
         present = dict(interface='ether2')
-        result = CmdPathRow.difference( wanted=wanted, present=present  )
+        result = self.TestCls.difference( wanted=wanted, present=present  )
         self.assertEqual( result, dict(interface='ether1') )

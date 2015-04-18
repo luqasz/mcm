@@ -67,7 +67,7 @@ class CmdPathRow:
 
     def __sub__(self, other):
 
-        diff = CmdPathRow.difference( wanted=self.data, present=other.data )
+        diff = self.difference( wanted=self.data, present=other.data )
         return CmdPathRow( data=diff )
 
 
@@ -77,6 +77,7 @@ class CmdPathRow:
         return pairs <= set(other.data.items())
 
 
+    @staticmethod
     def difference( wanted, present ):
         '''
         Return elements in wanted that are not in present.
