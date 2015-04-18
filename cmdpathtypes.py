@@ -23,6 +23,11 @@ MENU_PATHS = {
     'modord': ('SET', 'ADD', 'DEL'),
     'type': 'uniquekey'
     },
+'/ip/dhcp-server': {
+    'keys': ('name',),
+    'modord': ('SET', 'ADD', 'DEL'),
+    'type': 'uniquekey'
+    },
 '/ip/dhcp-server/alert': {
     'keys': ('interface',),
     'modord': ('SET', 'ADD', 'DEL'),
