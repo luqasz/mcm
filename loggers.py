@@ -18,3 +18,5 @@ def setup(verbosity):
     formatter = logging.Formatter(fmt='{levelname} {message}', datefmt='%d/%m/%Y %H:%M:%S', style='{')
     console.setFormatter(formatter)
     mainlog.addHandler(console)
+
+    return mainlog

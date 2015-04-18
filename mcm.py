@@ -34,17 +34,17 @@ def mk_master(config):
 
 if __name__ == '__main__':
     args = get_arguments(prog_version=__version__)
-    setup_loggin(verbosity=args.verbose)
+    mainlog = setup_loggin(verbosity=args.verbose)
     parsed_config = JsonParser(parsed=args.config)
     master = mk_master(config=dict(parsed_config))
 
     try:
         slave = mk_slave(user=args.username, host=args.host)
     except ConnError as error:
-        print('Connection error: {}'.format(error))
+        mainlog.error('Connection error: {}'.format(error))
         exit(1)
     except LoginError as error:
-        print('Failed to login: {}'.format(error))
+        mainlog.error('Failed to login: {}'.format(error))
         exit(1)
 
     configurator = Configurator(master=master, slave=slave)
