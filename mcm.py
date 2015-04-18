@@ -14,8 +14,6 @@ from loggers import setup as setup_loggin
 
 
 
-__version__ = 0.1
-
 
 
 def mk_slave(user, host):
@@ -33,7 +31,7 @@ def mk_master(config):
 
 
 if __name__ == '__main__':
-    args = get_arguments(prog_version=__version__)
+    args = get_arguments()
     mainlog = setup_loggin(verbosity=args.verbose)
     parsed_config = JsonParser(parsed=args.config)
     master = mk_master(config=dict(parsed_config))
@@ -41,7 +39,7 @@ if __name__ == '__main__':
     try:
         slave = mk_slave(user=args.username, host=args.host)
     except ConnError as error:
-        mainlog.error('Connection error: {}'.format(error))
+        mainlog.error('Could not connect: {}'.format(error))
         exit(1)
     except LoginError as error:
         mainlog.error('Failed to login: {}'.format(error))

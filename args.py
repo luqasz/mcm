@@ -3,6 +3,8 @@
 from argparse import ArgumentParser, ArgumentTypeError
 from json import load as json_load
 
+from static import __version__
+
 
 
 class JsonFile:
@@ -20,12 +22,12 @@ class JsonFile:
 
 
 
-def get_arguments(prog_version):
-    argparser = ArgumentParser(description='Mikrotik Configuration Manager. Version {}'.format(prog_version))
+def get_arguments():
+    argparser = ArgumentParser(description='Mikrotik Configuration Manager. Version {}'.format(__version__))
     argparser.add_argument('host', type=str, help='Host to connect to.')
     argparser.add_argument('config', type=JsonFile(), help='Configuration file.')
     argparser.add_argument('--username', '-u', type=str, help='Mikrotik API username.', required=True)
-    argparser.add_argument('--version', '-V', action='version', version=str(prog_version))
+    argparser.add_argument('--version', '-V', action='version', version=str(__version__))
     argparser.add_argument('--verbose', '-v', default=0, action='count', help='Verbosity level. Can be supplied multiple times to increase verbosity.')
     argparser.add_argument('--dry-run', '-n', action='store_true', help='Perform a trial run without making any changes.')
 
