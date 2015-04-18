@@ -10,7 +10,7 @@ from args import get_arguments
 from iodevices import StaticConfig, RouterOsAPIDevice
 from adapters import SlaveAdapter, MasterAdapter
 from configurators import Configurator
-from loggers import setup as setup_loggin
+from loggers import setup as setup_logging
 
 
 
@@ -32,7 +32,7 @@ def mk_master(config):
 
 if __name__ == '__main__':
     args = get_arguments()
-    mainlog = setup_loggin(verbosity=args.verbose)
+    mainlog = setup_logging(verbosity=args.verbose)
     parsed_config = JsonParser(parsed=args.config)
     master = mk_master(config=dict(parsed_config))
 
