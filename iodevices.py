@@ -14,9 +14,9 @@ class StaticConfig:
 
 
     def read(self, path):
-        for searched_path, rules in self.data.items():
-            if searched_path.absolute == path:
-                return rules
+        for section in self.data:
+            if section['path'] == path:
+                return section['rules']
 
 
 

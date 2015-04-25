@@ -5,12 +5,12 @@ from getpass import getpass
 
 from librouteros import LoginError, connect, ConnError
 
-from parsers import JsonParser
 from args import get_arguments
 from iodevices import StaticConfig, RouterOsAPIDevice
 from adapters import SlaveAdapter, MasterAdapter
 from configurators import Configurator
 from loggers import setup as setup_logging
+from datastructures import make_cmdpath
 
 
 
@@ -29,15 +29,25 @@ def mk_master(config):
     return master
 
 
+def mk_paths(data):
+    paths = []
+    for path in data['paths']:
+        CmdPath = make_cmdpath(path=path['path'], strategy=path['strategy'])
+        paths.append(CmdPath)
+    return paths
+
 
 if __name__ == '__main__':
     args = get_arguments()
     mainlog = setup_logging(verbosity=args.verbose)
-    parsed_config = JsonParser(parsed=args.config)
-    master = mk_master(config=dict(parsed_config))
+    master = mk_master(config=args.config['paths'])
 
     try:
+        paths = mk_paths(data=args.config)
         slave = mk_slave(user=args.username, host=args.host)
+    except KeyError as path:
+        mainlog.error('Could not find path specification for {}'.format(path))
+        exit(1)
     except ConnError as error:
         mainlog.error('Could not connect: {}'.format(error))
         exit(1)
@@ -46,4 +56,4 @@ if __name__ == '__main__':
         exit(1)
 
     configurator = Configurator(master=master, slave=slave)
-    configurator.run(paths=(path for path,rules in parsed_config))
+    configurator.run(paths=paths)

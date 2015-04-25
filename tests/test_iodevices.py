@@ -7,10 +7,23 @@ except ImportError:
 from unittest import TestCase
 
 
-from iodevices import RouterOsAPIDevice, cmd_action_join, filter_dynamic
+from iodevices import RouterOsAPIDevice, cmd_action_join, filter_dynamic, StaticConfig
 from librouteros import CmdError
 from exceptions import ReadError, WriteError
 
+
+
+class StaticConfig_Tests(TestCase):
+
+    def setUp(self):
+        data = [
+                {'path':'test_path', 'strategy':'exact', 'rules':[ {'key':'value'} ]}
+                ]
+        self.TestCls = StaticConfig(data=data)
+
+    def test_read_returns_valid_rules(self):
+        returned = self.TestCls.read(path='test_path')
+        self.assertEqual(returned, [{'key':'value'}])
 
 
 
