@@ -2,7 +2,7 @@
 
 Manage multiple mikrotik devices remotely.
 
-* [Documentation](http://)
+* [Documentation](https://github.com/luqasz/mcm/wiki)
 
 ## Requirements
 
