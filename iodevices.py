@@ -28,16 +28,16 @@ class RouterOsAPIDevice:
 
 
     def read(self, path):
-        cmd = cmd_action_join(path=path, action='GET')
+        cmd = self.cmd_action_join(path=path, action='GET')
         try:
             data = self.api.run(cmd=cmd)
         except CmdError as error:
             raise ReadError(error)
-        return filter_dynamic(data)
+        return self.filter_dynamic(data)
 
 
     def write(self, path, action, data):
-        command = cmd_action_join(path=path, action=action)
+        command = self.cmd_action_join(path=path, action=action)
         method = getattr(self, action)
         method(command=command, data=data)
 
@@ -64,12 +64,15 @@ class RouterOsAPIDevice:
             raise WriteError(error)
 
 
+    @staticmethod
+    def cmd_action_join(path, action):
+        actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
+        return pjoin(path, actions[action])
 
 
-def cmd_action_join(path, action):
-    actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
-    return pjoin(path, actions[action])
+    @staticmethod
+    def filter_dynamic(data):
+        return tuple(row for row in data if not row.get('dynamic'))
 
 
-def filter_dynamic(data):
-    return tuple(row for row in data if not row.get('dynamic'))
+

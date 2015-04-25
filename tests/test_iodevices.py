@@ -7,7 +7,7 @@ except ImportError:
 from unittest import TestCase
 
 
-from iodevices import RouterOsAPIDevice, cmd_action_join, filter_dynamic, StaticConfig
+from iodevices import RouterOsAPIDevice, StaticConfig
 from librouteros import CmdError
 from exceptions import ReadError, WriteError
 
@@ -34,51 +34,51 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.pathmock = MagicMock()
         self.datamock = MagicMock()
 
-    @patch('iodevices.filter_dynamic')
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'filter_dynamic')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_read_calls_api_run_method(self, joinmock, filter_mock):
         self.TestCls.read(self.pathmock)
         self.TestCls.api.run.assert_called_once_with(cmd=joinmock.return_value)
 
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_read_raises_ReadError(self, joinmock):
         self.TestCls.api.run.side_effect = CmdError
         with self.assertRaises(ReadError):
             self.TestCls.read(path=MagicMock())
 
-    @patch('iodevices.filter_dynamic')
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'filter_dynamic')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_read_calls_cmd_action_join(self, joinmock, filter_mock):
         self.TestCls.read(self.pathmock)
         joinmock.assert_called_once_with(path=self.pathmock, action='GET')
 
-    @patch('iodevices.filter_dynamic')
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'filter_dynamic')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_read_calls_filter_dynamic(self, joinmock, filter_mock):
         self.TestCls.read(self.pathmock)
         filter_mock.assert_called_once_with(self.TestCls.api.run.return_value)
 
     @patch.object(RouterOsAPIDevice, 'ADD')
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_write_calls_cmd_action_join(self, joinmock, addmock):
         self.TestCls.write(path=self.pathmock, action='ADD', data=None)
         joinmock.assert_called_once_with(path=self.pathmock, action='ADD')
 
 
     @patch.object(RouterOsAPIDevice, 'DEL')
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_write_calls_DEL_when_cmd_is_DEL(self, joinmock, delmock):
         self.TestCls.write(data='data', path=self.pathmock, action='DEL')
         delmock.assert_called_once_with(command=joinmock.return_value, data='data')
 
     @patch.object(RouterOsAPIDevice, 'ADD')
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_write_calls_ADD_when_cmd_is_ADD(self, joinmock, addmock):
         self.TestCls.write(data='data', path=self.pathmock, action='ADD')
         addmock.assert_called_once_with(command=joinmock.return_value, data='data')
 
     @patch.object(RouterOsAPIDevice, 'SET')
-    @patch('iodevices.cmd_action_join')
+    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_write_calls_SET_when_cmd_is_SET(self, joinmock, setmock):
         self.TestCls.write(data='data', path=self.pathmock, action='SET')
         setmock.assert_called_once_with(command=joinmock.return_value, data='data')
@@ -119,19 +119,19 @@ class RouterOsAPIDevice_Tests(TestCase):
 class cmd_action_join_Tests(TestCase):
 
     def test_returns_appended_remove_string_without_ending_forward_slash(self):
-        cmd = cmd_action_join('/ip/address', action='DEL')
+        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='DEL')
         self.assertEqual( cmd, '/ip/address/remove' )
 
     def test__returns_appended_add_string_without_ending_forward_slash(self):
-        cmd = cmd_action_join('/ip/address', action='ADD')
+        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='ADD')
         self.assertEqual( cmd, '/ip/address/add' )
 
     def test__returns_appended_set_string_without_ending_forward_slash(self):
-        cmd = cmd_action_join('/ip/address', action='SET')
+        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='SET')
         self.assertEqual( cmd, '/ip/address/set' )
 
     def test__returns_appended_getall_string_without_ending_forward_slash(self):
-        cmd = cmd_action_join('/ip/address', action='GET')
+        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='GET')
         self.assertEqual( cmd, '/ip/address/getall' )
 
 
@@ -143,10 +143,10 @@ class filter_dynamic_Tests(TestCase):
         self.data = ( self.dynamic, self.static )
 
     def test_returns_only_static(self):
-        result = filter_dynamic(self.data)
+        result = RouterOsAPIDevice.filter_dynamic(self.data)
         self.assertEqual(result, (self.static,))
 
     def test_returns_tuple(self):
-        result = filter_dynamic(self.data)
+        result = RouterOsAPIDevice.filter_dynamic(self.data)
         self.assertIs(type(result), tuple)
 
