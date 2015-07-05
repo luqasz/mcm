@@ -20,7 +20,6 @@ from librouteros.api import Api
 NULL_LOGGER = getLogger( 'api_null_logger' )
 NULL_LOGGER.addHandler( NullHandler() )
 
-__version__ = '1.1.0'
 
 
 def connect( host, user, pw, **kwargs ):
