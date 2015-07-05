@@ -4,9 +4,6 @@
 from librouteros import connect
 api = connect( '1.1.1.1', 'admin', 'password' )
 api.run('/ip/address/print')
-
-For more information please visit
-https://github.com/uqasz/librouteros
 '''
 
 
@@ -14,11 +11,14 @@ from logging import getLogger, NullHandler
 from socket import create_connection, error as sk_error, timeout as sk_timeout
 from binascii import unhexlify, hexlify
 from hashlib import md5
+from collections import ChainMap
 
 from librouteros.exc import ConnError, CmdError, LoginError
 from librouteros.connections import ReaderWriter
 from librouteros.api import Api
 
+NULL_LOGGER = getLogger( 'api_null_logger' )
+NULL_LOGGER.addHandler( NullHandler() )
 
 __version__ = '1.1.0'
 
@@ -44,23 +44,25 @@ def connect( host, user, pw, **kwargs ):
         Source address to bind to.
     '''
 
-    def_vals = { 'timeout' : 10, \
-                'logger' : None, \
-                'port' : 8728, \
-                'saddr' : '' }
+    defaults = { 'timeout' : 10,
+                'port' : 8728,
+                'saddr' : '',
+                'logger' : NULL_LOGGER
+                }
 
-    arguments = def_vals.copy()
-    arguments.update( kwargs )
+    arguments = ChainMap(kwargs, defaults)
 
     try:
-        sk = create_connection( ( host, arguments['port'] ), arguments['timeout'], ( arguments['saddr'], 0 ) )
+        sock = create_connection( ( host, arguments['port'] ), arguments['timeout'], ( arguments['saddr'], 0 ) )
     except ( sk_error, sk_timeout ) as e:
         raise ConnError( e )
 
-    api, rwo = _mkobj( sk, arguments['logger'] )
+    rwo = ReaderWriter( sock, arguments['logger'] )
+    api = Api( rwo )
 
     try:
-        chal = _initlogin( api )
+        snt = api.run( '/login' )
+        chal = snt[0]['ret']
         encoded = _encpw( chal, pw )
         api.run( '/login', {'name':user, 'response':encoded} )
     except ( ConnError, CmdError ) as estr:
@@ -68,27 +70,6 @@ def connect( host, user, pw, **kwargs ):
         raise LoginError( estr )
 
     return api
-
-
-def _mkobj(sk, logger):
-    '''
-    Assemble objects and return them.
-    '''
-
-    logger = _mkNullLogger() if not logger else logger
-    rwo = ReaderWriter( sk, logger )
-    api = Api( rwo )
-
-    return (api, rwo)
-
-
-def _initlogin( api ):
-    '''
-    Send initial login and return challenge response.
-    '''
-
-    snt = api.run( '/login' )
-    return snt[0]['ret']
 
 
 
@@ -104,14 +85,4 @@ def _encpw( chal, password ):
 
     return password
 
-
-def _mkNullLogger():
-
-    # this will always return same logger instance
-    logger = getLogger( 'api_null_logger' )
-    # ensure that logge has only 1 null handler.
-    if len( logger.handlers ) == 0:
-        logger.addHandler( NullHandler() )
-
-    return logger
 

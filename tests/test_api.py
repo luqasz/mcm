@@ -2,68 +2,67 @@
 
 import unittest
 try:
-    from unittest.mock import MagicMock
+    from unittest.mock import MagicMock, patch
 except ImportError:
-    from mock import MagicMock
+    from mock import MagicMock, patch
 
 from librouteros.api import Api
 from librouteros.exc import CmdError, ConnError, LibError
 from librouteros.connections import ReaderWriter
-from tests.helpers import make_patches
 
+
+
+@patch( 'librouteros.api.parsresp' )
+@patch( 'librouteros.api.mksnt' )
+@patch( 'librouteros.api.trapCheck' )
+@patch( 'librouteros.api.raiseIfFatal' )
+@patch.object( Api, '_readDone' )
+@patch.object( Api, 'close' )
 class RunMethod(unittest.TestCase):
 
 
     def setUp(self):
-        make_patches( self, (
-            ( 'parsresp','librouteros.api.parsresp' ),
-            ( 'mksnt','librouteros.api.mksnt' ),
-            ( 'trapcheck','librouteros.api.trapCheck' ),
-            ( 'raisefatal', 'librouteros.api.raiseIfFatal' )
-                ))
 
         rwo = MagicMock( spec = ReaderWriter )
         self.api = Api( rwo )
-        self.api.close = MagicMock()
-        self.api._readDone = MagicMock()
 
 
-    def test_calls_mksnt(self):
+    def test_calls_mksnt(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
         self.api.run( 'some level' )
-        self.mksnt_mock.assert_called_once_with( dict() )
+        mksnt_mock.assert_called_once_with( dict() )
 
-    def test_calls_write_sentence_with_combined_tuple(self):
+    def test_calls_write_sentence_with_combined_tuple(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
         lvl = '/ip/address'
         retval = ('=key=value',)
-        self.mksnt_mock.return_value = ( retval )
+        mksnt_mock.return_value = ( retval )
         self.api.run( lvl, 'some args' )
         self.api.rwo.writeSnt.assert_called_once_with( (lvl,) + retval )
 
-    def test_calls_readdone(self):
+    def test_calls_readdone(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
         self.api.run( 'some string' )
-        self.api._readDone.assert_called_once_with()
+        read_mock.assert_called_once_with()
 
-    def test_calls_trapCheck(self):
+    def test_calls_trapCheck(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
         self.api._readDone.return_value = ( 'some read sentence' )
         self.api.run( 'some level' )
-        self.trapcheck_mock.assert_called_once_with( 'some read sentence' )
+        trap_mock.assert_called_once_with( 'some read sentence' )
 
-    def test_calls_parsresp(self):
+    def test_calls_parsresp(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
         self.api._readDone.return_value = 'read sentence'
         self.api.run( 'some level' )
-        self.parsresp_mock.assert_called_once_with( 'read sentence' )
+        parsresp_mock.assert_called_once_with( 'read sentence' )
 
-    def test_checks_for_fatal_condition(self):
+    def test_checks_for_fatal_condition(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
         self.api._readDone.return_value = ( 'some read sentence' )
         self.api.run( 'some level' )
-        self.raisefatal_mock.assert_called_once_with( 'some read sentence' )
+        raise_mock.assert_called_once_with( 'some read sentence' )
 
-    def test_raises_CmdError_if_trap_in_sentence(self):
-        self.trapcheck_mock.side_effect = CmdError()
+    def test_raises_CmdError_if_trap_in_sentence(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
+        trap_mock.side_effect = CmdError()
         self.assertRaises( CmdError, self.api.run, ( 'some level' ) )
 
-    def test_raises_ConnError_if_fatal_in_sentence(self):
-        self.raisefatal_mock.side_effect = ConnError()
+    def test_raises_ConnError_if_fatal_in_sentence(self, close_mock, read_mock, raise_mock, trap_mock, mksnt_mock, parsresp_mock):
+        raise_mock.side_effect = ConnError()
         self.assertRaises( ConnError, self.api.run, ( 'some level' ) )
 
 

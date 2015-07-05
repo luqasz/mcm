@@ -8,7 +8,6 @@ except ImportError:
     from mock import MagicMock, call, patch
 
 import librouteros.connections as conn
-from tests.helpers import make_patches
 from librouteros.exc import ConnError
 
 
@@ -235,64 +234,58 @@ class ReadSock(unittest.TestCase):
 
 
 
+@patch('librouteros.connections.log_snt')
+@patch('librouteros.connections.encsnt')
 class WriteSentence(unittest.TestCase):
 
 
     def setUp(self):
-        make_patches( self, (
-            ('encsnt', 'librouteros.connections.encsnt'),
-            ('log', 'librouteros.connections.log_snt')
-            ) )
-
         self.rwo = conn.ReaderWriter( None, None )
         self.rwo.writeSock = MagicMock()
 
-
-    def test_calls_encode_sentence( self ):
+    def test_calls_encode_sentence( self, encsnt_mock, log_mock ):
         sentence = ('first', 'second')
         self.rwo.writeSnt( sentence )
-        self.encsnt_mock.assert_called_once_with( sentence )
+        encsnt_mock.assert_called_once_with( sentence )
 
-    def test_calls_write_to_socket( self ):
-        self.encsnt_mock.return_value = 'encoded'
+    def test_calls_writeSock( self, encsnt_mock, log_mock ):
+        encsnt_mock.return_value = 'encoded'
         self.rwo.writeSnt( 'sentence' )
         self.rwo.writeSock.assert_called_once_with( 'encoded' )
 
-    def test_calls_log_sentence(self):
+    def test_calls_log_sentence(self, encsnt_mock, log_mock):
         self.rwo.writeSnt('sentence')
-        self.log_mock.assert_called_once_with( None, 'sentence', 'write' )
+        log_mock.assert_called_once_with( None, 'sentence', 'write' )
 
 
 
+@patch('librouteros.connections.log_snt')
+@patch('librouteros.connections.decsnt')
 class ReadSentence(unittest.TestCase):
 
 
     def setUp(self):
-        make_patches( self, (
-            ('decsnt', 'librouteros.connections.decsnt'),
-            ('log', 'librouteros.connections.log_snt')
-            ) )
         self.rwo = conn.ReaderWriter( None, None )
         self.rwo.readSock = MagicMock( side_effect = [ 'first','second' ] )
         self.rwo.getLen = MagicMock( side_effect = [5,6,0] )
 
 
-    def test_calls_getLen_as_long_as_returns_0( self ):
+    def test_calls_getLen_as_long_as_returns_0( self, decsnt_mock, log_mock ):
         self.rwo.readSnt()
         self.assertEqual( self.rwo.getLen.call_count, 3 )
 
-    def test_calls_readSock_for_every_returned_getLen(self):
+    def test_calls_readSock_for_every_returned_getLen(self, decsnt_mock, log_mock):
         self.rwo.readSnt()
         self.assertEqual( self.rwo.readSock.mock_calls, [ call(5), call(6) ] )
 
-    def test_calls_decode_sentence( self ):
+    def test_calls_decode_sentence( self, decsnt_mock, log_mock ):
         self.rwo.readSnt()
-        self.decsnt_mock.assert_called_once_with( [ 'first', 'second' ] )
+        decsnt_mock.assert_called_once_with( [ 'first', 'second' ] )
 
-    def test_calls_log_sentence(self):
-        self.decsnt_mock.return_value = 'string'
+    def test_calls_log_sentence(self, decsnt_mock, log_mock):
+        decsnt_mock.return_value = 'string'
         self.rwo.readSnt()
-        self.log_mock.assert_called_once_with( None, 'string', 'read' )
+        log_mock.assert_called_once_with( None, 'string', 'read' )
 
 
 class ClosingProcedures(unittest.TestCase):
