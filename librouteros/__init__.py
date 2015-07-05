@@ -53,8 +53,8 @@ def connect( host, user, pw, **kwargs ):
 
     try:
         sock = create_connection( ( host, arguments['port'] ), arguments['timeout'], ( arguments['saddr'], 0 ) )
-    except ( SOCKET_ERROR, SOCKET_TIMEOUT ) as e:
-        raise ConnError( e )
+    except ( SOCKET_ERROR, SOCKET_TIMEOUT ) as error:
+        raise ConnError( error )
 
     rwo = ReaderWriter( sock, arguments['logger'] )
     api = Api( rwo )
@@ -64,9 +64,9 @@ def connect( host, user, pw, **kwargs ):
         chal = snt[0]['ret']
         encoded = _encpw( chal, pw )
         api.run( '/login', {'name':user, 'response':encoded} )
-    except ( ConnError, CmdError ) as estr:
+    except ( ConnError, CmdError ) as error:
         rwo.close()
-        raise LoginError( estr )
+        raise LoginError( error )
 
     return api
 
