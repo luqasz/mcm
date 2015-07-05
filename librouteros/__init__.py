@@ -62,7 +62,7 @@ def connect( host, user, pw, **kwargs ):
     try:
         snt = api.run( '/login' )
         chal = snt[0]['ret']
-        encoded = _encpw( chal, pw )
+        encoded = _encode_password( chal, pw )
         api.run( '/login', {'name':user, 'response':encoded} )
     except ( ConnError, CmdError ) as error:
         rwo.close()
@@ -72,7 +72,7 @@ def connect( host, user, pw, **kwargs ):
 
 
 
-def _encpw( chal, password ):
+def _encode_password( chal, password ):
 
     chal = chal.encode( 'UTF-8', 'strict' )
     chal = unhexlify( chal )
