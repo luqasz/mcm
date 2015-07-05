@@ -8,7 +8,7 @@ api.run('/ip/address/print')
 
 
 from logging import getLogger, NullHandler
-from socket import create_connection, error as sk_error, timeout as sk_timeout
+from socket import create_connection, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from binascii import unhexlify, hexlify
 from hashlib import md5
 from collections import ChainMap
@@ -53,7 +53,7 @@ def connect( host, user, pw, **kwargs ):
 
     try:
         sock = create_connection( ( host, arguments['port'] ), arguments['timeout'], ( arguments['saddr'], 0 ) )
-    except ( sk_error, sk_timeout ) as e:
+    except ( SOCKET_ERROR, SOCKET_TIMEOUT ) as e:
         raise ConnError( e )
 
     rwo = ReaderWriter( sock, arguments['logger'] )
