@@ -54,7 +54,7 @@ class Test_connect(unittest.TestCase):
         api_mock.return_value.run.assert_any_call( '/login', {'name':'user', 'response':'pass'} )
 
     def test_raises_LoginError_when_login_fails_with_CmdError(self, encpw_mock, create_conn_mock, rwo_mock, api_mock):
-        api_mock.return_value.run.side_effect = ConnError
+        api_mock.return_value.run.side_effect = CmdError
         self.assertRaises( LoginError, connect, 'host', 'user', 'pass' )
 
     def test_after_CmdError_calls_rwo_close(self, encpw_mock, create_conn_mock, rwo_mock, api_mock):
