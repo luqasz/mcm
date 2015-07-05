@@ -75,11 +75,15 @@ class ReadLoop(unittest.TestCase):
         self.api = Api( rwo )
         self.api.close = MagicMock()
 
+    def test_returns_response_if_done_at_the_end_of_response(self):
+        response = (('1','2'),('!done',))
+        self.api.rwo.readSnt.side_effect = response
+        self.assertEqual( self.api._readDone(), response )
 
-    def test_breaks_if_done_in_sentence(self):
-        self.api.rwo.readSnt.side_effect = ['1','2','!done']
-        self.api._readDone()
-        self.assertEqual( self.api.rwo.readSnt.call_count, 3 )
+    def test_returns_response_if_done_at_the_begining_of_sentence(self):
+        response = (('!done', '1','2'),)
+        self.api.rwo.readSnt.side_effect = response
+        self.assertEqual( self.api._readDone(), response )
 
 
 
