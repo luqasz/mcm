@@ -14,7 +14,7 @@ except ImportError:
 import operator
 
 
-from tools import StopWatch, timer, vcmp
+from tools import StopWatch, timer, vcmp, ChainMap
 
 
 
@@ -119,3 +119,25 @@ class VersionCompareTests(TestCase):
     def test_not_equal_comparison_returns_False(self):
         result = vcmp( '4.11', '4.11', operator.ne )
         self.assertFalse( result )
+
+
+class VersionCompareTests(TestCase):
+
+    def setUp(self):
+        self.default_dict = dict(port=123, timeout=10)
+        self.provided_dict = dict(username='admin', host='1.1.1.1')
+        self.overide_dict = dict(port=222)
+
+    def test_raises_KeyError_if_key_is_not_found(self):
+        chained = ChainMap(self.overide_dict, self.default_dict)
+        with self.assertRaises(KeyError):
+            chained['username']
+
+    def test_accessing_username_returns_from_provided_dict(self):
+        chained = ChainMap(self.provided_dict, self.default_dict)
+        self.assertEqual(chained['username'], self.provided_dict['username'])
+
+    def test_accessing_port_returns_from_overrided_dict(self):
+        chained = ChainMap(self.overide_dict, self.default_dict)
+        self.assertEqual(chained['port'], self.overide_dict['port'])
+

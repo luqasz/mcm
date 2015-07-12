@@ -11,7 +11,10 @@ from logging import getLogger, NullHandler
 from socket import create_connection, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from binascii import unhexlify, hexlify
 from hashlib import md5
-from collections import ChainMap
+try:
+    from collections import ChainMap
+except ImportError:
+    from tools import ChainMap
 
 from librouteros.exc import ConnError, CmdError, LoginError
 from librouteros.connections import ReaderWriter

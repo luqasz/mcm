@@ -7,6 +7,7 @@ except ImportError:
     from time import time as timer
 
 from distutils.version import LooseVersion
+from collections import UserDict
 
 
 
@@ -35,3 +36,19 @@ def vcmp(v1, v2, op):
 
     return op(LooseVersion(v1), LooseVersion(v2))
 
+
+class ChainMap(UserDict):
+    '''
+    Fallback collections.ChainMap if using python3 < 3.4
+    '''
+
+    def __init__(self, *maps):
+        self._maps = maps
+
+    def __getitem__(self, key):
+        for mapping in self._maps:
+            try:
+                return mapping[key]
+            except KeyError:
+                pass
+        raise KeyError(key)
