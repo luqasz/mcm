@@ -25,7 +25,7 @@ class TimerFunctionImport(TestCase):
         '''Assert that time.monotonic is used.'''
         self.assertTrue( timer == monotonic )
 
-    @skipIf( version_info.major >= 3 and version_info.minor > 3, 'Using python >= 3.3' )
+    @skipIf( version_info.major >= 3 and version_info.minor > 2, 'Using python >= 3.3' )
     def test_module_uses_time_as_timer(self):
         '''Assert that time.time is used when time.monotonic is not available.'''
         self.assertTrue( timer == time )
