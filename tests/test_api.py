@@ -85,6 +85,11 @@ class ReadLoop(unittest.TestCase):
         self.api.rwo.readSnt.side_effect = response
         self.assertEqual( self.api._readDone(), response )
 
+    def test_returns_response_if_done_at_the_end_of_sentence(self):
+        response = (('1','2','!done'),)
+        self.api.rwo.readSnt.side_effect = response
+        self.assertEqual( self.api._readDone(), response )
+
 
 
 class ClosingConnecton(unittest.TestCase):
