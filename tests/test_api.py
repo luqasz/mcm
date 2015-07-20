@@ -122,27 +122,3 @@ class ClosingConnecton(unittest.TestCase):
         self.api.rwo.close.assert_called_once_with()
 
 
-
-class TimeoutManipulations(unittest.TestCase):
-
-
-    def setUp(self):
-        self.rwo = MagicMock()
-        self.api = Api( self.rwo )
-
-    def test_getting_timeout_value(self):
-        self.api.timeout
-        self.rwo.sock.gettimeout.assert_called_once
-
-    def test_setting_timeout_0_raises_ValueError(self):
-        with self.assertRaises(ValueError):
-            self.api.timeout = 0
-
-    def test_setting_timeout_lower_than_0_raises_ValueError(self):
-        with self.assertRaises(ValueError):
-            self.api.timeout = -1
-
-    def test_calls_setting_timeout(self):
-        self.api.timeout = 20
-        self.rwo.sock.settimeout.assert_called_once_with(20)
-

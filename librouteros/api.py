@@ -12,19 +12,6 @@ class Api:
         self.rwo = rwo
 
 
-    def _set_timeout(self, value):
-        if value <= 0:
-            raise ValueError('timeout must be greater than 0')
-        else:
-            self.rwo.sock.settimeout(value)
-
-    def _get_timeout(self):
-        return self.rwo.sock.gettimeout()
-
-
-    timeout = property( _get_timeout, _set_timeout, doc='Get or set timeout of connection. Timeout muste be > 0.' )
-
-
     def run( self, cmd, args = dict() ):
         '''
         Run any 'non interactive' command. Returns parsed response.
