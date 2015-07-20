@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-import socket
+from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from struct import pack, unpack
 
 from librouteros.exc import ConnError
@@ -159,10 +159,10 @@ class ReaderWriter:
                 if not read:
                     raise ConnError( 'connection unexpectedly closed. read {read}/{total} bytes.'
                                     .format( read = total_bytes_read, total = length ) )
-        except socket.timeout:
+        except SOCKET_TIMEOUT:
             raise ConnError( 'socket timed out. read {read}/{total} bytes.'
                             .format( read = total_bytes_read, total = length ) )
-        except socket.error as estr:
+        except SOCKET_ERROR as estr:
             raise ConnError( 'failed to read from socket: {reason}'.format( reason = estr ) )
 
         return b''.join( return_string )
@@ -187,10 +187,10 @@ class ReaderWriter:
                 if not sent:
                     raise ConnError( 'connection unexpectedly closed. sent {sent}/{total} bytes.'
                                     .format( sent = total_bytes_sent, total = string_length ) )
-        except socket.timeout:
+        except SOCKET_TIMEOUT:
             raise ConnError( 'socket timed out. sent {sent}/{total} bytes.'
                             .format( sent = total_bytes_sent, total = string_length ) )
-        except socket.error as estr:
+        except SOCKET_ERROR as estr:
             raise ConnError( 'failed to write to socket: {reason}'.format( reason = estr ) )
 
 
@@ -226,8 +226,8 @@ class ReaderWriter:
             return
         # shutdown socket
         try:
-            self.sock.shutdown( socket.SHUT_RDWR )
-        except socket.error:
+            self.sock.shutdown( SHUT_RDWR )
+        except SOCKET_ERROR:
             pass
         finally:
             self.sock.close()

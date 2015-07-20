@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import unittest
-import socket
+from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT, socket
 try:
     from unittest.mock import MagicMock, call, patch
 except ImportError:
@@ -162,7 +162,7 @@ class WriteSock(unittest.TestCase):
 
 
     def setUp(self):
-        sock = MagicMock( spec = socket.socket )
+        sock = MagicMock( spec = socket )
         self.rwo = conn.ReaderWriter( sock, None )
 
 
@@ -179,12 +179,12 @@ class WriteSock(unittest.TestCase):
 
 
     def test_sending_raises_socket_timeout(self):
-        self.rwo.sock.send.side_effect = socket.timeout
+        self.rwo.sock.send.side_effect = SOCKET_TIMEOUT
         self.assertRaises( ConnError, self.rwo.writeSock, 'word' )
 
 
     def test_sending_raises_socket_error(self):
-        self.rwo.sock.send.side_effect = socket.error
+        self.rwo.sock.send.side_effect = SOCKET_ERROR
         self.assertRaises( ConnError, self.rwo.writeSock, 'word' )
 
 
@@ -198,7 +198,7 @@ class ReadSock(unittest.TestCase):
 
 
     def setUp(self):
-        sock = MagicMock( spec = socket.socket )
+        sock = MagicMock( spec = socket )
         self.rwo = conn.ReaderWriter( sock, None )
 
     def test_returns_empty_byte_when_called_with_0(self):
@@ -216,11 +216,11 @@ class ReadSock(unittest.TestCase):
         self.assertRaises( ConnError, self.rwo.readSock, 4 )
 
     def test_reading_raises_socket_timeout(self):
-        self.rwo.sock.recv.side_effect = socket.timeout
+        self.rwo.sock.recv.side_effect = SOCKET_TIMEOUT
         self.assertRaises( ConnError, self.rwo.readSock, 4 )
 
     def test_reading_raises_socket_error(self):
-        self.rwo.sock.recv.side_effect = socket.error
+        self.rwo.sock.recv.side_effect = SOCKET_ERROR
         self.assertRaises( ConnError, self.rwo.readSock, 4 )
 
     def test_returns_bytes_object(self):
@@ -292,7 +292,7 @@ class ClosingProcedures(unittest.TestCase):
 
 
     def setUp(self):
-        sock = MagicMock( spec = socket.socket )
+        sock = MagicMock( spec = socket )
         self.rwo = conn.ReaderWriter( sock, None )
 
 
@@ -312,10 +312,10 @@ class ClosingProcedures(unittest.TestCase):
     def test_call_shutdown_if_socket_is_not_closed(self):
         self.rwo.sock._closed = False
         self.rwo.close()
-        self.rwo.sock.shutdown.assert_called_once_with( socket.SHUT_RDWR )
+        self.rwo.sock.shutdown.assert_called_once_with( SHUT_RDWR )
 
     def test_calls_socket_close_even_if_shutdown_raises_socket_error(self):
         self.rwo.sock._closed = False
-        self.rwo.sock.shutdown.side_effect = socket.error()
+        self.rwo.sock.shutdown.side_effect = SOCKET_ERROR()
         self.rwo.close()
         self.rwo.sock.close.assert_called_once_with()
