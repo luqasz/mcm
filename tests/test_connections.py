@@ -11,42 +11,43 @@ import librouteros.connections as conn
 from librouteros.exc import ConnError
 
 
-class EncodeLengths(unittest.TestCase):
+class LengthEncoding(unittest.TestCase):
 
 
-    def test_encode_length_less_than_128( self ):
+    def test_encodes_length_less_than_128( self ):
         self.assertEqual( conn.enclen( 127 ), b'\x7f' )
 
-    def test_encode_length_less_than_16384( self ):
+    def test_encodes_length_less_than_16384( self ):
         self.assertEqual( conn.enclen( 130 ), b'\x80\x82' )
 
-    def test_encode_length_less_than_2097152( self ):
+    def test_encodes_length_less_than_2097152( self ):
         self.assertEqual( conn.enclen( 2097140 ), b'\xdf\xff\xf4' )
 
-    def test_encode_length_less_than_268435456( self ):
+    def test_encodes_length_less_than_268435456( self ):
         self.assertEqual( conn.enclen( 268435440 ), b'\xef\xff\xff\xf0' )
 
-    def test_encode_length_raises_exception_if_lenghth_exceeds_268435456( self ):
+    def test_raises_ConnError_if_lenghth_is_too_big( self ):
+        '''Raises ConnError if length >= 268435456'''
         self.assertRaises( ConnError, conn.enclen, 268435456 )
 
 
 
-class DecodeLengths(unittest.TestCase):
+class LengthDecoding(unittest.TestCase):
 
 
-    def test_decode_0_length( self ):
+    def test_decodes_0_length( self ):
         self.assertEqual( conn.declen( b'\x00' ), 0 )
 
-    def test_decode_length_less_than_128( self ):
+    def test_decodes_length_less_than_128( self ):
         self.assertEqual( conn.declen( b'\x7f' ), 127 )
 
-    def test_decode_length_less_than_16384( self ):
+    def test_decodes_length_less_than_16384( self ):
         self.assertEqual( conn.declen( b'\x80\x82' ), 130 )
 
-    def test_decode_length_less_than_2097152( self ):
+    def test_decodes_length_less_than_2097152( self ):
         self.assertEqual( conn.declen( b'\xdf\xff\xf4' ), 2097140 )
 
-    def test_decode_length_less_than_268435456( self ):
+    def test_decodes_length_less_than_268435456( self ):
         self.assertEqual( conn.declen( b'\xef\xff\xff\xf0'  ), 268435440 )
 
 
