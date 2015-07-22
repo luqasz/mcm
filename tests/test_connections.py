@@ -50,6 +50,10 @@ class LengthDecoding(unittest.TestCase):
     def test_decodes_length_less_than_268435456( self ):
         self.assertEqual( conn.declen( b'\xef\xff\xff\xf0'  ), 268435440 )
 
+    def test_raises_ConnError_if_bytes_is_too_big( self ):
+        '''Raises ConnError if length > 4 bytes'''
+        self.assertRaises( ConnError, conn.declen, b'\xff\xff\xff\xff\xff' )
+
 
 
 class GetLengths(unittest.TestCase):

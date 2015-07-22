@@ -28,7 +28,7 @@ def enclen( length ):
         ored_length = length | 0xE0000000
         offset = -4
     else:
-        raise ConnError( 'unable to encode length of {0}'
+        raise ConnError( 'unable to encode length of {}'
                         .format( length ) )
 
     encoded_length = pack( '!I', ored_length )[offset:]
@@ -43,12 +43,26 @@ def declen( bytes ):
     returns: Length in integer.
     '''
 
-    XORMAP = { 3:0, 2:0x8000, 1:0xC00000, 0:0xE0000000 }
-    zfill = bytes.rjust(4, b'\x00')
-    # how many \x00 have been prefixed
-    xor = len(zfill) - len(bytes)
-    decoded = unpack( '!I', zfill )[0]
-    decoded ^= XORMAP[ xor ]
+    bytes_length = len( bytes )
+
+    if bytes_length < 2:
+        offset = b'\x00\x00\x00'
+        XOR = 0
+    elif bytes_length < 3:
+        offset = b'\x00\x00'
+        XOR = 0x8000
+    elif bytes_length < 4:
+        offset = b'\x00'
+        XOR = 0xC00000
+    elif bytes_length < 5:
+        offset = b''
+        XOR = 0xE0000000
+    else:
+        raise ConnError( 'unable to decode length of {}'.format(bytes) )
+
+    combined_bytes = offset + bytes
+    decoded = unpack( '!I', combined_bytes )[0]
+    decoded ^= XOR
 
     return decoded
 
