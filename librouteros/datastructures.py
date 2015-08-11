@@ -2,14 +2,14 @@
 
 from librouteros.exc import CmdError, ConnError
 
-to_py_mapping = {'yes': True, \
-                   'true': True, \
-                   'no': False, \
-                   'false': False, \
+to_py_mapping = {'yes': True,
+                   'true': True,
+                   'no': False,
+                   'false': False,
                    '': None}
 
-to_api_mapping = { True:'yes', \
-                    False:'no', \
+to_api_mapping = { True:'yes',
+                    False:'no',
                     None:''}
 
 
