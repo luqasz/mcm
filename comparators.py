@@ -33,7 +33,7 @@ class OrderedComparator:
         elif not wanted and not difference and present:
             self.DEL.append( present )
         elif wanted and difference and present:
-            difference['ID'] = present['ID']
+            difference['.id'] = present['.id']
             self.SET.append( difference )
 
 
@@ -88,7 +88,7 @@ class UniqueKeyComparator:
             self.ADD.append( wanted )
         elif wanted and difference and present:
             self.NO_DELETE.append(present)
-            difference['ID'] = present['ID']
+            difference['.id'] = present['.id']
             self.SET.append( difference )
         elif wanted and not difference and present:
             self.NO_DELETE.append(present)

@@ -43,7 +43,7 @@ class RouterOsAPIDevice:
 
 
     def DEL(self, command, data):
-        ID = {'ID':data['ID']}
+        ID = {'.id':data['.id']}
         try:
             self.api.run(cmd=command, args=ID)
         except CmdError as error:

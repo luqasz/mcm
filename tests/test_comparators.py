@@ -35,20 +35,20 @@ class OrderedComparator_Tests(TestCase):
         self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=self.present )
         self.TestCls.SET.append.assert_called_once_with( self.difference )
 
-    def test_decide_updates_differences_ID_with_presents_ID(self):
+    def test_decide_updates_differences_id_with_presents_id(self):
         difference = dict(group='full')
-        present = dict(ID=2)
+        present = {'.id':2}
         self.TestCls.decide(wanted=self.wanted, difference=difference, present=present )
-        self.assertEqual(difference['ID'], present['ID'])
+        self.assertEqual(difference['.id'], present['.id'])
 
 
 class OrderedComparator_compare_Tests(TestCase):
 
     def setUp(self):
-        self.wanted_row = CmdPathRow(data=dict(name='admin', group='read'))
-        self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
-        self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
-        self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
+        self.wanted_row = CmdPathRow(data={'name':'admin', 'group':'read'})
+        self.present_row = CmdPathRow(data={'name':'admin', 'group':'full', '.id':'*2'})
+        self.unwanted_row = CmdPathRow(data={'name':'operator', 'group':'read', '.id':'*3'})
+        self.difference = CmdPathRow(data={'group':'read', '.id':'*2'})
         self.TestCls = OrderedComparator()
         self.wanted_data = (self.wanted_row,)
         self.present_data = (self.present_row, self.unwanted_row)
@@ -102,9 +102,9 @@ class SingleElementComparator_Tests(TestCase):
 class UniqueKeyComparator_Tests(TestCase):
 
     def setUp(self):
-        self.present = CmdPathRow(data=dict(group='full', ID='*2', name='admin'))
-        self.wanted = CmdPathRow(data=dict(name='admin', group='read'))
-        self.difference = CmdPathRow(data=dict(group='read'))
+        self.present = CmdPathRow(data={'group':'full', '.id':'*2', 'name':'admin'})
+        self.wanted = CmdPathRow(data={'name':'admin', 'group':'read'})
+        self.difference = CmdPathRow(data={'group':'read'})
         self.TestCls = UniqueKeyComparator( keys=('name',) )
         self.TestCls.ADD = MagicMock()
         self.TestCls.SET = MagicMock()
@@ -128,7 +128,7 @@ class UniqueKeyComparator_Tests(TestCase):
 
     def test_decide_updates_differences_ID_with_presents_ID(self):
         self.TestCls.decide(wanted=self.wanted, difference=self.difference, present=self.present )
-        self.assertEqual(self.difference['ID'], self.present['ID'])
+        self.assertEqual(self.difference['.id'], self.present['.id'])
 
 
     def test_findPair_returns_found_row(self):
@@ -136,7 +136,7 @@ class UniqueKeyComparator_Tests(TestCase):
         self.assertEqual(found, self.present)
 
     def test_findPair_returns_empty_CmdPathRow_when_searched_row_is_not_found(self):
-        present = CmdPathRow(data=dict(group='full', ID='*2', name='operator'))
+        present = CmdPathRow(data={'group':'full', '.id':'*2', 'name':'operator'})
         row = self.TestCls.findPair(searched=self.wanted, present=(present,))
         self.assertEqual(row.data, dict())
 
@@ -145,10 +145,10 @@ class UniqueKeyComparator_Tests(TestCase):
 class UniqueKeyComparator_compare_Tests(TestCase):
 
     def setUp(self):
-        self.wanted_row = CmdPathRow(data=dict(name='admin', group='read'))
-        self.present_row = CmdPathRow(data=dict(name='admin', group='full', ID='*2'))
-        self.unwanted_row = CmdPathRow(data=dict(name='operator', group='read', ID='*3'))
-        self.difference = CmdPathRow(data=dict(group='read', ID='*2'))
+        self.wanted_row = CmdPathRow(data={'name':'admin', 'group':'read'})
+        self.present_row = CmdPathRow(data={'name':'admin', 'group':'full', '.id':'*2'})
+        self.unwanted_row = CmdPathRow(data={'name':'operator', 'group':'read', '.id':'*3'})
+        self.difference = CmdPathRow(data={'group':'read', '.id':'*2'})
         self.TestCls = UniqueKeyComparator( keys=('name',) )
         self.present = (self.unwanted_row, self.present_row)
 

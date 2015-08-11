@@ -29,26 +29,6 @@ def castValToApi( value ):
 
 
 
-def castKeyToPy( key ):
-    '''
-    Any key that starts with . will be converted to uppercase.
-    '''
-    if key[0] == '.':
-        return key[1:].upper()
-    else:
-        return key
-
-
-def castKeyToApi( key ):
-    '''
-    Any key that is uppercase will be converted to lowercase and a . will be prefixed.
-    '''
-    if key.isupper():
-        return '.' + key.lower()
-    else:
-        return key
-
-
 
 
 def parsresp(sentences):
@@ -104,9 +84,8 @@ def mkattrwrd( kv ):
 
     key, value = kv
     casted_value = castValToApi( value )
-    casted_key = castKeyToApi( key )
 
-    return '={0}={1}'.format( casted_key, casted_value )
+    return '={0}={1}'.format( key, casted_value )
 
 
 def convattrwrd( word ):
@@ -119,11 +98,10 @@ def convattrwrd( word ):
 
     splitted = word.split( '=', 2 )
     key = splitted[1]
-    casted_key = castKeyToPy( key )
     value = splitted[2]
     casted_value = castValToPy( value )
 
-    return ( casted_key, casted_value )
+    return ( key, casted_value )
 
 
 

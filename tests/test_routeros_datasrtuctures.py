@@ -6,7 +6,7 @@ try:
 except ImportError:
     from mock import MagicMock, patch, call
 
-from librouteros.datastructures import parsresp, parsnt, mksnt, mkattrwrd, convattrwrd, castKeyToApi, castKeyToPy, castValToPy, castValToApi, raiseIfFatal, trapCheck
+from librouteros.datastructures import parsresp, parsnt, mksnt, mkattrwrd, convattrwrd, castValToPy, castValToApi, raiseIfFatal, trapCheck
 from librouteros.exc import CmdError, ConnError
 
 
@@ -82,77 +82,36 @@ class TestValCastingFromPython(unittest.TestCase):
 
 
 
-
-class TestKeyCastingFromApi(unittest.TestCase):
-
-
-    def test_no_dotkey_mapping(self):
-        self.assertEqual( castKeyToPy( 'key' ), 'key' )
-
-    def test_dotkey_mapping(self):
-        self.assertEqual( castKeyToPy( '.key' ), 'KEY' )
-
-
-class TestKeyCastingFromPython(unittest.TestCase):
-
-
-    def test_no_dotkey_mapping(self):
-        self.assertEqual( castKeyToApi( 'key' ), 'key' )
-
-    def test_uppercase_key_mapping(self):
-        self.assertEqual( castKeyToApi( 'KEY' ), '.key' )
-
-
-
-def return_same( something ):
-    return something
-
-
-
 class AttributeWordConversion(unittest.TestCase):
 
+    def test_splits_key_and_value( self ):
+        api_word = convattrwrd( '=key=value' )
+        self.assertEqual( api_word, ( 'key', 'value' ) )
 
-    @patch('librouteros.datastructures.castKeyToPy')
-    @patch('librouteros.datastructures.castValToPy')
-    def test_returns_valid_tuple( self, key_mock, val_mock ):
-        key_mock.side_effect = return_same
-        val_mock.side_effect = return_same
-
-        word = '=key=value'
-        expected_result = ( 'key', 'value' )
-        result = convattrwrd( word )
-
-        self.assertEqual( result, expected_result )
+    def test_splits_key_and_value_with_id_key( self ):
+        api_word = convattrwrd( '=.id=value' )
+        self.assertEqual( api_word, ( '.id', 'value' ) )
 
 
 
 class AttributeWordCreation(unittest.TestCase):
 
+    def test_creates_valid_api_word( self ):
+        result = mkattrwrd( ( 'key', 'value' ) )
+        self.assertEqual( result, '=key=value' )
 
-    @patch('librouteros.datastructures.castKeyToApi')
-    @patch('librouteros.datastructures.castValToApi')
-    def test_returns_valid_word( self, key_mock, val_mock ):
-        key_mock.side_effect = return_same
-        val_mock.side_effect = return_same
-
-        call_tuple = ( 'key', 'value' )
-        expected_result = '=key=value'
-        result = mkattrwrd( call_tuple )
-
-        self.assertEqual( result, expected_result )
+    def test_creates_valid_api_word_with_id_key( self ):
+        result = mkattrwrd( ( '.id', 'value' ) )
+        self.assertEqual( result, '=.id=value' )
 
 
 
 class ApiSentenceCreation(unittest.TestCase):
 
-
-    @patch('librouteros.datastructures.mkattrwrd')
-    def test_calls_attribute_word_creation_method( self, mk_mock ):
+    def test_returns_valid_api_sentence( self ):
         call_dict = { 'interface':'ether1', 'disabled':'false' }
-        expected_calls = [ call(item) for item in call_dict.items() ]
-
-        mksnt( call_dict )
-        self.assertEqual( mk_mock.mock_calls, expected_calls )
+        result = ( '=interface=ether1', '=disabled=false' )
+        self.assertEqual( result, mksnt( call_dict ) )
 
 
 

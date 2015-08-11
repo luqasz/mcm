@@ -85,9 +85,9 @@ class RouterOsAPIDevice_Tests(TestCase):
 
 
     def test_DEL_calls_api_run_only_with_ID(self):
-        data = dict(ID='*1', address='1.1.1.1/24')
+        data = {'.id':'*1', 'address':'1.1.1.1/24'}
         self.TestCls.DEL(command='/ip/address/remove', data=data)
-        self.TestCls.api.run.assert_called_once_with(cmd='/ip/address/remove', args=dict(ID='*1'))
+        self.TestCls.api.run.assert_called_once_with(cmd='/ip/address/remove', args={'.id':'*1'})
 
     def test_DEL_raises_WriteError(self):
         self.TestCls.api.run.side_effect = CmdError
