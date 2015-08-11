@@ -22,16 +22,16 @@ class Api:
 
         snt = (cmd,) + mksnt( args )
         self.rwo.writeSnt( snt )
-        response = self._readDone()
+        response = self._readResponse()
         trapCheck( response )
         raiseIfFatal( response )
 
         return parsresp( response )
 
 
-    def _readDone( self ):
+    def _readResponse( self ):
         '''
-        Read as long as !done is received.
+        Read whole response.
 
         returns Read sentences as tuple.
         '''
