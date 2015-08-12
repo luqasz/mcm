@@ -102,51 +102,38 @@ class GetLengths(unittest.TestCase):
 
 
 
+@patch('librouteros.connections.enclen')
 class EncodeWord(unittest.TestCase):
 
-
-    def setUp(self):
-        patcher = patch('librouteros.connections.enclen')
-        self.enc_len_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-
-    def test_calls_enclen( self ):
+    def test_calls_enclen( self, enclen_mock ):
         word = 'word'
         conn.encword( word )
-        self.enc_len_mock.called_once_with( 4 )
+        enclen_mock.called_once_with( 4 )
 
-
-    def test_returns_bytes_encoded(self):
-        self.enc_len_mock.return_value = b'len'
+    def test_returns_bytes_encoded(self, enclen_mock):
+        enclen_mock.return_value = b'len'
         retval = conn.encword( 'word' )
         self.assertEqual( retval, b'lenword' )
 
 
+
+@patch('librouteros.connections.encword')
 class EncodeSentence(unittest.TestCase):
 
-
-    def setUp(self):
-        patcher = patch('librouteros.connections.encword')
-        self.enc_word_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-
-    def test_calls_encword( self ):
+    def test_calls_encword( self, enc_word_mock ):
         sentence = ('first', 'second')
-        self.enc_word_mock.side_effect = [ b'first', b'second' ]
+        enc_word_mock.side_effect = [ b'first', b'second' ]
         conn.encsnt( sentence )
         expected_calls = [ call(elem) for elem in sentence ]
-        self.assertEqual( self.enc_word_mock.mock_calls, expected_calls )
+        self.assertEqual( enc_word_mock.mock_calls, expected_calls )
 
-
-    def test_returns_bytes_encoded_sentence(self):
-        self.enc_word_mock.side_effect = [ b'first', b'second' ]
+    def test_returns_bytes_encoded_sentence(self, enc_word_mock):
+        enc_word_mock.side_effect = [ b'first', b'second' ]
         retval = conn.encsnt(( 'first', 'second' ))
         self.assertEqual( retval, b'firstsecond\x00' )
 
-    def test_appends_end_of_sentence_mark_ath_the_end(self):
-        self.enc_word_mock.side_effect = [ b'' ]
+    def test_appends_end_of_sentence_mark_ath_the_end(self, enc_word_mock):
+        enc_word_mock.side_effect = [ b'' ]
         retval = conn.encsnt( ('',) )
         self.assertEqual( b'\x00', retval )
 
