@@ -121,23 +121,20 @@ class VersionCompareTests(TestCase):
         self.assertFalse( result )
 
 
-class VersionCompareTests(TestCase):
+class ChainMapTests(TestCase):
 
     def setUp(self):
         self.default_dict = dict(port=123, timeout=10)
-        self.provided_dict = dict(username='admin', host='1.1.1.1')
-        self.overide_dict = dict(port=222)
+        self.override_dict = dict(username='admin', host='1.1.1.1', port=222)
+        self.chained = ChainMap(self.override_dict, self.default_dict)
 
     def test_raises_KeyError_if_key_is_not_found(self):
-        chained = ChainMap(self.overide_dict, self.default_dict)
         with self.assertRaises(KeyError):
-            chained['username']
+            self.chained['not_found']
 
-    def test_accessing_username_returns_from_provided_dict(self):
-        chained = ChainMap(self.provided_dict, self.default_dict)
-        self.assertEqual(chained['username'], self.provided_dict['username'])
+    def test_timeout_is_equal_to_key_value_in_default_dict(self):
+        self.assertEqual(self.chained['timeout'], self.default_dict['timeout'])
 
-    def test_accessing_port_returns_from_overrided_dict(self):
-        chained = ChainMap(self.overide_dict, self.default_dict)
-        self.assertEqual(chained['port'], self.overide_dict['port'])
+    def test_port_is_equal_to_key_value_from_overrided_dict(self):
+        self.assertEqual(self.chained['port'], self.override_dict['port'])
 
