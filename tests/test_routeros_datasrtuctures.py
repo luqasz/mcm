@@ -6,6 +6,8 @@ try:
 except ImportError:
     from mock import MagicMock, patch, call
 
+from tests_utils.equality_checks import SentenceEquality
+
 from librouteros.datastructures import parsresp, parsnt, mksnt, mkattrwrd, convattrwrd, castValToPy, castValToApi, raiseIfFatal, trapCheck
 from librouteros.exc import CmdError, ConnError
 
@@ -106,13 +108,13 @@ class AttributeWordCreation(unittest.TestCase):
 
 
 
-class ApiSentenceCreation(unittest.TestCase):
+class ApiSentenceCreation(unittest.TestCase, SentenceEquality):
 
     def test_returns_valid_api_sentence( self ):
+        self.addTypeEqualityFunc(tuple, 'assertApiSentenceEqual')
         call_dict = { 'interface':'ether1', 'disabled':'false' }
         result = ( '=interface=ether1', '=disabled=false' )
         self.assertEqual( result, mksnt( call_dict ) )
-
 
 
 class ApiResponseParsing(unittest.TestCase):

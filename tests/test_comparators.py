@@ -6,6 +6,7 @@ except ImportError:
     from mock import MagicMock
 from unittest import TestCase
 
+from tests_utils.equality_checks import SentenceEquality
 
 from comparators import UniqueKeyComparator, SingleElementComparator, OrderedComparator
 from datastructures import CmdPathRow
@@ -142,7 +143,7 @@ class UniqueKeyComparator_Tests(TestCase):
 
 
 
-class UniqueKeyComparator_compare_Tests(TestCase):
+class UniqueKeyComparator_compare_Tests(TestCase, SentenceEquality):
 
     def setUp(self):
         self.wanted_row = CmdPathRow(data={'name':'admin', 'group':'read'})
@@ -151,6 +152,7 @@ class UniqueKeyComparator_compare_Tests(TestCase):
         self.difference = CmdPathRow(data={'group':'read', '.id':'*2'})
         self.TestCls = UniqueKeyComparator( keys=('name',) )
         self.present = (self.unwanted_row, self.present_row)
+        self.addTypeEqualityFunc(tuple, 'assertApiSentenceEqual')
 
     def test_compare_returns_unwanted_row_in_DEL(self):
         ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,), present=self.present)
@@ -158,8 +160,7 @@ class UniqueKeyComparator_compare_Tests(TestCase):
 
     def test_compare_returns_all_rows_from_present_in_DEL_when_empty_wanted(self):
         ADD, SET, DEL = self.TestCls.compare(wanted=(), present=self.present)
-        # objects in DEL may be returned in any order
-        self.assertEqual(set(DEL), set((self.unwanted_row,self.present_row)))
+        self.assertEqual(DEL, (self.unwanted_row,self.present_row))
 
     def test_compare_returns_difference_in_SET(self):
         ADD, SET, DEL = self.TestCls.compare(wanted=(self.wanted_row,), present=self.present)
