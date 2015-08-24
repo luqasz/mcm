@@ -24,6 +24,10 @@ class MasterAdapter:
         return data
 
 
+    def close(self):
+        self.device.close()
+
+
     @staticmethod
     def assemble_data(data):
         return tuple(CmdPathRow(data=elem) for elem in data)

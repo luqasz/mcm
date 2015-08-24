@@ -5,6 +5,7 @@ try:
 except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
+from inspect import ismethod
 
 
 from iodevices import RouterOsAPIDevice, StaticConfig
@@ -24,6 +25,9 @@ class StaticConfig_Tests(TestCase):
     def test_read_returns_valid_rules(self):
         returned = self.TestCls.read(path='test_path')
         self.assertEqual(returned, [{'key':'value'}])
+
+    def test_has_close_method(self):
+        self.assertTrue(ismethod(self.TestCls.close))
 
 
 
@@ -113,6 +117,10 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.api.run.side_effect = CmdError
         with self.assertRaises(WriteError):
             self.TestCls.SET(command=MagicMock(), data=MagicMock())
+
+    def test_close_calls_api_close(self):
+        self.TestCls.close()
+        self.TestCls.api.close.assert_called_once_with()
 
 
 

@@ -102,6 +102,9 @@ class Configurator:
                 msg = 'Failed to read {path} {reason}'.format(path=path.absolute, reason=error)
                 logger.error(msg)
 
+        self.master.close()
+        self.slave.close()
+
 
     def getPathConfigurator(self, path):
         strategy = 'with_' + path.strategy

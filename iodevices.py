@@ -19,6 +19,10 @@ class StaticConfig:
                 return section['rules']
 
 
+    def close(self):
+        pass
+
+
 
 class RouterOsAPIDevice:
 
@@ -62,6 +66,10 @@ class RouterOsAPIDevice:
             self.api.run(cmd=command, args=data)
         except CmdError as error:
             raise WriteError(error)
+
+
+    def close(self):
+        self.api.close()
 
 
     @staticmethod

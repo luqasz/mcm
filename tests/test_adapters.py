@@ -39,6 +39,10 @@ class MasterAdapter_Tests(TestCase):
         returned = self.TestCls.assemble_data(data=self.data)
         self.assertIs(type(returned), tuple)
 
+    def test_close_calls_device_close(self):
+        self.TestCls.close()
+        self.TestCls.device.close.assert_called_once_with()
+
 
 class SlaveAdapter_Tests(TestCase):
 

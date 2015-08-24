@@ -184,3 +184,15 @@ class Configurator_Tests(TestCase):
         self.TestCls.getPathConfigurator(path=self.path)
         exactmock.assert_called_once_with(configurator=self.TestCls, path=self.path)
 
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_calls_master_close(self, pathcfgmock):
+        '''After iterating over all paths close master.'''
+        self.TestCls.run(paths=(self.path,))
+        self.TestCls.master.close.assert_called_once_with()
+
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_calls_slave_close(self, pathcfgmock):
+        '''After iterating over all paths close slave.'''
+        self.TestCls.run(paths=(self.path,))
+        self.TestCls.slave.close.assert_called_once_with()
+
