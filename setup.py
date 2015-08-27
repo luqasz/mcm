@@ -25,8 +25,8 @@ setup(
         install_requires=install_pkgs,
         tests_require=tests_pkgs,
         extras_require={'tests': tests_pkgs},
-        # entry_points={
-        #     'console_scripts': 'mcm=mcm.cli:main'
-        # },
+        entry_points={
+            'console_scripts': 'mcm=mcm.cli:main'
+        },
         zip_safe=False
 )
