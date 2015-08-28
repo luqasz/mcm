@@ -8,8 +8,8 @@ except ImportError:
 
 from socket import error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 
-from librouteros.exc import ConnError, LoginError, CmdError
-from librouteros import connect, _encode_password
+from mcm.librouteros.exc import ConnError, LoginError, CmdError
+from mcm.librouteros import connect, _encode_password
 
 
 
@@ -21,10 +21,10 @@ class PasswordEncoding(unittest.TestCase):
 
 
 
-@patch('librouteros.Api')
-@patch('librouteros.ReaderWriter')
-@patch('librouteros.create_connection')
-@patch('librouteros._encode_password')
+@patch('mcm.librouteros.Api')
+@patch('mcm.librouteros.ReaderWriter')
+@patch('mcm.librouteros.create_connection')
+@patch('mcm.librouteros._encode_password')
 class Test_connect(unittest.TestCase):
 
 

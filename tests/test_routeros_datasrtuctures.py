@@ -8,8 +8,8 @@ except ImportError:
 
 from tests_utils.equality_checks import SentenceEquality
 
-from librouteros.datastructures import parsresp, parsnt, mksnt, mkattrwrd, convattrwrd, castValToPy, castValToApi, raiseIfFatal, trapCheck
-from librouteros.exc import CmdError, ConnError
+from mcm.librouteros.datastructures import parsresp, parsnt, mksnt, mkattrwrd, convattrwrd, castValToPy, castValToApi, raiseIfFatal, trapCheck
+from mcm.librouteros.exc import CmdError, ConnError
 
 
 
@@ -117,54 +117,42 @@ class ApiSentenceCreation(unittest.TestCase, SentenceEquality):
         self.assertEqual( result, mksnt( call_dict ) )
 
 
+@patch('mcm.librouteros.datastructures.parsnt', return_value=())
 class ApiResponseParsing(unittest.TestCase):
 
 
-    def setUp(self):
-        parsnt_patcher = patch('librouteros.datastructures.parsnt')
-        self.parsnt_mock = parsnt_patcher.start()
-        self.parsnt_mock.return_value = ()
-        self.addCleanup(parsnt_patcher.stop)
-
-
-    def test_filters_out_empty_sentences( self ):
+    def test_filters_out_empty_sentences( self, parsesnt_mock ):
         sentences = ( (), () )
         expected_result = ()
         result = parsresp( sentences )
         self.assertEqual( expected_result, result )
 
 
-    def test_calls_api_sentence_parsing_method( self ):
+    def test_calls_api_sentence_parsing_method( self, parsesnt_mock ):
         sentences = ( (1,2), (1,2) )
         expected_calls = [ call(elem) for elem in sentences ]
 
         parsresp( sentences )
-        calls = self.parsnt_mock.mock_calls
+        calls = parsesnt_mock.mock_calls
         self.assertEqual( calls, expected_calls )
 
 
 
+@patch('mcm.librouteros.datastructures.convattrwrd', return_value = (1,2))
 class ApiSentenceParsing(unittest.TestCase):
 
 
-    def setUp(self):
-        conv_patcher = patch('librouteros.datastructures.convattrwrd')
-        self.conv_mock = conv_patcher.start()
-        self.conv_mock.return_value = (1,2)
-        self.addCleanup(conv_patcher.stop)
-
-
-    def test_calls_tuple_creation_method(self):
+    def test_calls_tuple_creation_method(self, convattr_mock):
         call_snt = ( '=disabled=false', '=interface=ether1' )
 
         parsnt( call_snt )
         call_list = [ call(elem) for elem in call_snt ]
-        self.assertEqual( call_list, self.conv_mock.mock_calls )
+        self.assertEqual( call_list, convattr_mock.mock_calls )
 
 
-    def test_filters_out_non_attribute_words(self):
+    def test_filters_out_non_attribute_words(self, convattr_mock):
         call_snt = ( '=disabled=false', '=interface=ether1', 'no_attr_word' )
 
         parsnt( call_snt )
         call_list = [ call(elem) for elem in call_snt[:2] ]
-        self.assertEqual( call_list, self.conv_mock.mock_calls )
+        self.assertEqual( call_list, convattr_mock.mock_calls )

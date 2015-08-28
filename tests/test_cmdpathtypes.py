@@ -6,7 +6,7 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from cmdpathtypes import MENU_PATHS
+from mcm.cmdpathtypes import MENU_PATHS
 
 class CmdPathTypes_DataStructures_Tests(TestCase):
 

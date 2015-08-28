@@ -6,8 +6,8 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from adapters import MasterAdapter, SlaveAdapter
-from exceptions import WriteError
+from mcm.adapters import MasterAdapter, SlaveAdapter
+from mcm.exceptions import WriteError
 
 
 
@@ -29,12 +29,12 @@ class MasterAdapter_Tests(TestCase):
         self.TestCls.read(path=self.path)
         assemblemock.assert_called_once_with(data=self.TestCls.device.read.return_value)
 
-    @patch('adapters.CmdPathRow')
+    @patch('mcm.adapters.CmdPathRow')
     def test_assemble_data_calls_CmdPathRow(self, rowmock):
         self.TestCls.assemble_data(data=self.data)
         rowmock.assert_any_call(data=self.element)
 
-    @patch('adapters.CmdPathRow')
+    @patch('mcm.adapters.CmdPathRow')
     def test_assemble_data_returns_tuple(self,rowmock):
         returned = self.TestCls.assemble_data(data=self.data)
         self.assertIs(type(returned), tuple)

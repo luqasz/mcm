@@ -6,8 +6,8 @@ except ImportError:
     from mock import MagicMock, patch, call
 from unittest import TestCase
 
-from validators import validate_list, validate_value, validate_type
-from exceptions import ValidateError
+from mcm.validators import validate_list, validate_value, validate_type
+from mcm.exceptions import ValidateError
 
 
 class ValidateListTests(TestCase):

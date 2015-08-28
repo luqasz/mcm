@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 
 
-from librouteros.datastructures import mksnt, parsresp, trapCheck, raiseIfFatal
-from librouteros.exc import LibError
+from mcm.librouteros.datastructures import mksnt, parsresp, trapCheck, raiseIfFatal
+from mcm.librouteros.exc import LibError
 
 
 class Api:

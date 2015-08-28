@@ -3,7 +3,7 @@
 from argparse import ArgumentParser, ArgumentTypeError
 from json import load as json_load
 
-from static import __version__
+from mcm import __version__
 
 
 

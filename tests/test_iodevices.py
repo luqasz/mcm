@@ -8,9 +8,9 @@ from unittest import TestCase
 from inspect import ismethod
 
 
-from iodevices import RouterOsAPIDevice, StaticConfig
-from librouteros import CmdError
-from exceptions import ReadError, WriteError
+from mcm.iodevices import RouterOsAPIDevice, StaticConfig
+from mcm.librouteros import CmdError
+from mcm.exceptions import ReadError, WriteError
 
 
 

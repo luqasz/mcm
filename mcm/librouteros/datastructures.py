@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from librouteros.exc import CmdError, ConnError
+from mcm.librouteros.exc import CmdError, ConnError
 
 to_py_mapping = {'yes': True,
                    'true': True,

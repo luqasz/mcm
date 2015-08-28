@@ -3,7 +3,7 @@
 from posixpath import join as pjoin
 from collections import namedtuple
 
-from cmdpathtypes import MENU_PATHS
+from mcm.cmdpathtypes import MENU_PATHS
 
 
 CmdPath = namedtuple('CmdPath', ('absolute', 'type', 'keys', 'modord', 'strategy'))

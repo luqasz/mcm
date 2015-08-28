@@ -26,7 +26,7 @@ setup(
         tests_require=tests_pkgs,
         extras_require={'tests': tests_pkgs},
         entry_points={
-            'console_scripts': 'mcm=mcm.cli:main'
+            'console_scripts': 'mcm=mcm.mcm:main'
         },
         zip_safe=False
 )

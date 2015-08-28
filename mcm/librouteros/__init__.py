@@ -16,9 +16,9 @@ try:
 except ImportError:
     from tools import ChainMap
 
-from librouteros.exc import ConnError, CmdError, LoginError
-from librouteros.connections import ReaderWriter
-from librouteros.api import Api
+from mcm.librouteros.exc import ConnError, CmdError, LoginError
+from mcm.librouteros.connections import ReaderWriter
+from mcm.librouteros.api import Api
 
 NULL_LOGGER = getLogger( 'api_null_logger' )
 NULL_LOGGER.addHandler( NullHandler() )

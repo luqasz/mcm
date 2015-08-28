@@ -14,7 +14,7 @@ except ImportError:
 import operator
 
 
-from tools import StopWatch, timer, vcmp, ChainMap
+from mcm.tools import StopWatch, timer, vcmp, ChainMap
 
 
 
@@ -33,7 +33,7 @@ class TimerFunctionImport(TestCase):
 
 
 
-@patch('tools.timer', side_effect=[14705.275287508, 14711.190629636])
+@patch('mcm.tools.timer', side_effect=[14705.275287508, 14711.190629636])
 class StopWatchTests(TestCase):
 
     def setUp(self):

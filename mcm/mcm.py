@@ -3,14 +3,14 @@
 
 from getpass import getpass
 
-from librouteros import LoginError, connect, ConnError
+from mcm.librouteros import LoginError, connect, ConnError
 
-from args import get_arguments
-from iodevices import StaticConfig, RouterOsAPIDevice
-from adapters import SlaveAdapter, MasterAdapter
-from configurators import Configurator
-from loggers import setup as setup_logging
-from datastructures import make_cmdpath
+from mcm.args import get_arguments
+from mcm.iodevices import StaticConfig, RouterOsAPIDevice
+from mcm.adapters import SlaveAdapter, MasterAdapter
+from mcm.configurators import Configurator
+from mcm.loggers import setup as setup_logging
+from mcm.datastructures import make_cmdpath
 
 
 
@@ -36,8 +36,7 @@ def mk_paths(data):
         paths.append(CmdPath)
     return paths
 
-
-if __name__ == '__main__':
+def main():
     args = get_arguments()
     mainlog = setup_logging(verbosity=args.verbose)
     master = mk_master(config=args.config['paths'])
@@ -57,3 +56,6 @@ if __name__ == '__main__':
 
     configurator = Configurator(master=master, slave=slave)
     configurator.run(paths=paths)
+
+if __name__ == '__main__':
+    main()

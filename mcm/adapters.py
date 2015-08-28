@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
-from datastructures import CmdPathRow
-from exceptions import WriteError
+from mcm.datastructures import CmdPathRow
+from mcm.exceptions import WriteError
 
 from logging import getLogger
 

@@ -6,7 +6,7 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from configurators import CmdPathConfigurator, real_action, no_action, Configurator
+from mcm.configurators import CmdPathConfigurator, real_action, no_action, Configurator
 
 
 class CmdPathConfigurator_Tests(TestCase):
@@ -118,7 +118,7 @@ class CmdPathConfigurator_Tests(TestCase):
 
 
 
-@patch('configurators.get_comparator')
+@patch('mcm.configurators.get_comparator')
 @patch.object(CmdPathConfigurator, '__init__', return_value=None)
 class Strategy_Factory_Tests(TestCase):
 
