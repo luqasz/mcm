@@ -14,7 +14,7 @@ from hashlib import md5
 try:
     from collections import ChainMap
 except ImportError:
-    from tools import ChainMap
+    from mcm.tools import ChainMap
 
 from mcm.librouteros.exc import ConnError, CmdError, LoginError
 from mcm.librouteros.connections import ReaderWriter
