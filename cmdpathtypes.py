@@ -88,6 +88,11 @@ MENU_PATHS = {
     'modord': ('SET',),
     'type': 'single'
     },
+'/ip/firewall/address-list': {
+    'keys': ('list','address'),
+    'modord': ('SET', 'ADD', 'DEL'),
+    'type': 'uniquekey'
+    },
 '/ip/firewall/connection/tracking': {
     'keys': (),
     'modord': ('SET',),
