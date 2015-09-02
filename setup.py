@@ -21,10 +21,12 @@ setup(
         author_email='lukasz.kostka@netng.pl',
         license='MIT',
         packages=['mcm'],
-        setup_requires=dev_pkgs,
         install_requires=install_pkgs,
         tests_require=tests_pkgs,
-        extras_require={'tests': tests_pkgs},
+        extras_require={
+            'tests': tests_pkgs,
+            'develop': dev_pkgs,
+        },
         entry_points={
             'console_scripts': 'mcm=mcm.mcm:main'
         },
