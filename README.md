@@ -16,4 +16,4 @@ MCM is a radically simple automation system. It handles configuration management
 
 `pip3 install mcm`
 
-### [Developement!](DEVELOP.md)
+### [Developement](DEVELOP.md)
