@@ -2,7 +2,7 @@
 
 ### This is beta version
 
-This software is still under developement. Be cautious on using this. There are still some command path specifications missing. If you see `Could not find path specification for '/ip/address'`, please cntact author or create an issue.
+This software is still under developement. Be cautious on using this. There are still some command path specifications missing. If you see an error `Could not find path specification for ...`, please cntact author or create an issue.
 
 ### Mikrotik Configuration Manager
 
