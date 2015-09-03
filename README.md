@@ -11,6 +11,7 @@ MCM is a radically simple automation system. It handles configuration management
 ### Requirements
 
 * python3
+* All config files must be utf-8 encoded
 
 ### Installation
 
