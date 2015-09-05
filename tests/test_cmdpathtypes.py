@@ -5,6 +5,7 @@ try:
 except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
+import re
 
 from mcm.cmdpathtypes import MENU_PATHS
 
@@ -34,6 +35,7 @@ class CmdPathTypes_DataStructures_Tests(TestCase):
         for path, attrs in self.paths:
             self.assertNotEqual(attrs['modord'], tuple(), msg='found in {}'.format(path))
 
+
 class CmdPathTypes_modord_value_Tests(TestCase):
 
     def setUp(self):
@@ -51,3 +53,17 @@ class CmdPathTypes_modord_value_Tests(TestCase):
         for path, attributes in self.paths:
             self.assertEqual(attributes['modord'], self.valid_modord, msg='found in {}'.format(path))
 
+
+class Duplicate_Tests(TestCase):
+
+    def assertNoDuplicates(self, to_check):
+        duplicates = set([elem for elem in to_check if to_check.count(elem) > 1])
+        if duplicates:
+            raise AssertionError('Duplicated entries found:\n{}'.format('\n'.join(duplicates)))
+
+    def test_duplicated_entries(self):
+        '''Check if there are any duplicated command path definitions.'''
+        with open('mcm/cmdpathtypes.py') as definitions_file:
+            content = definitions_file.read()
+            found = re.findall(r'(?:\/[a-z0-9-]+)+', content)
+            self.assertNoDuplicates(found)
