@@ -38,7 +38,8 @@ class CmdPathRow:
         '''
         Return ready for logging data.
         '''
-        return ' '.join('{}={}'.format(key, value) for key, value in self.data.items())
+        bool_map = {True:'yes', False:'no'}
+        return ' '.join('{}={}'.format(key, bool_map.get(value, value)) for key, value in self.data.items())
 
 
     def __eq__(self, other):
