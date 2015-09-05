@@ -228,11 +228,6 @@ MENU_PATHS = {
     'modord': ('SET',),
     'type': 'uniquekey'
     },
-'/ip/upnp/interfaces': {
-    'keys': ('interface',),
-    'modord': ('SET', 'ADD', 'DEL'),
-    'type': 'uniquekey'
-    },
 '/ipv6/nd': {
     'keys': ('interface',),
     'modord': ('SET', 'ADD', 'DEL'),
