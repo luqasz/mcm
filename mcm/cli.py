@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
 from getpass import getpass
@@ -56,6 +55,3 @@ def main():
 
     configurator = Configurator(master=master, slave=slave)
     configurator.run(paths=paths)
-
-if __name__ == '__main__':
-    main()

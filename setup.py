@@ -28,7 +28,7 @@ setup(
             'develop': dev_pkgs,
         },
         entry_points={
-            'console_scripts': 'mcm=mcm.mcm:main'
+            'console_scripts': 'mcm=mcm.cli:main'
         },
         zip_safe=False
 )
