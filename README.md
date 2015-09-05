@@ -1,16 +1,20 @@
 [![Build Status](https://travis-ci.org/luqasz/mcm.svg)](https://travis-ci.org/luqasz/mcm)
 
-## Mikrotik Configuration Manager
+### This is beta version
 
-Manage multiple mikrotik devices remotely.
+This software is still under developement. Things may change. There are still some command path specifications missing. If you see an error `Could not find path specification for ...`, please cntact author or create an issue with exact error message.
 
-* [Documentation](https://github.com/luqasz/mcm/wiki)
+### Mikrotik Configuration Manager
 
-## Requirements
+MCM is a radically simple automation system. It handles configuration management and multiple devices orchestration. For more information [read this](https://github.com/luqasz/mcm/wiki).
+
+### Requirements
 
 * python3
+* All config files must be utf-8 encoded
 
-## Coding style
+### Installation
 
-* 4 spaces indentiation
-* UTF-8 encoding
+`pip3 install mcm`
+
+### [Developement](DEVELOP.md)

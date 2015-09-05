@@ -7,8 +7,8 @@ try:
 except ImportError:
     from mock import MagicMock, call, patch
 
-import librouteros.connections as conn
-from librouteros.exc import ConnError
+import mcm.librouteros.connections as conn
+from mcm.librouteros.exc import ConnError
 
 
 class LengthEncoding(unittest.TestCase):
@@ -56,45 +56,42 @@ class LengthDecoding(unittest.TestCase):
 
 
 
+@patch('mcm.librouteros.connections.declen')
 class GetLengths(unittest.TestCase):
 
 
     def setUp(self):
-        patcher = patch('librouteros.connections.declen')
-        self.dec_len_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
         self.rwo = conn.ReaderWriter( None, None )
         self.rwo.readSock = MagicMock()
 
-    def test_calls_declen(self):
+    def test_calls_declen(self, dec_len_mock):
         self.rwo.readSock.side_effect = [b'\x7f', b'']
         self.rwo.getLen()
-        self.dec_len_mock.assert_called_once_with( b'\x7f' )
+        dec_len_mock.assert_called_once_with( b'\x7f' )
 
-    def test_raises_if_first_byte_if_greater_than_239( self ):
+    def test_raises_if_first_byte_if_greater_than_239( self , dec_len_mock):
         self.rwo.readSock.return_value = b'\xf0'
         self.assertRaises( ConnError, self.rwo.getLen )
 
-    def test_calls_read_socket_less_than_128( self ):
+    def test_calls_read_socket_less_than_128( self , dec_len_mock):
         self.rwo.readSock.side_effect = [b'\x7f', b'']
         self.rwo.getLen()
         expected_calls = [ call(1), call(0) ]
         self.assertEqual( self.rwo.readSock.mock_calls, expected_calls )
 
-    def test_calls_read_socket_less_than_16384( self ):
+    def test_calls_read_socket_less_than_16384( self , dec_len_mock):
         self.rwo.readSock.side_effect = [ b'\x80', b'\x82' ]
         self.rwo.getLen()
         expected_calls = [ call(1), call(1) ]
-        self.assertEqual( self.rwo.readSock.mock_calls, expected_calls )
+        self.assertEqual( self.rwo.readSock.mock_calls, expected_calls , dec_len_mock)
 
-    def test_calls_read_socket_less_than_2097152( self ):
+    def test_calls_read_socket_less_than_2097152( self , dec_len_mock):
         self.rwo.readSock.side_effect = [ b'\xdf', b'\xff\xf4' ]
         self.rwo.getLen()
         expected_calls = [ call(1), call(2) ]
         self.assertEqual( self.rwo.readSock.mock_calls, expected_calls )
 
-    def test_calls_read_socket_less_than_268435456( self ):
+    def test_calls_read_socket_less_than_268435456( self , dec_len_mock):
         self.rwo.readSock.side_effect = [ b'\xef', b'\xff\xff\xf0' ]
         self.rwo.getLen()
         expected_calls = [ call(1), call(3) ]
@@ -102,7 +99,7 @@ class GetLengths(unittest.TestCase):
 
 
 
-@patch('librouteros.connections.enclen')
+@patch('mcm.librouteros.connections.enclen')
 class EncodeWord(unittest.TestCase):
 
     def test_calls_enclen( self, enclen_mock ):
@@ -117,7 +114,7 @@ class EncodeWord(unittest.TestCase):
 
 
 
-@patch('librouteros.connections.encword')
+@patch('mcm.librouteros.connections.encword')
 class EncodeSentence(unittest.TestCase):
 
     def test_calls_encword( self, enc_word_mock ):
@@ -226,8 +223,8 @@ class ReadSock(unittest.TestCase):
 
 
 
-@patch('librouteros.connections.log_snt')
-@patch('librouteros.connections.encsnt')
+@patch('mcm.librouteros.connections.log_snt')
+@patch('mcm.librouteros.connections.encsnt')
 class WriteSentence(unittest.TestCase):
 
 
@@ -251,8 +248,8 @@ class WriteSentence(unittest.TestCase):
 
 
 
-@patch('librouteros.connections.log_snt')
-@patch('librouteros.connections.decsnt')
+@patch('mcm.librouteros.connections.log_snt')
+@patch('mcm.librouteros.connections.decsnt')
 class ReadSentence(unittest.TestCase):
 
 

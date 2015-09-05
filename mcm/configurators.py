@@ -3,8 +3,8 @@
 from types import MethodType
 from logging import getLogger
 
-from comparators import get_comparator
-from exceptions import ReadError
+from .comparators import get_comparator
+from .exceptions import ReadError
 
 logger = getLogger('mcm.' + __name__)
 

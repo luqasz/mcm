@@ -6,16 +6,16 @@ try:
 except ImportError:
     from mock import MagicMock, patch
 
-from librouteros.api import Api
-from librouteros.exc import CmdError, ConnError, LibError
-from librouteros.connections import ReaderWriter
+from mcm.librouteros.api import Api
+from mcm.librouteros.exc import CmdError, ConnError, LibError
+from mcm.librouteros.connections import ReaderWriter
 
 
 
-@patch( 'librouteros.api.parsresp' )
-@patch( 'librouteros.api.mksnt' )
-@patch( 'librouteros.api.trapCheck' )
-@patch( 'librouteros.api.raiseIfFatal' )
+@patch( 'mcm.librouteros.api.parsresp' )
+@patch( 'mcm.librouteros.api.mksnt' )
+@patch( 'mcm.librouteros.api.trapCheck' )
+@patch( 'mcm.librouteros.api.raiseIfFatal' )
 @patch.object( Api, '_readResponse' )
 @patch.object( Api, 'close' )
 class RunMethod(unittest.TestCase):

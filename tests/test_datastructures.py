@@ -6,10 +6,10 @@ except ImportError:
     from mock import MagicMock, patch
 from unittest import TestCase
 
-from datastructures import CmdPathRow, make_cmdpath
+from mcm.datastructures import CmdPathRow, make_cmdpath
 
 
-@patch('datastructures.MENU_PATHS')
+@patch('mcm.datastructures.MENU_PATHS')
 class CmdPath_Tests(TestCase):
 
     def test_absolute_attribute_returns_absolute_path_without_appended_forward_slash(self, paths_mock):

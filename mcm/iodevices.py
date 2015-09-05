@@ -1,8 +1,9 @@
 # -*- coding: UTF-8 -*-
 
 from posixpath import join as pjoin
-from librouteros import CmdError
-from exceptions import ReadError, WriteError
+
+from mcm.librouteros import CmdError
+from mcm.exceptions import ReadError, WriteError
 
 
 

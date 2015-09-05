@@ -8,8 +8,8 @@ from unittest import TestCase
 
 from tests_utils.equality_checks import SentenceEquality
 
-from comparators import UniqueKeyComparator, SingleElementComparator, OrderedComparator
-from datastructures import CmdPathRow
+from mcm.comparators import UniqueKeyComparator, SingleElementComparator, OrderedComparator
+from mcm.datastructures import CmdPathRow
 
 
 
