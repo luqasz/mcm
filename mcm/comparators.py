@@ -2,7 +2,7 @@
 
 from itertools import zip_longest
 
-from .datastructures import CmdPathRow
+from mcm.datastructures import CmdPathRow
 
 
 
