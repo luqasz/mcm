@@ -48,13 +48,21 @@ class CmdPathRow_Tests(TestCase):
     def test_str_on_instance_returns_string(self):
         self.assertIsInstance( str(self.TestCls), str )
 
-    def test_str_on_instance_returns_substitute_True_with_yes(self):
+    def test_str_on_instance_substitute_True_with_yes(self):
         row = CmdPathRow(data={'enabled':True})
         self.assertEqual(str(row), 'enabled=yes')
 
-    def test_str_on_instance_returns_substitute_False_with_no(self):
+    def test_str_on_instance_substitute_False_with_no(self):
         row = CmdPathRow(data={'enabled':False})
         self.assertEqual(str(row), 'enabled=no')
+
+    def test_str_on_instance_substitute_None_with_double_quotes(self):
+        row = CmdPathRow(data={'servers':None})
+        self.assertEqual(str(row), 'servers=""')
+
+    def test_str_on_instance_substitute_single_quotes_with_double_quotes(self):
+        row = CmdPathRow(data={'servers':''})
+        self.assertEqual(str(row), 'servers=""')
 
     def test_equal_returns_True_when_data_is_same(self):
         self.TestCls.data = dict(some_key='value')

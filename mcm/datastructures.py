@@ -38,7 +38,7 @@ class CmdPathRow:
         '''
         Return ready for logging data.
         '''
-        bool_map = {True:'yes', False:'no'}
+        bool_map = {True:'yes', False:'no', None:'""', '':'""'}
         return ' '.join('{}={}'.format(key, bool_map.get(value, value)) for key, value in self.data.items())
 
 
