@@ -6,4 +6,4 @@ python:
 install:
   - "python setup.py develop"
   - "pip install -e '.[tests]'"
-script: nosetests
+script: py.test

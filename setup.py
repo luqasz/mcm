@@ -9,7 +9,7 @@ install_pkgs=[
         ]
 
 tests_pkgs=[
-        'nose==1.3.7',
+        'pytest==2.7.2',
         ]
 
 setup(
