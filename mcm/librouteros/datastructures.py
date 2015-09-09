@@ -84,8 +84,9 @@ def mkattrwrd( kv ):
 
     key, value = kv
     casted_value = castValToApi( value )
+    prefix = '' if key == '.tag' else '='
 
-    return '={0}={1}'.format( key, casted_value )
+    return '{prefix}{key}={value}'.format( prefix=prefix, key=key, value=casted_value )
 
 
 def convattrwrd( word ):

@@ -10,6 +10,7 @@ install_pkgs=[
 
 tests_pkgs=[
         'pytest==2.7.2',
+        'mock==1.3.0'
         ]
 
 setup(

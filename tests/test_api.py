@@ -1,10 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import unittest
-try:
-    from unittest.mock import MagicMock, patch
-except ImportError:
-    from mock import MagicMock, patch
+from mock import MagicMock, patch
 
 from mcm.librouteros.api import Api
 from mcm.librouteros.exc import CmdError, ConnError, LibError

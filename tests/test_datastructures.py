@@ -1,12 +1,15 @@
 # -*- coding: UTF-8 -*-
 
-try:
-    from unittest.mock import MagicMock, patch
-except ImportError:
-    from mock import MagicMock, patch
+from mock import MagicMock, patch
 from unittest import TestCase
+import pytest
 
 from mcm.datastructures import CmdPathRow, make_cmdpath
+
+
+@pytest.fixture(scope='module')
+def cmd_path_row():
+    return CmdPathRow(data=MagicMock())
 
 
 @patch('mcm.datastructures.MENU_PATHS')
@@ -38,31 +41,22 @@ class CmdPath_Tests(TestCase):
             make_cmdpath('/ip/address', 'exact')
 
 
+@pytest.mark.parametrize("data,expected", (
+    ( {'enabled':True}, 'enabled=yes' ),
+    ( {'enabled':False}, 'enabled=no' ),
+    ( {'servers':None}, 'servers=""' ),
+    ( {'servers':''}, 'servers=""' ),
+    ))
+def test_CmdPathRow_str(data, expected, cmd_path_row):
+    cmd_path_row.data = data
+    assert str(cmd_path_row) == expected
+
 
 class CmdPathRow_Tests(TestCase):
 
     def setUp(self):
         self.TestCls = CmdPathRow(data=MagicMock())
         self.Other = CmdPathRow(data=MagicMock())
-
-    def test_str_on_instance_returns_string(self):
-        self.assertIsInstance( str(self.TestCls), str )
-
-    def test_str_on_instance_substitute_True_with_yes(self):
-        row = CmdPathRow(data={'enabled':True})
-        self.assertEqual(str(row), 'enabled=yes')
-
-    def test_str_on_instance_substitute_False_with_no(self):
-        row = CmdPathRow(data={'enabled':False})
-        self.assertEqual(str(row), 'enabled=no')
-
-    def test_str_on_instance_substitute_None_with_double_quotes(self):
-        row = CmdPathRow(data={'servers':None})
-        self.assertEqual(str(row), 'servers=""')
-
-    def test_str_on_instance_substitute_single_quotes_with_double_quotes(self):
-        row = CmdPathRow(data={'servers':''})
-        self.assertEqual(str(row), 'servers=""')
 
     def test_equal_returns_True_when_data_is_same(self):
         self.TestCls.data = dict(some_key='value')

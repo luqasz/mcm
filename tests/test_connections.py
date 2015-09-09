@@ -1,58 +1,59 @@
 # -*- coding: UTF-8 -*-
 
 import unittest
+import pytest
 from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT, socket
-try:
-    from unittest.mock import MagicMock, call, patch
-except ImportError:
-    from mock import MagicMock, call, patch
+from mock import MagicMock, call, patch
 
-import mcm.librouteros.connections as conn
+from mcm.librouteros import connections
 from mcm.librouteros.exc import ConnError
 
 
-class LengthEncoding(unittest.TestCase):
+integers = (0, 127 ,130 ,2097140 ,268435440)
+encoded = (b'\x00', b'\x7f', b'\x80\x82', b'\xdf\xff\xf4', b'\xef\xff\xff\xf0')
 
 
-    def test_encodes_length_less_than_128( self ):
-        self.assertEqual( conn.enclen( 127 ), b'\x7f' )
-
-    def test_encodes_length_less_than_16384( self ):
-        self.assertEqual( conn.enclen( 130 ), b'\x80\x82' )
-
-    def test_encodes_length_less_than_2097152( self ):
-        self.assertEqual( conn.enclen( 2097140 ), b'\xdf\xff\xf4' )
-
-    def test_encodes_length_less_than_268435456( self ):
-        self.assertEqual( conn.enclen( 268435440 ), b'\xef\xff\xff\xf0' )
-
-    def test_raises_ConnError_if_lenghth_is_too_big( self ):
-        '''Raises ConnError if length >= 268435456'''
-        self.assertRaises( ConnError, conn.enclen, 268435456 )
+@pytest.mark.parametrize("integer,encoded", zip(integers, encoded))
+def test_encoding(integer, encoded):
+    assert connections.enclen(integer) == encoded
 
 
+@pytest.mark.parametrize("encoded,integer", zip(encoded, integers))
+def test_decoding(encoded, integer):
+    assert connections.declen(encoded) == integer
 
-class LengthDecoding(unittest.TestCase):
+
+def test_raises_ConnError_if_lenghth_is_too_big():
+    '''Raises ConnError if length >= 268435456'''
+    with pytest.raises(ConnError):
+        connections.enclen(268435456)
 
 
-    def test_decodes_0_length( self ):
-        self.assertEqual( conn.declen( b'\x00' ), 0 )
+def test_raises_ConnError_if_bytes_is_too_big():
+    '''Raises ConnError if length > 4 bytes'''
+    with pytest.raises(ConnError):
+        connections.declen(b'\xff\xff\xff\xff\xff')
 
-    def test_decodes_length_less_than_128( self ):
-        self.assertEqual( conn.declen( b'\x7f' ), 127 )
 
-    def test_decodes_length_less_than_16384( self ):
-        self.assertEqual( conn.declen( b'\x80\x82' ), 130 )
+@patch('mcm.librouteros.connections.enclen', return_value=b'len')
+def test_word_encode_returns_encoded_word_with_prefixed_length(enclen_mock):
+    assert connections.encword('word') == b'lenword'
 
-    def test_decodes_length_less_than_2097152( self ):
-        self.assertEqual( conn.declen( b'\xdf\xff\xf4' ), 2097140 )
 
-    def test_decodes_length_less_than_268435456( self ):
-        self.assertEqual( conn.declen( b'\xef\xff\xff\xf0'  ), 268435440 )
+@patch('mcm.librouteros.connections.encword', side_effect = [ b'first', b'second' ])
+class EncodeSentence(unittest.TestCase):
 
-    def test_raises_ConnError_if_bytes_is_too_big( self ):
-        '''Raises ConnError if length > 4 bytes'''
-        self.assertRaises( ConnError, conn.declen, b'\xff\xff\xff\xff\xff' )
+    def test_calls_encword( self, enc_word_mock ):
+        sentence = ('first', 'second')
+        connections.encsnt( sentence )
+        assert enc_word_mock.mock_calls == [ call(elem) for elem in sentence ]
+
+    def test_returns_bytes_encoded_sentence_with_appended_EOS(self, enc_word_mock):
+        assert connections.encsnt(( 'first', 'second' )) == b'firstsecond\x00'
+
+
+def test_sentence_decoding():
+    assert connections.decsnt( (b'first', b'second') ) == ('first', 'second')
 
 
 
@@ -61,7 +62,7 @@ class GetLengths(unittest.TestCase):
 
 
     def setUp(self):
-        self.rwo = conn.ReaderWriter( None, None )
+        self.rwo = connections.ReaderWriter( None, None )
         self.rwo.readSock = MagicMock()
 
     def test_calls_declen(self, dec_len_mock):
@@ -99,51 +100,6 @@ class GetLengths(unittest.TestCase):
 
 
 
-@patch('mcm.librouteros.connections.enclen')
-class EncodeWord(unittest.TestCase):
-
-    def test_calls_enclen( self, enclen_mock ):
-        word = 'word'
-        conn.encword( word )
-        enclen_mock.called_once_with( 4 )
-
-    def test_returns_bytes_encoded(self, enclen_mock):
-        enclen_mock.return_value = b'len'
-        retval = conn.encword( 'word' )
-        self.assertEqual( retval, b'lenword' )
-
-
-
-@patch('mcm.librouteros.connections.encword')
-class EncodeSentence(unittest.TestCase):
-
-    def test_calls_encword( self, enc_word_mock ):
-        sentence = ('first', 'second')
-        enc_word_mock.side_effect = [ b'first', b'second' ]
-        conn.encsnt( sentence )
-        expected_calls = [ call(elem) for elem in sentence ]
-        self.assertEqual( enc_word_mock.mock_calls, expected_calls )
-
-    def test_returns_bytes_encoded_sentence(self, enc_word_mock):
-        enc_word_mock.side_effect = [ b'first', b'second' ]
-        retval = conn.encsnt(( 'first', 'second' ))
-        self.assertEqual( retval, b'firstsecond\x00' )
-
-    def test_appends_end_of_sentence_mark_ath_the_end(self, enc_word_mock):
-        enc_word_mock.side_effect = [ b'' ]
-        retval = conn.encsnt( ('',) )
-        self.assertEqual( b'\x00', retval )
-
-
-
-
-class DecodeSentences(unittest.TestCase):
-
-
-    def test_return_decoded(self):
-        retval = conn.decsnt( (b'first', b'second') )
-        self.assertEqual( retval, ('first', 'second') )
-
 
 
 
@@ -152,7 +108,7 @@ class WriteSock(unittest.TestCase):
 
     def setUp(self):
         sock = MagicMock( spec = socket )
-        self.rwo = conn.ReaderWriter( sock, None )
+        self.rwo = connections.ReaderWriter( sock, None )
 
 
     def test_loops_as_long_as_string_is_not_sent(self):
@@ -188,7 +144,7 @@ class ReadSock(unittest.TestCase):
 
     def setUp(self):
         sock = MagicMock( spec = socket )
-        self.rwo = conn.ReaderWriter( sock, None )
+        self.rwo = connections.ReaderWriter( sock, None )
 
     def test_returns_empty_byte_when_called_with_0(self):
         retval = self.rwo.readSock(0)
@@ -229,7 +185,7 @@ class WriteSentence(unittest.TestCase):
 
 
     def setUp(self):
-        self.rwo = conn.ReaderWriter( None, None )
+        self.rwo = connections.ReaderWriter( None, None )
         self.rwo.writeSock = MagicMock()
 
     def test_calls_encode_sentence( self, encsnt_mock, log_mock ):
@@ -254,7 +210,7 @@ class ReadSentence(unittest.TestCase):
 
 
     def setUp(self):
-        self.rwo = conn.ReaderWriter( None, None )
+        self.rwo = connections.ReaderWriter( None, None )
         self.rwo.readSock = MagicMock( side_effect = [ 'first','second' ] )
         self.rwo.getLen = MagicMock( side_effect = [5,6,0] )
 
@@ -282,7 +238,7 @@ class ClosingProcedures(unittest.TestCase):
 
     def setUp(self):
         sock = MagicMock( spec = socket )
-        self.rwo = conn.ReaderWriter( sock, None )
+        self.rwo = connections.ReaderWriter( sock, None )
 
 
     def test_does_not_call_close_if_socket_already_is_closed(self):

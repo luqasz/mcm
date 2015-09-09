@@ -1,65 +1,72 @@
 # -*- coding: UTF-8 -*-
 
-try:
-    from unittest.mock import MagicMock, patch
-except ImportError:
-    from mock import MagicMock, patch
-from unittest import TestCase
+from mock import MagicMock, patch
+import pytest
 
 from mcm.adapters import MasterAdapter, SlaveAdapter
 from mcm.exceptions import WriteError
 
 
-
-class MasterAdapter_Tests(TestCase):
-
-    def setUp(self):
-        self.element = MagicMock()
-        self.data = [self.element]
-        self.TestCls = MasterAdapter(device=MagicMock())
-        self.path = MagicMock()
-
-    @patch.object(MasterAdapter, 'assemble_data')
-    def test_read_calls_device_read(self, assemblemock):
-        self.TestCls.read(path=self.path)
-        self.TestCls.device.read.assert_called_once_with(path=self.path.absolute)
-
-    @patch.object(MasterAdapter, 'assemble_data')
-    def test_read_calls_assemble_data(self, assemblemock):
-        self.TestCls.read(path=self.path)
-        assemblemock.assert_called_once_with(data=self.TestCls.device.read.return_value)
-
-    @patch('mcm.adapters.CmdPathRow')
-    def test_assemble_data_calls_CmdPathRow(self, rowmock):
-        self.TestCls.assemble_data(data=self.data)
-        rowmock.assert_any_call(data=self.element)
-
-    @patch('mcm.adapters.CmdPathRow')
-    def test_assemble_data_returns_tuple(self,rowmock):
-        returned = self.TestCls.assemble_data(data=self.data)
-        self.assertIs(type(returned), tuple)
-
-    def test_close_calls_device_close(self):
-        self.TestCls.close()
-        self.TestCls.device.close.assert_called_once_with()
+@pytest.fixture
+def master_adapter():
+    return MasterAdapter(device=MagicMock())
 
 
-class SlaveAdapter_Tests(TestCase):
+@pytest.fixture
+def slave_adapter():
+    return SlaveAdapter(device=MagicMock())
 
-    def setUp(self):
-        self.TestCls = SlaveAdapter(device=MagicMock())
-        self.path = MagicMock()
-        self.row = MagicMock()
-        self.row.data = MagicMock()
-        self.data = (self.row, )
 
-    def test_write_calls_device_write_with_absolute_path_and_rows_data(self):
-        self.TestCls.write(path=self.path, action=None, data=self.data)
-        self.TestCls.device.write.assert_any_call(path=self.path.absolute, action=None, data=self.row.data)
+@pytest.fixture
+def path():
+    return MagicMock()
 
-    def test_Write_catches_WriteError(self):
-        self.TestCls.device.write.side_effect = WriteError
-        try:
-            self.TestCls.write(path=self.path, action=None, data=self.data)
-        except:
-            self.fail('Unexpected exception raised!')
+
+@pytest.fixture
+def data_row():
+    return MagicMock(name='data_element')
+
+
+@pytest.fixture
+def data_set(data_row):
+    return (data_row,)
+
+
+def test_MasterAdapter_calls_devices_read(master_adapter, path):
+    master_adapter.assemble_data = MagicMock()
+    master_adapter.read(path=path)
+    master_adapter.device.read.assert_called_once_with(path=path.absolute)
+
+
+def test_MasterAdapter_calls_assemble_data(master_adapter, path):
+    master_adapter.assemble_data = MagicMock()
+    master_adapter.read(path=path)
+    master_adapter.assemble_data.assert_called_once_with(data=master_adapter.device.read.return_value)
+
+
+@pytest.mark.parametrize("adapter", (master_adapter(), slave_adapter()))
+def test_adapters_device_close(adapter):
+    adapter.close()
+    adapter.device.close.assert_called_once_with()
+
+
+@patch('mcm.adapters.CmdPathRow')
+def test_assemble_data_calls_CmdPathRow(rowmock, master_adapter, data_set, data_row):
+    master_adapter.assemble_data(data=data_set)
+    rowmock.assert_any_call(data=data_row)
+
+
+@patch('mcm.adapters.CmdPathRow')
+def test_assemble_data_returns_tuple(rowmock, master_adapter, data_set, data_row):
+    result = master_adapter.assemble_data(data=data_set)
+    assert type(result) == tuple
+
+
+def test_SlaveAdapter_write_calls_device_write(slave_adapter, data_set, path, data_row):
+    slave_adapter.write(path=path, action='ADD', data=data_set)
+    slave_adapter.device.write.assert_any_call(path=path.absolute, action='ADD', data=data_row.data)
+
+
+def test_SlaveAdapter_write_catches_WriteError(slave_adapter, data_set, path):
+    slave_adapter.device.side_effect = WriteError
+    slave_adapter.write(path=path, action='ADD', data=data_set)

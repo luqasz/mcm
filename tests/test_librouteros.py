@@ -1,23 +1,17 @@
 #-*- coding: UTF-8 -*-
 
-import unittest
-try:
-    from unittest.mock import MagicMock, patch
-except ImportError:
-    from mock import MagicMock, patch
-
 from socket import error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
+from mock import MagicMock, patch
+import unittest
+import pytest
 
 from mcm.librouteros.exc import ConnError, LoginError, CmdError
 from mcm.librouteros import connect, _encode_password
 
 
 
-class PasswordEncoding(unittest.TestCase):
-
-
-    def test_password_encoding(self):
-        self.assertEqual( _encode_password( '259e0bc05acd6f46926dc2f809ed1bba', 'test'), '00c7fd865183a43a772dde231f6d0bff13' )
+def test_password_encoding():
+    assert _encode_password( '259e0bc05acd6f46926dc2f809ed1bba', 'test') == '00c7fd865183a43a772dde231f6d0bff13'
 
 
 

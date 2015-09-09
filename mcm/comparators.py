@@ -52,6 +52,7 @@ class SingleElementComparator:
 
 
     def compare(self, wanted, present):
+        SET = tuple()
         for wanted_row, present_row in zip(wanted, present):
             diff = wanted_row - present_row
             SET = (diff,) if diff else tuple()

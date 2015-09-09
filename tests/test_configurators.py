@@ -1,9 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-try:
-    from unittest.mock import MagicMock, patch
-except ImportError:
-    from mock import MagicMock, patch
+from mock import MagicMock, patch
 from unittest import TestCase
 
 from mcm.configurators import CmdPathConfigurator, real_action, no_action, Configurator

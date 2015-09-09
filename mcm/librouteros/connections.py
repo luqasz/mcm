@@ -184,7 +184,7 @@ class ReaderWriter:
 
     def writeSock( self, string ):
         '''
-        Writt given string to socket. Loop as long as every byte in
+        Write given string to socket. Loop as long as every byte in
         string is written unless exception is raised.
         '''
 

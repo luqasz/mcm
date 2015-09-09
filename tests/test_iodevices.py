@@ -1,11 +1,9 @@
 # -*- coding: UTF-8 -*-
 
-try:
-    from unittest.mock import MagicMock, patch
-except ImportError:
-    from mock import MagicMock, patch
+from mock import MagicMock, patch
 from unittest import TestCase
 from inspect import ismethod
+import pytest
 
 
 from mcm.iodevices import RouterOsAPIDevice, StaticConfig
@@ -14,9 +12,9 @@ from mcm.exceptions import ReadError, WriteError
 
 
 
-class StaticConfig_Tests(TestCase):
+class StaticConfig_Tests:
 
-    def setUp(self):
+    def setup(self):
         data = [
                 {'path':'test_path', 'strategy':'exact', 'rules':[ {'key':'value'} ]}
                 ]
@@ -24,10 +22,10 @@ class StaticConfig_Tests(TestCase):
 
     def test_read_returns_valid_rules(self):
         returned = self.TestCls.read(path='test_path')
-        self.assertEqual(returned, [{'key':'value'}])
+        assert returned == [{'key':'value'}]
 
     def test_has_close_method(self):
-        self.assertTrue(ismethod(self.TestCls.close))
+        assert ismethod(self.TestCls.close)
 
 
 
@@ -123,38 +121,21 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.api.close.assert_called_once_with()
 
 
-
-class cmd_action_join_Tests(TestCase):
-
-    def test_returns_appended_remove_string_without_ending_forward_slash(self):
-        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='DEL')
-        self.assertEqual( cmd, '/ip/address/remove' )
-
-    def test__returns_appended_add_string_without_ending_forward_slash(self):
-        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='ADD')
-        self.assertEqual( cmd, '/ip/address/add' )
-
-    def test__returns_appended_set_string_without_ending_forward_slash(self):
-        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='SET')
-        self.assertEqual( cmd, '/ip/address/set' )
-
-    def test__returns_appended_getall_string_without_ending_forward_slash(self):
-        cmd = RouterOsAPIDevice.cmd_action_join('/ip/address', action='GET')
-        self.assertEqual( cmd, '/ip/address/getall' )
+@pytest.mark.parametrize("path,action,expected",(
+    ('/ip/address','DEL','/ip/address/remove'),
+    ('/ip/address','ADD','/ip/address/add'),
+    ('/ip/address','SET','/ip/address/set'),
+    ('/ip/address','GET','/ip/address/getall'),
+    ))
+def test_cmd_action_join(path,action,expected):
+    assert RouterOsAPIDevice.cmd_action_join(path=path,action=action) == expected
 
 
-class filter_dynamic_Tests(TestCase):
+@pytest.mark.parametrize("response,expected",(
+    ( ({'dynamic':False},{'dynamic':True}), ({'dynamic':False},) ),
+    ( ({'dynamic':True},), () ),
+    ))
+def test_filter_dynamic(response,expected):
+    assert RouterOsAPIDevice.filter_dynamic(response) == expected
 
-    def setUp(self):
-        self.dynamic = dict(dynamic=True)
-        self.static = dict(dynamic=False)
-        self.data = ( self.dynamic, self.static )
-
-    def test_returns_only_static(self):
-        result = RouterOsAPIDevice.filter_dynamic(self.data)
-        self.assertEqual(result, (self.static,))
-
-    def test_returns_tuple(self):
-        result = RouterOsAPIDevice.filter_dynamic(self.data)
-        self.assertIs(type(result), tuple)
 

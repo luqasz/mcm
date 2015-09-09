@@ -13,8 +13,9 @@ MCM is a radically simple automation system. It handles configuration management
 * python3
 * All config files must be utf-8 encoded
 
-### Installation
+### Usage
 
-`pip3 install mcm`
+`./mcm.py -u USERNAME IP_ADDRESS CONFIG_FILE`
+For more help run `./mcm.py --help`
 
 ### [Developement](DEVELOP.md)

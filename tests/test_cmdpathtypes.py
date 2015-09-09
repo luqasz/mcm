@@ -1,69 +1,50 @@
 # -*- coding: UTF-8 -*-
 
-try:
-    from unittest.mock import MagicMock, patch
-except ImportError:
-    from mock import MagicMock, patch
-from unittest import TestCase
 import re
+import pytest
 
 from mcm.cmdpathtypes import MENU_PATHS
 
-class CmdPathTypes_DataStructures_Tests(TestCase):
 
-    def setUp(self):
-        self.paths = MENU_PATHS.items()
-        self.valid_types = ('single', 'ordered', 'uniquekey')
-
-    def test_paths_type_is_string(self):
-        for path, attrs in self.paths:
-            self.assertIs(type(attrs['type']), str, msg='found in {}'.format(path))
-
-    def test_paths_keys_is_tuple(self):
-        for path, attrs in self.paths:
-            self.assertIs(type(attrs['keys']), tuple, msg='found in {}'.format(path))
-
-    def test_paths_modord_is_tupe(self):
-        for path, attrs in self.paths:
-            self.assertIs(type(attrs['modord']), tuple, msg='found in {}'.format(path))
-
-    def test_paths_type_have_valid_value(self):
-        for path, attrs in self.paths:
-            self.assertIn(attrs['type'], self.valid_types, msg='Invalid type {} in {}'.format(attrs['type'], path))
-
-    def test_modord_is_not_empty(self):
-        for path, attrs in self.paths:
-            self.assertNotEqual(attrs['modord'], tuple(), msg='found in {}'.format(path))
+valid_path_types = ('single', 'ordered', 'uniquekey')
+valid_modord_values = {'SET', 'ADD', 'DEL'}
 
 
-class CmdPathTypes_modord_value_Tests(TestCase):
-
-    def setUp(self):
-        self.paths = MENU_PATHS.items()
-        self.addTypeEqualityFunc(tuple, self.ModordCheck)
-        self.valid_modord = ('SET', 'ADD', 'DEL')
-
-    def ModordCheck(self, tested, valid, msg=None):
-        result = set(tested) - set(valid)
-        if result:
-            result = ','.join(result)
-            raise self.failureException('invalid value/s {!r} {}'.format(result, msg))
-
-    def test_modord_has_valid_attributes(self):
-        for path, attributes in self.paths:
-            self.assertEqual(attributes['modord'], self.valid_modord, msg='found in {}'.format(path))
+@pytest.mark.parametrize("attribute_name,attribute_type",(
+        ('type',str),
+        ('keys',tuple),
+        ('modord',tuple),
+        ))
+@pytest.mark.parametrize("path,attributes",MENU_PATHS.items())
+def test_attributes_types(path,attributes,attribute_type,attribute_name):
+    assert isinstance(attributes[attribute_name],attribute_type), '{!r} is not {}'.format(attribute_name,attribute_type)
 
 
-class Duplicate_Tests(TestCase):
+@pytest.mark.parametrize("path,attributes",MENU_PATHS.items())
+def test_type_has_valid_value(path,attributes):
+    assert attributes['type'] in valid_path_types, 'Invalid type {!r}'.format(attributes['type'])
 
-    def assertNoDuplicates(self, to_check):
-        duplicates = set([elem for elem in to_check if to_check.count(elem) > 1])
-        if duplicates:
-            raise AssertionError('Duplicated entries found:\n{}'.format('\n'.join(duplicates)))
 
-    def test_duplicated_entries(self):
-        '''Check if there are any duplicated command path definitions.'''
-        with open('mcm/cmdpathtypes.py') as definitions_file:
-            content = definitions_file.read()
-            found = re.findall(r'(?:\/[a-z0-9-]+)+', content)
-            self.assertNoDuplicates(found)
+@pytest.mark.parametrize("path,attributes",MENU_PATHS.items())
+def test_modord_is_not_empty(path,attributes):
+    assert attributes['modord'] != tuple(), 'Found empty modord in {}'.format(path)
+
+
+@pytest.mark.parametrize("path,attributes",MENU_PATHS.items())
+def test_modord_has_valid_attributes(path,attributes):
+    to_check = set(attributes['modord'])
+    assert to_check.issubset(valid_modord_values), 'Invalid modord value/s found {}'.format(to_check - valid_modord_values)
+
+
+def assertNoDuplicates(to_check):
+    duplicates = set([elem for elem in to_check if to_check.count(elem) > 1])
+    if duplicates:
+        raise AssertionError('Duplicated entries found: {}'.format('\n'.join(duplicates)))
+
+
+def test_duplicated_entries():
+    '''Check if there are any duplicated command path definitions.'''
+    with open('mcm/cmdpathtypes.py') as definitions_file:
+        content = definitions_file.read()
+        found = re.findall(r'(?:\/[a-z0-9-]+)+', content)
+        assertNoDuplicates(found)
