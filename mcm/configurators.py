@@ -5,6 +5,7 @@ from logging import getLogger
 
 from mcm.comparators import get_comparator
 from mcm.exceptions import ReadError
+from mcm.librouteros.exc import ConnError
 
 logger = getLogger('mcm.' + __name__)
 
@@ -101,6 +102,10 @@ class Configurator:
             except ReadError as error:
                 msg = 'Failed to read {path} {reason}'.format(path=path.absolute, reason=error)
                 logger.error(msg)
+            except ConnError as error:
+                msg = 'Connection broken {reason}'.format(reason=error)
+                logger.error(msg)
+                break
 
         self.master.close()
         self.slave.close()

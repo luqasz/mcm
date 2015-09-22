@@ -69,7 +69,10 @@ def declen( bytes ):
 
 def decsnt( sentence ):
 
-    return tuple( word.decode( 'UTF-8', 'strict' ) for word in sentence )
+    try:
+        return tuple( word.decode( 'ASCII', 'strict' ) for word in sentence )
+    except UnicodeDecodeError as error:
+        raise ConnError('Could not decode {!r}. Non ASCII characters'.format(error.object))
 
 
 def encsnt( sentence ):
@@ -95,7 +98,10 @@ def encword( word ):
     '''
 
     encoded_len = enclen( len( word ) )
-    encoded_word = word.encode( encoding = 'utf_8', errors = 'strict' )
+    try:
+        encoded_word = word.encode( encoding = 'ASCII', errors = 'strict' )
+    except UnicodeEncodeError as error:
+        raise ConnError('Could not encode {!r}. Non ASCII characters'.format(error.object))
     return encoded_len + encoded_word
 
 

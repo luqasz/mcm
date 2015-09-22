@@ -4,6 +4,8 @@ from mock import MagicMock, patch
 from unittest import TestCase
 
 from mcm.configurators import CmdPathConfigurator, real_action, no_action, Configurator
+from mcm.exceptions import ReadError
+from mcm.librouteros.exc import ConnError
 
 
 class CmdPathConfigurator_Tests(TestCase):
@@ -166,6 +168,23 @@ class Configurator_Tests(TestCase):
         '''After calling getPathConfigurator, assert that its run() was called.'''
         self.TestCls.run(paths=(self.path,))
         pathcfgmock.return_value.run.assert_called_once_with()
+
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_catches_ReadError(self, pathcfgmock):
+        pathcfgmock.return_value.run.side_effect = ReadError
+        self.TestCls.run(paths=(self.path,))
+
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_catches_ConnError(self, pathcfgmock):
+        pathcfgmock.return_value.run.side_effect = ConnError
+        self.TestCls.run(paths=(self.path,))
+
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_breaks_loop_ConnError(self, pathcfgmock):
+        """After first ConnError, break the configuration loop."""
+        pathcfgmock.return_value.run.side_effect = ConnError
+        self.TestCls.run(paths=(self.path,self.path))
+        assert pathcfgmock.return_value.run.call_count == 1
 
     @patch.object(CmdPathConfigurator, 'with_ensure')
     def test_getPathConfigurator_calls_with_ensure(self, ensuremock):

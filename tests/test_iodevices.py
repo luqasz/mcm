@@ -7,7 +7,7 @@ import pytest
 
 
 from mcm.iodevices import RouterOsAPIDevice, StaticConfig
-from mcm.librouteros import CmdError
+from mcm.librouteros import CmdError, ConnError
 from mcm.exceptions import ReadError, WriteError
 
 
@@ -45,7 +45,7 @@ class RouterOsAPIDevice_Tests(TestCase):
     @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_read_raises_ReadError(self, joinmock):
         self.TestCls.api.run.side_effect = CmdError
-        with self.assertRaises(ReadError):
+        with pytest.raises(ReadError):
             self.TestCls.read(path=MagicMock())
 
     @patch.object(RouterOsAPIDevice, 'filter_dynamic')

@@ -39,6 +39,12 @@ def test_raises_ConnError_if_bytes_is_too_big():
 def test_word_encode_returns_encoded_word_with_prefixed_length(enclen_mock):
     assert connections.encword('word') == b'lenword'
 
+@patch('mcm.librouteros.connections.enclen')
+def test_non_ASCII_word_encoding(enclen_mock):
+    with pytest.raises(ConnError) as error:
+        connections.encword('łą')
+    assert 'łą' in str(error.value)
+
 
 @patch('mcm.librouteros.connections.encword', side_effect = [ b'first', b'second' ])
 class EncodeSentence(unittest.TestCase):
@@ -54,6 +60,12 @@ class EncodeSentence(unittest.TestCase):
 
 def test_sentence_decoding():
     assert connections.decsnt( (b'first', b'second') ) == ('first', 'second')
+
+def test_non_ASCII_sentence_decoding():
+    non_ascii = b'\xc5\x82\xc4\x85'
+    with pytest.raises(ConnError) as error:
+        connections.decsnt((non_ascii,))
+    assert str(non_ascii) in str(error.value)
 
 
 
