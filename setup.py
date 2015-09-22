@@ -2,6 +2,7 @@ from setuptools import setup
 
 dev_pkgs=[
         'bumpversion==0.5.3',
+        'pytest-xdist==1.13.1',
         ]
 
 install_pkgs=[
