@@ -3,7 +3,7 @@
 
 '''
 'type'      Menu type. May be: uniquekey, single, ordered.
-'keys'      Optional tuple with key names to treat as uniqie key. May be 1 or more. This field is valid only for 'type' : 'uniquekey'
+'keys'      Tuple with key names to treat as uniqie key. May be 1 or more. If more then one, it is treated as a compound key. This field is important only for 'type' : 'uniquekey'
 'modord'    Modification order. Possible values 'ADD', 'SET', 'DEL'. This also works as possible actions that can be taken for given menu. If eg. 'DEL' is not specified, delete actions will be skipped.
 '''
 
