@@ -24,8 +24,7 @@ class StaticConfig:
         pass
 
 
-
-class RouterOsAPIDevice:
+class ReadOnlyRouterOS:
 
 
     def __init__(self, api):
@@ -39,6 +38,28 @@ class RouterOsAPIDevice:
         except CmdError as error:
             raise ReadError(error)
         return self.filter_dynamic(data)
+
+
+    def write(self, path, action, data):
+        pass
+
+
+    def close(self):
+        self.api.close()
+
+
+    @staticmethod
+    def cmd_action_join(path, action):
+        actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
+        return pjoin(path, actions[action])
+
+
+    @staticmethod
+    def filter_dynamic(data):
+        return tuple(row for row in data if not row.get('dynamic'))
+
+
+class RouterOsAPIDevice(ReadOnlyRouterOS):
 
 
     def write(self, path, action, data):
@@ -67,21 +88,3 @@ class RouterOsAPIDevice:
             self.api.run(cmd=command, args=data)
         except CmdError as error:
             raise WriteError(error)
-
-
-    def close(self):
-        self.api.close()
-
-
-    @staticmethod
-    def cmd_action_join(path, action):
-        actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
-        return pjoin(path, actions[action])
-
-
-    @staticmethod
-    def filter_dynamic(data):
-        return tuple(row for row in data if not row.get('dynamic'))
-
-
-

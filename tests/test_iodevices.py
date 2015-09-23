@@ -6,10 +6,14 @@ from inspect import ismethod
 import pytest
 
 
-from mcm.iodevices import RouterOsAPIDevice, StaticConfig
-from mcm.librouteros import CmdError, ConnError
+from mcm.iodevices import RouterOsAPIDevice, StaticConfig, ReadOnlyRouterOS
+from mcm.librouteros import CmdError
 from mcm.exceptions import ReadError, WriteError
 
+
+@pytest.fixture
+def read_only_routeros():
+    return ReadOnlyRouterOS(api=MagicMock())
 
 
 class StaticConfig_Tests:
@@ -119,6 +123,15 @@ class RouterOsAPIDevice_Tests(TestCase):
     def test_close_calls_api_close(self):
         self.TestCls.close()
         self.TestCls.api.close.assert_called_once_with()
+
+
+@pytest.mark.parametrize("action", ('ADD', 'SET', 'DEL'))
+def test_DryRunRouterOS_write_passes(read_only_routeros, action):
+    """Assert that DEL SET ADD methods are not called."""
+    setattr(read_only_routeros, action, MagicMock())
+    read_only_routeros.write(path='path', action=action, data=None)
+    assert getattr(read_only_routeros, action).call_count == 0
+
 
 
 @pytest.mark.parametrize("path,action,expected",(

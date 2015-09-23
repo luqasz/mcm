@@ -37,6 +37,7 @@ def get_arguments():
     argparser.add_argument('--username', '-u', type=str, help='Mikrotik API username.', required=True)
     argparser.add_argument('--version', '-V', action='version', version=str(__version__))
     argparser.add_argument('--verbose', '-v', default=0, action='count', help='Verbosity level. Can be supplied multiple times to increase verbosity.')
+    argparser.add_argument('--dry-run', '-n', default=False, action='store_true', help='Do not perform any modification actions. Just simulate what could be done.')
 
     args = argparser.parse_args()
     args.password = get_password()

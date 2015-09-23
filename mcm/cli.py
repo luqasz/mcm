@@ -2,7 +2,7 @@
 
 from mcm.librouteros import LoginError, connect, ConnError
 from mcm.args import get_arguments
-from mcm.iodevices import StaticConfig, RouterOsAPIDevice
+from mcm.iodevices import StaticConfig, RouterOsAPIDevice, ReadOnlyRouterOS
 from mcm.adapters import SlaveAdapter, MasterAdapter
 from mcm.configurators import Configurator
 from mcm.loggers import setup as setup_logging
@@ -12,9 +12,9 @@ from mcm.datastructures import make_cmdpath
 
 
 
-def mk_slave(user, host, password):
+def mk_slave(user, host, password, dry_run):
     api = connect(host=host, user=user, pw=password)
-    iodevice = RouterOsAPIDevice(api=api)
+    iodevice = RouterOsAPIDevice(api=api) if not dry_run else ReadOnlyRouterOS(api=api)
     slave = SlaveAdapter(device=iodevice)
     return slave
 
@@ -39,7 +39,7 @@ def main():
 
     try:
         paths = mk_paths(data=args.config)
-        slave = mk_slave(user=args.username, host=args.host, password=args.password)
+        slave = mk_slave(user=args.username, host=args.host, password=args.password, dry_run=args.dry_run)
     except KeyError as path:
         mainlog.error('Could not find path specification for {}'.format(path))
         exit(1)
