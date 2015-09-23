@@ -2,9 +2,17 @@
 
 from argparse import ArgumentParser, ArgumentTypeError
 from json import load as json_load
+from os import environ
+from getpass import getpass
 
 from mcm import __version__
 
+
+def get_password():
+    try:
+        return environ['MCM_HOST_PASSWORD']
+    except KeyError:
+        return getpass()
 
 
 class JsonFile:
@@ -21,14 +29,16 @@ class JsonFile:
             raise ArgumentTypeError(msg(file, error))
 
 
-
 def get_arguments():
-    argparser = ArgumentParser(description='Mikrotik Configuration Manager. Version {}'.format(__version__))
+    argparser = ArgumentParser(prog='mcm', epilog='By default program will issue a password prompt. If you don\'t want that, store it in MCM_HOST_PASSWORD environment variable.',
+            description='Mikrotik Configuration Manager. Version ' + str(__version__))
     argparser.add_argument('host', type=str, help='Host to connect to.')
     argparser.add_argument('config', type=JsonFile(), help='Configuration file.')
     argparser.add_argument('--username', '-u', type=str, help='Mikrotik API username.', required=True)
     argparser.add_argument('--version', '-V', action='version', version=str(__version__))
     argparser.add_argument('--verbose', '-v', default=0, action='count', help='Verbosity level. Can be supplied multiple times to increase verbosity.')
 
-    return argparser.parse_args()
+    args = argparser.parse_args()
+    args.password = get_password()
+    return args
 

@@ -16,6 +16,9 @@ MCM is a radically simple automation system. It handles configuration management
 ### Usage
 
 `./mcm.py -u USERNAME IP_ADDRESS CONFIG_FILE`
+
+By default program will issue a password prompt. If you don't want that, store it in `MCM_HOST_PASSWORD` environment variable.
+
 For more help run `./mcm.py --help`
 
 ### [Developement](DEVELOP.md)
