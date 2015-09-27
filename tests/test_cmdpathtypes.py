@@ -17,7 +17,7 @@ valid_modord_values = {'SET', 'ADD', 'DEL'}
         ))
 @pytest.mark.parametrize("path,attributes",MENU_PATHS.items())
 def test_attributes_types(path,attributes,attribute_type,attribute_name):
-    assert isinstance(attributes[attribute_name],attribute_type), '{!r} is not {}'.format(attribute_name,attribute_type)
+    assert type(attributes[attribute_name]) == attribute_type, '{!r} is not {}'.format(attribute_name,attribute_type)
 
 
 @pytest.mark.parametrize("path,attributes",MENU_PATHS.items())
