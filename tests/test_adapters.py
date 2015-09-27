@@ -53,7 +53,7 @@ def test_adapters_device_close(adapter):
 @patch('mcm.adapters.CmdPathRow')
 def test_assemble_data_calls_CmdPathRow(rowmock, master_adapter, data_set, data_row):
     master_adapter.assemble_data(data=data_set)
-    rowmock.assert_any_call(data=data_row)
+    rowmock.assert_any_call(data_row)
 
 
 @patch('mcm.adapters.CmdPathRow')
@@ -64,7 +64,7 @@ def test_assemble_data_returns_tuple(rowmock, master_adapter, data_set, data_row
 
 def test_SlaveAdapter_write_calls_device_write(slave_adapter, data_set, path, data_row):
     slave_adapter.write(path=path, action='ADD', data=data_set)
-    slave_adapter.device.write.assert_any_call(path=path.absolute, action='ADD', data=data_row.data)
+    slave_adapter.device.write.assert_any_call(path=path.absolute, action='ADD', data=data_row)
 
 
 def test_SlaveAdapter_write_catches_WriteError(slave_adapter, data_set, path):
