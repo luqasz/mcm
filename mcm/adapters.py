@@ -30,7 +30,7 @@ class MasterAdapter:
 
     @staticmethod
     def assemble_data(data):
-        return tuple(CmdPathRow(data=elem) for elem in data)
+        return tuple(CmdPathRow(elem) for elem in data)
 
 
 
@@ -40,7 +40,7 @@ class SlaveAdapter(MasterAdapter):
     def write(self, path, action, data):
         for row in data:
             try:
-                self.device.write(path=path.absolute, action=action, data=row.data)
+                self.device.write(path=path.absolute, action=action, data=row)
                 logger.info('{path} {action} {data}'.format(path=path.absolute, action=action, data=row))
             except WriteError as error:
                 logger.error('Failed to send {path} {action} {data} to device: {reason}'.format(path=path.absolute, action=action, data=row, reason=error))
