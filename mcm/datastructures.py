@@ -22,66 +22,27 @@ def make_cmdpath(path, strategy):
 
 
 
-
-class CmdPathRow:
-
-    def __init__(self, data):
-        '''
-        data
-            Dict with read data.
-        '''
-
-        self.data = data
+class CmdPathRow(dict):
 
 
     def __str__(self):
-        '''
-        Return ready for logging data.
-        '''
         bool_map = {True:'yes', False:'no', None:'""', '':'""'}
-        return ' '.join('{}={}'.format(key, bool_map.get(value, value)) for key, value in self.data.items())
-
-
-    def __eq__(self, other):
-        return self.data == other.data
-
-
-    def __ne__(self, other):
-        return self.data != other.data
-
-
-    def __bool__(self):
-        return bool(self.data)
+        return ' '.join('{}={}'.format(key, bool_map.get(value, value)) for key, value in self.items())
 
 
     def __hash__(self):
-        return hash(tuple(self.data.items()))
-
-
-    def __setitem__(self, key, value):
-        self.data[key] = value
-
-
-    def __getitem__(self, key):
-        return self.data[key]
+        return hash(tuple(self.items()))
 
 
     def __sub__(self, other):
+        '''Return new instance with key,valie pairs from self not listed in other.'''
 
-        diff = self.difference( wanted=self.data, present=other.data )
-        return CmdPathRow( data=diff )
+        diff = dict(set(self.items()) - set(other.items()))
+        return CmdPathRow( diff )
 
 
     def isunique(self, other, keys):
+        '''Test whether every key,value pair (from keys) is in other.'''
 
         pairs = set( (key,self[key]) for key in keys )
-        return pairs <= set(other.data.items())
-
-
-    @staticmethod
-    def difference( wanted, present ):
-        '''
-        Return elements in wanted that are not in present.
-        '''
-
-        return dict(set(wanted.items()) - set(present.items()))
+        return pairs <= set(other.items())

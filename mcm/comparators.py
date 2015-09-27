@@ -39,7 +39,7 @@ class OrderedComparator:
 
     def compare(self, wanted, present):
 
-        fillval = CmdPathRow(data=dict())
+        fillval = CmdPathRow(dict())
         for wanted_rule, present_rule in zip_longest(wanted, present, fillvalue=fillval):
             diff = wanted_rule - present_rule
             self.decide(wanted_rule, diff, present_rule)
@@ -101,4 +101,4 @@ class UniqueKeyComparator:
             if row.isunique(other=searched, keys=self.keys):
                 return row
         else:
-            return CmdPathRow(data=dict())
+            return CmdPathRow(dict())

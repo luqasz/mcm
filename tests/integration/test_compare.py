@@ -9,15 +9,15 @@ from mcm.datastructures import CmdPathRow
 @pytest.fixture
 def compare_data(request):
     single = {
-        'wanted':CmdPathRow(data={"primary-ntp":"1.1.1.1"}),
-        'present':CmdPathRow(data={"primary-ntp":"213.222.193.35"}),
-        'difference':CmdPathRow(data={"primary-ntp":"1.1.1.1"}),
+        'wanted':CmdPathRow({"primary-ntp":"1.1.1.1"}),
+        'present':CmdPathRow({"primary-ntp":"213.222.193.35"}),
+        'difference':CmdPathRow({"primary-ntp":"1.1.1.1"}),
     }
     default = {
-        'wanted':CmdPathRow(data={'name':'admin', 'group':'read'}),
-        'present':CmdPathRow(data={'name':'admin', 'group':'full', '.id':'*2'}),
-        'extra':CmdPathRow(data={'name':'operator', 'group':'read', '.id':'*3'}),
-        'difference':CmdPathRow(data={'group':'read', '.id':'*2'}),
+        'wanted':CmdPathRow({'name':'admin', 'group':'read'}),
+        'present':CmdPathRow({'name':'admin', 'group':'full', '.id':'*2'}),
+        'extra':CmdPathRow({'name':'operator', 'group':'read', '.id':'*3'}),
+        'difference':CmdPathRow({'group':'read', '.id':'*2'}),
     }
     if 'single' in request.cls.__name__.lower():
         return single
