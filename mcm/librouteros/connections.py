@@ -3,7 +3,7 @@
 from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from struct import pack, unpack
 
-from mcm.librouteros.exc import ConnError
+from mcm.librouteros.exceptions import ConnError
 
 
 

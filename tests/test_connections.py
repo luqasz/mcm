@@ -6,7 +6,7 @@ from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT, 
 from mock import MagicMock, call, patch
 
 from mcm.librouteros import connections
-from mcm.librouteros.exc import ConnError
+from mcm.librouteros.exceptions import ConnError
 
 
 integers = (0, 127 ,130 ,2097140 ,268435440)

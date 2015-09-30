@@ -3,7 +3,7 @@
 import pytest
 
 from mcm.librouteros.datastructures import parsresp, parsnt, mksnt, mkattrwrd, convattrwrd, castValToPy, castValToApi, raiseIfFatal, trapCheck
-from mcm.librouteros.exc import CmdError, ConnError
+from mcm.librouteros.exceptions import CmdError, ConnError
 
 
 

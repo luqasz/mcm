@@ -5,7 +5,7 @@ from mock import MagicMock, patch
 import unittest
 import pytest
 
-from mcm.librouteros.exc import ConnError, LoginError, CmdError
+from mcm.librouteros.exceptions import ConnError, LoginError, CmdError
 from mcm.librouteros import connect, _encode_password
 
 

@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from mcm.configurators import CmdPathConfigurator, real_action, no_action, Configurator
 from mcm.exceptions import ReadError
-from mcm.librouteros.exc import ConnError
+from mcm.librouteros.exceptions import ConnError
 
 
 class CmdPathConfigurator_Tests(TestCase):

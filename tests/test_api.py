@@ -4,7 +4,7 @@ import unittest
 from mock import MagicMock, patch
 
 from mcm.librouteros.api import Api
-from mcm.librouteros.exc import CmdError, ConnError, LibError
+from mcm.librouteros.exceptions import CmdError, ConnError, LibError
 from mcm.librouteros.connections import ReaderWriter
 
 
