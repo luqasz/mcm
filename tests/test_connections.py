@@ -23,13 +23,13 @@ def test_decoding(encoded, integer):
     assert connections.declen(encoded) == integer
 
 
-def test_raises_ConnError_if_lenghth_is_too_big():
+def test_raises_if_lenghth_is_too_big():
     '''Raises ConnError if length >= 268435456'''
     with pytest.raises(ConnError):
         connections.enclen(268435456)
 
 
-def test_raises_ConnError_if_bytes_is_too_big():
+def test_raises_if_bytes_is_too_big():
     '''Raises ConnError if length > 4 bytes'''
     with pytest.raises(ConnError):
         connections.declen(b'\xff\xff\xff\xff\xff')
@@ -159,7 +159,7 @@ class Test_socket_reading:
     def test_raises_socket_errors(self, exception):
         self.connection.sock.recv.side_effect = exception
         with pytest.raises(ConnError):
-            self.connection.readSock(b'some data')
+            self.connection.readSock(2)
 
     def test_does_not_call_recv(self):
         self.connection.readSock(0)

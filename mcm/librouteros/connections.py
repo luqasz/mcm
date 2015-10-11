@@ -166,20 +166,19 @@ class ReaderWriter:
         '''
 
         data = bytearray()
-        to_read = length
 
         try:
-            while to_read:
-                read = self.sock.recv(to_read)
+            while length:
+                read = self.sock.recv(length)
                 if not read:
-                    raise ConnError( 'Connection unexpectedly closed. read {read}/{total} bytes.'
-                                    .format(read = len(data), total = length))
+                    raise ConnError( 'Connection unexpectedly closed. Read {read}/{total} bytes.'
+                                    .format(read = len(data), total = (len(data) + length)))
                 data += read
-                to_read -= len(read)
+                length -= len(read)
 
         except SOCKET_TIMEOUT:
-            raise ConnError( 'Socket timed out. read {read}/{total} bytes.'
-                            .format(read = len(data), total = length))
+            raise ConnError( 'Socket timed out. Read {read}/{total} bytes.'
+                            .format(read = len(data), total = (len(data) + length)))
         except SOCKET_ERROR as estr:
             raise ConnError( 'Failed to read from socket. {reason}'.format(reason = estr))
 
