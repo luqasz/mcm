@@ -3,6 +3,7 @@
 from sys import stdout
 import logging
 
+
 def setup(verbosity):
 
     mainlog = logging.getLogger('mcm')
@@ -15,7 +16,7 @@ def setup(verbosity):
     else:
         mainlog.setLevel(logging.WARNING)
 
-    formatter = logging.Formatter(fmt='{levelname} {message}', datefmt='%d/%m/%Y %H:%M:%S', style='{')
+    formatter = logging.Formatter(fmt='{levelname} {message}', style='{')
     console.setFormatter(formatter)
     mainlog.addHandler(console)
 

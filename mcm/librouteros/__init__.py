@@ -16,7 +16,7 @@ try:
 except ImportError:
     from mcm.tools import ChainMap
 
-from mcm.librouteros.exc import ConnError, CmdError, LoginError
+from mcm.librouteros.exceptions import ConnError, CmdError, LoginError
 from mcm.librouteros.connections import ReaderWriter
 from mcm.librouteros.api import Api
 

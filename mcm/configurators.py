@@ -5,7 +5,7 @@ from logging import getLogger
 
 from mcm.comparators import get_comparator
 from mcm.exceptions import ReadError
-from mcm.librouteros.exc import ConnError
+from mcm.librouteros.exceptions import ConnError
 
 logger = getLogger('mcm.' + __name__)
 

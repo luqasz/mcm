@@ -6,7 +6,7 @@ from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT, 
 from mock import MagicMock, call, patch
 
 from mcm.librouteros import connections
-from mcm.librouteros.exc import ConnError
+from mcm.librouteros.exceptions import ConnError
 
 
 integers = (0, 127 ,130 ,2097140 ,268435440)
@@ -23,13 +23,13 @@ def test_decoding(encoded, integer):
     assert connections.declen(encoded) == integer
 
 
-def test_raises_ConnError_if_lenghth_is_too_big():
+def test_raises_if_lenghth_is_too_big():
     '''Raises ConnError if length >= 268435456'''
     with pytest.raises(ConnError):
         connections.enclen(268435456)
 
 
-def test_raises_ConnError_if_bytes_is_too_big():
+def test_raises_if_bytes_is_too_big():
     '''Raises ConnError if length > 4 bytes'''
     with pytest.raises(ConnError):
         connections.declen(b'\xff\xff\xff\xff\xff')
@@ -115,79 +115,55 @@ class GetLengths(unittest.TestCase):
 
 
 
-class WriteSock(unittest.TestCase):
+class Test_socket_writing:
 
 
-    def setUp(self):
-        sock = MagicMock( spec = socket )
-        self.rwo = connections.ReaderWriter( sock, None )
+    def setup(self):
+        self.connection = connections.ReaderWriter( sock=MagicMock(), log=None )
 
+    def test_calls_sendall(self):
+        self.connection.writeSock(b'some message')
+        self.connection.sock.sendall.assert_called_once_with(b'some message')
 
-    def test_loops_as_long_as_string_is_not_sent(self):
-        self.rwo.sock.send.side_effect = [ 2,2 ]
-        self.rwo.writeSock( 'word' )
-        expected_calls = [ call( 'word' ), call('rd') ]
-        self.assertEqual( self.rwo.sock.send.mock_calls, expected_calls )
+    @pytest.mark.parametrize("exception", (SOCKET_ERROR, SOCKET_TIMEOUT))
+    def test_raises_socket_errors(self, exception):
+        self.connection.sock.sendall.side_effect = exception
+        with pytest.raises(ConnError):
+            self.connection.writeSock(b'some data')
 
-
-    def test_sending_raises_when_no_bytes_sent(self):
-        self.rwo.sock.send.side_effect = [ 0 ]
-        self.assertRaises( ConnError, self.rwo.writeSock, 'word' )
-
-
-    def test_sending_raises_socket_timeout(self):
-        self.rwo.sock.send.side_effect = SOCKET_TIMEOUT
-        self.assertRaises( ConnError, self.rwo.writeSock, 'word' )
-
-
-    def test_sending_raises_socket_error(self):
-        self.rwo.sock.send.side_effect = SOCKET_ERROR
-        self.assertRaises( ConnError, self.rwo.writeSock, 'word' )
-
-
-    def test_does_not_call_socket_send_when_called_with_empty_string(self):
-        self.rwo.writeSock('')
-        self.assertEqual( self.rwo.sock.send.call_count, 0 )
+    def test_does_not_call_sendall(self):
+        self.connection.writeSock(b'')
+        assert self.connection.sock.send.call_count == 0
 
 
 
-class ReadSock(unittest.TestCase):
+class Test_socket_reading:
 
 
-    def setUp(self):
-        sock = MagicMock( spec = socket )
-        self.rwo = connections.ReaderWriter( sock, None )
+    def setup(self):
+        self.connection = connections.ReaderWriter( sock=MagicMock(), log=None )
 
-    def test_returns_empty_byte_when_called_with_0(self):
-        retval = self.rwo.readSock(0)
-        self.assertEqual( retval, b'' )
+    def test_returns_empty_byte_string(self):
+        assert self.connection.readSock(0) == b''
 
-    def test_loops_as_long_as_are_bytes_to_receive(self):
-        self.rwo.sock.recv.side_effect = [ b'wo', b'rd' ]
-        self.rwo.readSock( 4 )
-        expected_calls = [ call(4), call(2) ]
-        self.assertEqual( self.rwo.sock.recv.mock_calls, expected_calls )
+    def test_loops_reading(self):
+        self.connection.sock.recv.side_effect = [ b'wo', b'rd' ]
+        assert self.connection.readSock( 4 ) == b'word'
 
-    def test_reading_raises_when_no_bytes_received(self):
-        self.rwo.sock.recv.side_effect = [ b'' ]
-        self.assertRaises( ConnError, self.rwo.readSock, 4 )
+    def test_raises_when_no_bytes_received(self):
+        self.connection.sock.recv.side_effect = [ b'' ]
+        with pytest.raises(ConnError):
+            self.connection.readSock(4)
 
-    def test_reading_raises_socket_timeout(self):
-        self.rwo.sock.recv.side_effect = SOCKET_TIMEOUT
-        self.assertRaises( ConnError, self.rwo.readSock, 4 )
+    @pytest.mark.parametrize("exception", (SOCKET_ERROR, SOCKET_TIMEOUT))
+    def test_raises_socket_errors(self, exception):
+        self.connection.sock.recv.side_effect = exception
+        with pytest.raises(ConnError):
+            self.connection.readSock(2)
 
-    def test_reading_raises_socket_error(self):
-        self.rwo.sock.recv.side_effect = SOCKET_ERROR
-        self.assertRaises( ConnError, self.rwo.readSock, 4 )
-
-    def test_returns_bytes_object(self):
-        self.rwo.sock.recv.side_effect = [ b'wo', b'rd' ]
-        retval = self.rwo.readSock( 4 )
-        self.assertEqual( retval, b'word' )
-
-    def test_does_not_call_recv_when_called_with_0(self):
-        self.rwo.readSock(0)
-        self.assertEqual( self.rwo.sock.recv.call_count, 0 )
+    def test_does_not_call_recv(self):
+        self.connection.readSock(0)
+        assert self.connection.sock.recv.call_count == 0
 
 
 

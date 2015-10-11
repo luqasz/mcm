@@ -3,7 +3,7 @@
 from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from struct import pack, unpack
 
-from mcm.librouteros.exc import ConnError
+from mcm.librouteros.exceptions import ConnError
 
 
 
@@ -165,27 +165,24 @@ class ReaderWriter:
         Loop as long as every byte is read unless exception is raised.
         '''
 
-        return_string = []
-        to_read = length
-        total_bytes_read = 0
+        data = bytearray()
 
         try:
-            while to_read:
-                read = self.sock.recv( to_read )
-                return_string.append( read )
-                to_read -= len( read )
-                total_bytes_read = length - to_read
-
+            while length:
+                read = self.sock.recv(length)
                 if not read:
-                    raise ConnError( 'connection unexpectedly closed. read {read}/{total} bytes.'
-                                    .format( read = total_bytes_read, total = length ) )
-        except SOCKET_TIMEOUT:
-            raise ConnError( 'socket timed out. read {read}/{total} bytes.'
-                            .format( read = total_bytes_read, total = length ) )
-        except SOCKET_ERROR as estr:
-            raise ConnError( 'failed to read from socket: {reason}'.format( reason = estr ) )
+                    raise ConnError( 'Connection unexpectedly closed. Read {read}/{total} bytes.'
+                                    .format(read = len(data), total = (len(data) + length)))
+                data += read
+                length -= len(read)
 
-        return b''.join( return_string )
+        except SOCKET_TIMEOUT:
+            raise ConnError( 'Socket timed out. Read {read}/{total} bytes.'
+                            .format(read = len(data), total = (len(data) + length)))
+        except SOCKET_ERROR as estr:
+            raise ConnError( 'Failed to read from socket. {reason}'.format(reason = estr))
+
+        return data
 
 
     def writeSock( self, string ):
@@ -194,24 +191,12 @@ class ReaderWriter:
         string is written unless exception is raised.
         '''
 
-        string_length = len( string )
-        total_bytes_sent = 0
-
         try:
-            while string:
-                sent = self.sock.send( string )
-                # remove sent bytes from begining of string
-                string = string[sent:]
-                total_bytes_sent = string_length - len( string )
-
-                if not sent:
-                    raise ConnError( 'connection unexpectedly closed. sent {sent}/{total} bytes.'
-                                    .format( sent = total_bytes_sent, total = string_length ) )
-        except SOCKET_TIMEOUT:
-            raise ConnError( 'socket timed out. sent {sent}/{total} bytes.'
-                            .format( sent = total_bytes_sent, total = string_length ) )
-        except SOCKET_ERROR as estr:
-            raise ConnError( 'failed to write to socket: {reason}'.format( reason = estr ) )
+            self.sock.sendall(string)
+        except SOCKET_TIMEOUT as error:
+            raise ConnError('Socket timed out. ' + str(error))
+        except SOCKET_ERROR as error:
+            raise ConnError('Failed to write to socket. ' + str(error))
 
 
     def getLen( self ):

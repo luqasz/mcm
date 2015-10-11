@@ -2,7 +2,7 @@
 
 
 from mcm.librouteros.datastructures import mksnt, parsresp, trapCheck, raiseIfFatal
-from mcm.librouteros.exc import LibError
+from mcm.librouteros.exceptions import LibError
 
 
 class Api:
