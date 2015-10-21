@@ -433,6 +433,11 @@ MENU_PATHS = {
     'modord': ('SET', 'ADD', 'DEL'),
     'type': 'uniquekey'
     },
+'/system/script': {
+    'keys': ('name',),
+    'modord': ('ADD','SET','DEL'),
+    'type': 'uniquekey'
+    },
 '/system/ntp/server': {
     'keys': (),
     'modord': ('SET',),

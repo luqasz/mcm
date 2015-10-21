@@ -43,6 +43,8 @@ def test_casting_from_api_to_python(api_type, python_type):
         ('22.2', '22.2'),
         (22.2, '22.2'),
         (22, '22'),
+        (1, '1'),
+        (0, '0')
         ))
 def test_casting_from_python_to_api(python_type, api_type):
     assert castValToApi(python_type) == api_type
