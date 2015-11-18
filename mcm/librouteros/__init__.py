@@ -1,11 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-'''
-from librouteros import connect
-api = connect( '1.1.1.1', 'admin', 'password' )
-api.run('/ip/address/print')
-'''
-
 
 from logging import getLogger, NullHandler
 from socket import create_connection, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
@@ -16,75 +10,68 @@ try:
 except ImportError:
     from mcm.tools import ChainMap
 
-from mcm.librouteros.exceptions import ConnError, CmdError, LoginError
-from mcm.librouteros.connections import ReaderWriter
+from mcm.librouteros.exceptions import TrapError, FatalError, ConnectionError
+from mcm.librouteros.connections import ApiProtocol, SocketTransport
 from mcm.librouteros.api import Api
 
-NULL_LOGGER = getLogger( 'api_null_logger' )
-NULL_LOGGER.addHandler( NullHandler() )
+NULL_LOGGER = getLogger('api_null_logger')
+NULL_LOGGER.addHandler(NullHandler())
 
 
-
-def connect( host, user, pw, **kwargs ):
+def connect(host: str, username: str, password: str, **kwargs):
     '''
     Connect and login to routeros device.
     Upon success return a Connection class.
 
-    host
-        Hostname to connecto to. May be ipv4,ipv6,FQDN.
-    user
-        Username to login with.
-    pw
-        Password to login with. Defaults to be empty.
-    timout
-        Socket timeout. Defaults to 10.
-    port
-        Destination port to be used. Defaults to 8728.
-    logger
-        Logger instance to be used. Defaults to an empty logging instance.
-    saddr
-        Source address to bind to.
+    :param host: Hostname to connecto to. May be ipv4,ipv6,FQDN.
+    :param username: Username to login with.
+    :param password: Password to login with. Defaults to be empty. Only ASCII characters allowed.
+    :param timout: Socket timeout. Defaults to 10.
+    :param port: Destination port to be used. Defaults to 8728.
+    :param logger: Logger instance to be used. Defaults to an empty logging instance.
+    :param saddr: Source address to bind to.
     '''
 
-    defaults = { 'timeout' : 10,
-                'port' : 8728,
-                'saddr' : '',
-                'logger' : NULL_LOGGER
+    defaults = {
+                'timeout': 10,
+                'port': 8728,
+                'saddr': '',
+                'logger': NULL_LOGGER,
+                'api_class': Api
                 }
 
     arguments = ChainMap(kwargs, defaults)
 
     try:
-        sock = create_connection( ( host, arguments['port'] ), arguments['timeout'], ( arguments['saddr'], 0 ) )
-    except ( SOCKET_ERROR, SOCKET_TIMEOUT ) as error:
-        raise ConnError( error )
+        sock = create_connection((host, arguments['port']), arguments['timeout'], (arguments['saddr'], 0))
+    except (SOCKET_ERROR, SOCKET_TIMEOUT) as error:
+        raise ConnectionError(error)
 
-    rwo = ReaderWriter( sock, arguments['logger'] )
-    api = Api( rwo )
+    transport = SocketTransport(sock=sock)
+    protocol = ApiProtocol(transport=transport, logger=arguments['logger'])
+    api = Api(protocol=protocol, transport=transport)
 
     try:
-        snt = api.run( '/login' )
-        chal = snt[0]['ret']
-        encoded = _encode_password( chal, pw )
-        api.run( '/login', {'name':user, 'response':encoded} )
-    except ( ConnError, CmdError ) as error:
-        rwo.close()
-        raise LoginError( error )
+        sentence = api('/login')
+        token = sentence[0]['ret']
+        encoded = encode_password(token, password)
+        api('/login', {'name': username, 'response': encoded})
+    except (ConnectionError, TrapError, FatalError) as error:
+        raise
+    finally:
+        transport.close()
 
     return api
 
 
+def encode_password(token, password):
 
-def _encode_password( chal, password ):
-
-    chal = chal.encode( 'UTF-8', 'strict' )
-    chal = unhexlify( chal )
-    password = password.encode( 'UTF-8', 'strict' )
+    token = token.encode('ascii', 'strict')
+    token = unhexlify(token)
+    password = password.encode('ascii', 'strict')
     md = md5()
-    md.update( b'\x00' + password + chal )
-    password = hexlify( md.digest() )
-    password = '00' + password.decode( 'UTF-8', 'strict' )
+    md.update(b'\x00' + password + token)
+    password = hexlify(md.digest())
+    password = '00' + password.decode('ascii', 'strict')
 
     return password
-
-

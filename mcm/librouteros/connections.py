@@ -3,163 +3,208 @@
 from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from struct import pack, unpack
 
-from mcm.librouteros.exceptions import ConnError
+from mcm.librouteros.exceptions import ConnectionError
 
 
+class Encoder:
 
-def enclen( length ):
-    '''
-    Encode given length in mikrotik format.
-
-    length: Integer < 268435456.
-    returns: Encoded length in bytes.
-    '''
-
-    if length < 128:
-        ored_length = length
-        offset = -1
-    elif length < 16384:
-        ored_length = length | 0x8000
-        offset = -2
-    elif length < 2097152:
-        ored_length = length | 0xC00000
-        offset = -3
-    elif length < 268435456:
-        ored_length = length | 0xE0000000
-        offset = -4
-    else:
-        raise ConnError( 'unable to encode length of {}'
-                        .format( length ) )
-
-    encoded_length = pack( '!I', ored_length )[offset:]
-    return encoded_length
-
-
-def declen( bytes ):
-    '''
-    Decode length based on given bytes.
-
-    bytes_string: Bytes string to decode.
-    returns: Length in integer.
-    '''
-
-    bytes_length = len( bytes )
-
-    if bytes_length < 2:
-        offset = b'\x00\x00\x00'
-        XOR = 0
-    elif bytes_length < 3:
-        offset = b'\x00\x00'
-        XOR = 0x8000
-    elif bytes_length < 4:
-        offset = b'\x00'
-        XOR = 0xC00000
-    elif bytes_length < 5:
-        offset = b''
-        XOR = 0xE0000000
-    else:
-        raise ConnError( 'unable to decode length of {}'.format(bytes) )
-
-    combined_bytes = offset + bytes
-    decoded = unpack( '!I', combined_bytes )[0]
-    decoded ^= XOR
-
-    return decoded
-
-
-def decsnt( sentence ):
-
-    try:
-        return tuple( word.decode( 'ASCII', 'strict' ) for word in sentence )
-    except UnicodeDecodeError as error:
-        raise ConnError('Could not decode {!r}. Non ASCII characters'.format(error.object))
-
-
-def encsnt( sentence ):
-    '''
-    Encode given sentence in API format.
-
-    returns: Encoded sentence in bytes object.
-    '''
-
-    encoded = map( encword, sentence )
-    encoded = b''.join( encoded )
-    # append EOS byte
-    encoded += b'\x00'
-
-    return encoded
-
-
-def encword( word ):
-    '''
-    Encode word in API format.
-
-    returns: Encoded word in bytes object.
-    '''
-
-    encoded_len = enclen( len( word ) )
-    try:
-        encoded_word = word.encode( encoding = 'ASCII', errors = 'strict' )
-    except UnicodeEncodeError as error:
-        raise ConnError('Could not encode {!r}. Non ASCII characters'.format(error.object))
-    return encoded_len + encoded_word
-
-
-
-def log_snt( logger, sentence, direction ):
-
-    dstrs = { 'write':'<---', 'read':'--->' }
-    dstr = dstrs.get( direction )
-
-    for word in sentence:
-        logger.debug( '{0} {1!r}'.format( dstr, word ) )
-
-    logger.debug( '{0} EOS'.format( dstr ) )
-
-
-
-
-
-
-class ReaderWriter:
-
-
-    def __init__( self, sock, log ):
-        self.sock = sock
-        self.log = log
-
-
-    def writeSnt( self, snt ):
+    @staticmethod
+    def encodeSentence(sentence: tuple) -> tuple:
         '''
-        Write sentence to connection.
+        Encode given sentence in API format.
 
-        sentence: Iterable (tuple or list) with words.
+        :param sentence: Sentence to endoce.
+        :returns: Encoded sentence.
         '''
 
-        encoded = encsnt( snt )
-        self.writeSock( encoded )
-        log_snt( self.log, snt, 'write' )
+        encoded = map(Encoder.encodeWord, sentence)
+        encoded = b''.join(encoded)
+        # append EOS byte
+        encoded += b'\x00'
+        return encoded
 
-
-    def readSnt( self ):
+    @staticmethod
+    def encodeWord(word: str) -> bytes:
         '''
-        Read sentence from connection.
+        Encode word in API format.
 
-        returns: Sentence as tuple with words in it.
+        :param word: Word to encode.
+        :returns: Encoded word.
         '''
 
-        snt = []
-        for length in iter( self.getLen, 0 ):
-            word = self.readSock( length )
-            snt.append( word )
+        try:
+            encoded_word = word.encode(encoding='ASCII', errors='strict')
+        except UnicodeEncodeError as error:
+            raise ConnectionError('Could not encode {!r}. Non ASCII characters'.format(error.object))
 
-        decoded = decsnt( snt )
-        log_snt( self.log, decoded, 'read' )
+        return Encoder.encodeLength(len(word)) + encoded_word
 
+    @staticmethod
+    def encodeLength(length: int) -> bytes:
+        '''
+        Encode given length in mikrotik format.
+
+        :param length: Integer < 268435456.
+        :returns: Encoded length.
+        '''
+
+        if length < 128:
+            ored_length = length
+            offset = -1
+        elif length < 16384:
+            ored_length = length | 0x8000
+            offset = -2
+        elif length < 2097152:
+            ored_length = length | 0xC00000
+            offset = -3
+        elif length < 268435456:
+            ored_length = length | 0xE0000000
+            offset = -4
+        else:
+            raise ConnectionError('Unable to encode length of {}'.format(length))
+
+        return pack('!I', ored_length)[offset:]
+
+
+class Decoder:
+
+    @staticmethod
+    def determineLength(length: bytes) -> int:
+        '''
+        Given first read byte, determine how many more bytes
+        needs to be known in order to get fully encoded length.
+
+        :param length: First read byte.
+        :return: How many bytes to read.
+        '''
+
+        integer = ord(length)
+
+        if integer < 128:
+            return 0
+        elif integer < 192:
+            return 1
+        elif integer < 224:
+            return 2
+        elif integer < 240:
+            return 3
+        else:
+            raise ConnectionError('Unknown controll byte {}'.format(length))
+
+    @staticmethod
+    def decodeLength(length: bytes) -> int:
+        '''
+        Decode length based on given bytes.
+
+        :param length: Bytes string to decode.
+        :return: Decoded length.
+        '''
+
+        bytes_length = len(length)
+
+        if bytes_length < 2:
+            offset = b'\x00\x00\x00'
+            XOR = 0
+        elif bytes_length < 3:
+            offset = b'\x00\x00'
+            XOR = 0x8000
+        elif bytes_length < 4:
+            offset = b'\x00'
+            XOR = 0xC00000
+        elif bytes_length < 5:
+            offset = b''
+            XOR = 0xE0000000
+        else:
+            raise ConnectionError('Unable to decode length of {}'.format(length))
+
+        decoded = unpack('!I', (offset + length))[0]
+        decoded ^= XOR
         return decoded
 
+    @staticmethod
+    def decodeSentence(sentence: tuple) -> tuple:
 
-    def readSock( self, length ):
+        try:
+            return tuple(word.decode(encoding='ASCII', errors='strict') for word in sentence)
+        except UnicodeDecodeError as error:
+            raise ConnectionError('Could not decode {!r}. Non ASCII characters'.format(error.object))
+
+
+class ApiProtocol(Encoder, Decoder):
+
+    def __init__(self, transport, logger):
+        self.transport = transport
+        self.logger = logger
+
+    def log(self, sentence, direction_string):
+
+        for word in sentence:
+            self.logger.debug('{0} {1!r}'.format(direction_string, word))
+
+        self.logger.debug('{0} EOS'.format(direction_string))
+
+    def writeSentence(self, cmd: str, words: tuple = tuple()) -> None:
+        '''
+        Encode and write sentence.
+
+        :param cmd: Command word.
+        :param words: Aditional words.
+        '''
+
+        sentence = (cmd,) + words
+        encoded = self.encodeSentence(sentence)
+        self.log(sentence, '<---')
+        self.transport.write(encoded)
+
+    def readSentence(self) -> tuple:
+        '''
+        Read every word untill empty word (NULL byte) is received.
+
+        :return: Reply word, tuple with read words.
+        '''
+
+        sentence = []
+        for length in iter(self.readLength, 0):
+            word = self.transport.read(length)
+            sentence.append(word)
+
+        decoded = self.decodeSentence(sentence)
+        self.log(decoded, '--->')
+        reply_word, words = decoded[0], decoded[1:]
+        return reply_word, words
+
+    def readLength(self) -> int:
+        '''
+        Read length from transport. This method may return 0 with indicates end of sentence.
+
+        :return: Length of next word.
+        '''
+
+        length = self.transport.read(1)
+        to_read = self.determineLength(length)
+        length += self.transport.read(to_read)
+        return self.decodeLength(length)
+
+
+class SocketTransport:
+
+    def __init__(self, sock):
+        self.sock = sock
+
+    def write(self, string: bytes):
+        '''
+        Write given bytes string to socket. Loop as long as every byte in
+        string is written unless exception is raised.
+        '''
+
+        try:
+            self.sock.sendall(string)
+        except SOCKET_TIMEOUT as error:
+            raise ConnectionError('Socket timed out. ' + str(error))
+        except SOCKET_ERROR as error:
+            raise ConnectionError('Failed to write to socket. ' + str(error))
+
+    def read(self, length: int) -> bytearray:
         '''
         Read as many bytes from socket as specified in length.
         Loop as long as every byte is read unless exception is raised.
@@ -171,67 +216,24 @@ class ReaderWriter:
             while length:
                 read = self.sock.recv(length)
                 if not read:
-                    raise ConnError( 'Connection unexpectedly closed. Read {read}/{total} bytes.'
-                                    .format(read = len(data), total = (len(data) + length)))
+                    msg = 'Connection unexpectedly closed. Read {read}/{total} bytes.'.format
+                    raise ConnectionError(msg(read=len(data), total=(len(data) + length)))
                 data += read
                 length -= len(read)
 
         except SOCKET_TIMEOUT:
-            raise ConnError( 'Socket timed out. Read {read}/{total} bytes.'
-                            .format(read = len(data), total = (len(data) + length)))
-        except SOCKET_ERROR as estr:
-            raise ConnError( 'Failed to read from socket. {reason}'.format(reason = estr))
+            msg = 'Socket timed out. Read {read}/{total} bytes.'.format
+            raise ConnectionError(msg(read=len(data), total=(len(data) + length)))
+        except SOCKET_ERROR as error:
+            raise ConnectionError('Failed to read from socket. {reason}'.format(reason=error))
 
         return data
 
-
-    def writeSock( self, string ):
-        '''
-        Write given string to socket. Loop as long as every byte in
-        string is written unless exception is raised.
-        '''
+    def close(self):
 
         try:
-            self.sock.sendall(string)
-        except SOCKET_TIMEOUT as error:
-            raise ConnError('Socket timed out. ' + str(error))
-        except SOCKET_ERROR as error:
-            raise ConnError('Failed to write to socket. ' + str(error))
-
-
-    def getLen( self ):
-        '''
-        Read encoded length and return it as integer.
-        '''
-
-        first_byte = self.readSock( 1 )
-        first_byte_int = unpack( 'B', first_byte )[0]
-
-        if first_byte_int < 128:
-            bytes_to_read = 0
-        elif first_byte_int < 192:
-            bytes_to_read = 1
-        elif first_byte_int < 224:
-            bytes_to_read = 2
-        elif first_byte_int < 240:
-            bytes_to_read = 3
-        else:
-            raise ConnError( 'unknown controll byte received {0!r}'
-                            .format( first_byte ) )
-
-        additional_bytes = self.readSock( bytes_to_read )
-
-        return declen( first_byte + additional_bytes )
-
-
-    def close( self ):
-
-        # do not do anything if socket is already closed
-        if self.sock._closed:
-            return
-        # shutdown socket
-        try:
-            self.sock.shutdown( SHUT_RDWR )
+            # inform other end that we will not read and write any more
+            self.sock.shutdown(SHUT_RDWR)
         except SOCKET_ERROR:
             pass
         finally:

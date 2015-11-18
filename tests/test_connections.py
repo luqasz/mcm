@@ -1,254 +1,203 @@
 # -*- coding: UTF-8 -*-
 
-import unittest
 import pytest
 from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT, socket
-from mock import MagicMock, call, patch
+from mock import MagicMock, patch
 
 from mcm.librouteros import connections
-from mcm.librouteros.exceptions import ConnError
+from mcm.librouteros.exceptions import ConnectionError
 
 
-integers = (0, 127 ,130 ,2097140 ,268435440)
+integers = (0, 127, 130, 2097140, 268435440)
 encoded = (b'\x00', b'\x7f', b'\x80\x82', b'\xdf\xff\xf4', b'\xef\xff\xff\xf0')
 
 
-@pytest.mark.parametrize("integer,encoded", zip(integers, encoded))
-def test_encoding(integer, encoded):
-    assert connections.enclen(integer) == encoded
+class Test_Decoder:
+
+    @pytest.mark.parametrize("length,expected", (
+        (b'x', 0),  # 120
+        (b'\xbf', 1),  # 191
+        (b'\xdf', 2),  # 223
+        (b'\xef', 3),  # 239
+        ))
+    def test_determineLength(self, length, expected):
+        assert connections.Decoder.determineLength(length) == expected
+
+    def test_raises_if_integer_is_too_big(self):
+        '''Raises ConnectionError if length >= 240'''
+        bad_length = b'\xf0'
+        with pytest.raises(ConnectionError) as error:
+            connections.Decoder.determineLength(bad_length)
+        assert str(bad_length) in str(error.value)
+
+    @pytest.mark.parametrize("encoded,integer", zip(encoded, integers))
+    def test_decodeLength(self, encoded, integer):
+        assert connections.Decoder.decodeLength(encoded) == integer
+
+    def test_raises_if_bytes_is_too_big(self):
+        '''Raises ConnectionError if length > 4 bytes'''
+        bad_length = b'\xff\xff\xff\xff\xff'
+        with pytest.raises(ConnectionError) as error:
+            connections.Decoder.decodeLength(bad_length)
+        assert str(bad_length) in str(error.value)
+
+    def test_decodeSentence(self):
+        assert connections.Decoder.decodeSentence((b'first', b'second')) == ('first', 'second')
+
+    def test_non_ASCII_sentence_decoding(self):
+        non_ascii = (b'first', b'\xc5\x82\xc4\x85')
+        with pytest.raises(ConnectionError) as error:
+            connections.Decoder.decodeSentence(non_ascii)
+        assert str(non_ascii[1]) in str(error.value)
 
 
-@pytest.mark.parametrize("encoded,integer", zip(encoded, integers))
-def test_decoding(encoded, integer):
-    assert connections.declen(encoded) == integer
+class Test_Encoder:
+
+    @pytest.mark.parametrize("integer,encoded", zip(integers, encoded))
+    def test_encodeLength(self, integer, encoded):
+        assert connections.Encoder.encodeLength(integer) == encoded
+
+    def test_encodeLength_raises_if_lenghth_is_too_big(self):
+        '''Raises ConnectionError if length >= 268435456'''
+        bad_length = 268435456
+        with pytest.raises(ConnectionError) as error:
+            connections.Encoder.encodeLength(bad_length)
+        assert str(bad_length) in str(error.value)
+
+    def test_encodeWord_returns_encoded_word(self):
+        assert connections.Encoder.encodeWord('word')[-4:] == b'word'
+
+    @patch.object(connections.Encoder, 'encodeLength')
+    def test_encodeWord_calls_encodeLength(self, encodeLength_mock):
+        connections.Encoder.encodeWord('word')
+        assert encodeLength_mock.call_count == 1
+
+    @patch.object(connections.Encoder, 'encodeLength', return_value=b'len_')
+    def test_encodeWord_returns_word_with_prefixed_length(self, encodeLength_mock):
+        assert connections.Encoder.encodeWord('word') == b'len_word'
+
+    def test_non_ASCII_word_encoding(self):
+        with pytest.raises(ConnectionError) as error:
+            connections.Encoder.encodeWord('łą')
+        assert 'łą' in str(error.value)
+
+    @patch.object(connections.Encoder, 'encodeWord', return_value=b'')
+    def test_encodeSentence_calls_encodeWord(self, encodeWord_mock):
+        connections.Encoder.encodeSentence(('first', 'second'))
+        assert encodeWord_mock.call_count == 2
+
+    @patch.object(connections.Encoder, 'encodeWord', return_value=b'')
+    def test_encodeSentence_appends_EOS_ath_the_end(self, encodeWord_mock):
+        assert connections.Encoder.encodeSentence(('first', 'second'))[-1:] == b'\x00'
 
 
-def test_raises_if_lenghth_is_too_big():
-    '''Raises ConnError if length >= 268435456'''
-    with pytest.raises(ConnError):
-        connections.enclen(268435456)
-
-
-def test_raises_if_bytes_is_too_big():
-    '''Raises ConnError if length > 4 bytes'''
-    with pytest.raises(ConnError):
-        connections.declen(b'\xff\xff\xff\xff\xff')
-
-
-@patch('mcm.librouteros.connections.enclen', return_value=b'len')
-def test_word_encode_returns_encoded_word_with_prefixed_length(enclen_mock):
-    assert connections.encword('word') == b'lenword'
-
-@patch('mcm.librouteros.connections.enclen')
-def test_non_ASCII_word_encoding(enclen_mock):
-    with pytest.raises(ConnError) as error:
-        connections.encword('łą')
-    assert 'łą' in str(error.value)
-
-
-@patch('mcm.librouteros.connections.encword', side_effect = [ b'first', b'second' ])
-class EncodeSentence(unittest.TestCase):
-
-    def test_calls_encword( self, enc_word_mock ):
-        sentence = ('first', 'second')
-        connections.encsnt( sentence )
-        assert enc_word_mock.mock_calls == [ call(elem) for elem in sentence ]
-
-    def test_returns_bytes_encoded_sentence_with_appended_EOS(self, enc_word_mock):
-        assert connections.encsnt(( 'first', 'second' )) == b'firstsecond\x00'
-
-
-def test_sentence_decoding():
-    assert connections.decsnt( (b'first', b'second') ) == ('first', 'second')
-
-def test_non_ASCII_sentence_decoding():
-    non_ascii = b'\xc5\x82\xc4\x85'
-    with pytest.raises(ConnError) as error:
-        connections.decsnt((non_ascii,))
-    assert str(non_ascii) in str(error.value)
-
-
-
-@patch('mcm.librouteros.connections.declen')
-class GetLengths(unittest.TestCase):
-
-
-    def setUp(self):
-        self.rwo = connections.ReaderWriter( None, None )
-        self.rwo.readSock = MagicMock()
-
-    def test_calls_declen(self, dec_len_mock):
-        self.rwo.readSock.side_effect = [b'\x7f', b'']
-        self.rwo.getLen()
-        dec_len_mock.assert_called_once_with( b'\x7f' )
-
-    def test_raises_if_first_byte_if_greater_than_239( self , dec_len_mock):
-        self.rwo.readSock.return_value = b'\xf0'
-        self.assertRaises( ConnError, self.rwo.getLen )
-
-    def test_calls_read_socket_less_than_128( self , dec_len_mock):
-        self.rwo.readSock.side_effect = [b'\x7f', b'']
-        self.rwo.getLen()
-        expected_calls = [ call(1), call(0) ]
-        self.assertEqual( self.rwo.readSock.mock_calls, expected_calls )
-
-    def test_calls_read_socket_less_than_16384( self , dec_len_mock):
-        self.rwo.readSock.side_effect = [ b'\x80', b'\x82' ]
-        self.rwo.getLen()
-        expected_calls = [ call(1), call(1) ]
-        self.assertEqual( self.rwo.readSock.mock_calls, expected_calls , dec_len_mock)
-
-    def test_calls_read_socket_less_than_2097152( self , dec_len_mock):
-        self.rwo.readSock.side_effect = [ b'\xdf', b'\xff\xf4' ]
-        self.rwo.getLen()
-        expected_calls = [ call(1), call(2) ]
-        self.assertEqual( self.rwo.readSock.mock_calls, expected_calls )
-
-    def test_calls_read_socket_less_than_268435456( self , dec_len_mock):
-        self.rwo.readSock.side_effect = [ b'\xef', b'\xff\xff\xf0' ]
-        self.rwo.getLen()
-        expected_calls = [ call(1), call(3) ]
-        self.assertEqual( self.rwo.readSock.mock_calls, expected_calls )
-
-
-
-
-
-
-class Test_socket_writing:
-
+class Test_ApiProtocol:
 
     def setup(self):
-        self.connection = connections.ReaderWriter( sock=MagicMock(), log=None )
+        self.protocol = connections.ApiProtocol(transport=MagicMock(spec=connections.SocketTransport), logger=MagicMock())
 
-    def test_calls_sendall(self):
-        self.connection.writeSock(b'some message')
-        self.connection.sock.sendall.assert_called_once_with(b'some message')
+    @patch.object(connections.Encoder, 'encodeSentence')
+    def test_writeSentence_calls_encodeSentence(self, encodeSentence_mock):
+        self.protocol.writeSentence(cmd=b'/ip/address/print', words=(b'=key=value',))
+        encodeSentence_mock.assert_called_once_with((b'/ip/address/print', b'=key=value'))
 
-    @pytest.mark.parametrize("exception", (SOCKET_ERROR, SOCKET_TIMEOUT))
-    def test_raises_socket_errors(self, exception):
-        self.connection.sock.sendall.side_effect = exception
-        with pytest.raises(ConnError):
-            self.connection.writeSock(b'some data')
+    @patch.object(connections.Encoder, 'encodeSentence')
+    def test_writeSentence_calls_transport_write(self, encodeSentence_mock):
+        '''Assert that write is called with encoded sentence.'''
+        self.protocol.writeSentence(cmd=b'/ip/address/print', words=(b'=key=value',))
+        self.protocol.transport.write.assert_called_once_with(encodeSentence_mock.return_value)
 
-    def test_does_not_call_sendall(self):
-        self.connection.writeSock(b'')
-        assert self.connection.sock.send.call_count == 0
+    @patch.object(connections.Decoder, 'decodeLength')
+    @patch.object(connections.Decoder, 'determineLength')
+    def test_readLength_calls_decodeLength(self, determineLength_mock, decodeLength_mock):
+        '''Case when there are no additional bytes to read.'''
+        self.protocol.transport.read.side_effect = [b'\x00', b'']
+        self.protocol.readLength()
+        decodeLength_mock.assert_called_once_with(b'\x00')
+
+    @patch.object(connections.Decoder, 'decodeLength')
+    @patch.object(connections.Decoder, 'determineLength')
+    def test_readLength_calls_determineLength(self, determineLength_mock, decodeLength_mock):
+        '''Check if determineLength is called only once with first read byte.'''
+        self.protocol.transport.read.side_effect = [b'\x00', b'\x01']
+        self.protocol.readLength()
+        determineLength_mock.assert_called_once_with(b'\x00')
+
+    @patch.object(connections.Decoder, 'decodeLength')
+    @patch.object(connections.Decoder, 'determineLength')
+    def test_readLength_calls_transport_read_with_determineLength_return_value(self, determineLength_mock, decodeLength_mock):
+        self.protocol.readLength()
+        self.protocol.transport.read.assert_any_call(determineLength_mock.return_value)
+
+    @patch.object(connections.Decoder, 'decodeSentence')
+    @patch.object(connections.ApiProtocol, 'readLength')
+    def test_readSentence_calls_transport_read_with_value_from_readLength(self, readLength_mock, decodeSentence_mock):
+        readLength_mock.side_effect = [1, 0]
+        self.protocol.readSentence()
+        self.protocol.transport.read.assert_any_call(1)
+
+    @patch.object(connections.Decoder, 'decodeSentence')
+    @patch.object(connections.ApiProtocol, 'readLength')
+    def test_readSentence_calls_decodeSentence(self, readLength_mock, decodeSentence_mock):
+        readLength_mock.side_effect = [1, 0]
+        self.protocol.readSentence()
+        decodeSentence_mock.assert_called_once_with([self.protocol.transport.read.return_value])
+
+    @patch.object(connections.Decoder, 'decodeSentence')
+    @patch.object(connections.ApiProtocol, 'readLength')
+    def test_readSentence_calls_transport_read_with_non_0_value(self, readLength_mock, decodeSentence_mock):
+        '''Assert that read is called as long as readLength does not return 0.'''
+        readLength_mock.side_effect = [1, 2, 0]
+        self.protocol.readSentence()
+        assert self.protocol.transport.read.call_count == 2
 
 
-
-class Test_socket_reading:
-
+class Test_SocketTransport:
 
     def setup(self):
-        self.connection = connections.ReaderWriter( sock=MagicMock(), log=None )
+        self.transport = connections.SocketTransport(sock=MagicMock(spec=socket))
 
-    def test_returns_empty_byte_string(self):
-        assert self.connection.readSock(0) == b''
-
-    def test_loops_reading(self):
-        self.connection.sock.recv.side_effect = [ b'wo', b'rd' ]
-        assert self.connection.readSock( 4 ) == b'word'
-
-    def test_raises_when_no_bytes_received(self):
-        self.connection.sock.recv.side_effect = [ b'' ]
-        with pytest.raises(ConnError):
-            self.connection.readSock(4)
-
-    @pytest.mark.parametrize("exception", (SOCKET_ERROR, SOCKET_TIMEOUT))
-    def test_raises_socket_errors(self, exception):
-        self.connection.sock.recv.side_effect = exception
-        with pytest.raises(ConnError):
-            self.connection.readSock(2)
-
-    def test_does_not_call_recv(self):
-        self.connection.readSock(0)
-        assert self.connection.sock.recv.call_count == 0
-
-
-
-@patch('mcm.librouteros.connections.log_snt')
-@patch('mcm.librouteros.connections.encsnt')
-class WriteSentence(unittest.TestCase):
-
-
-    def setUp(self):
-        self.rwo = connections.ReaderWriter( None, None )
-        self.rwo.writeSock = MagicMock()
-
-    def test_calls_encode_sentence( self, encsnt_mock, log_mock ):
-        sentence = ('first', 'second')
-        self.rwo.writeSnt( sentence )
-        encsnt_mock.assert_called_once_with( sentence )
-
-    def test_calls_writeSock( self, encsnt_mock, log_mock ):
-        encsnt_mock.return_value = 'encoded'
-        self.rwo.writeSnt( 'sentence' )
-        self.rwo.writeSock.assert_called_once_with( 'encoded' )
-
-    def test_calls_log_sentence(self, encsnt_mock, log_mock):
-        self.rwo.writeSnt('sentence')
-        log_mock.assert_called_once_with( None, 'sentence', 'write' )
-
-
-
-@patch('mcm.librouteros.connections.log_snt')
-@patch('mcm.librouteros.connections.decsnt')
-class ReadSentence(unittest.TestCase):
-
-
-    def setUp(self):
-        self.rwo = connections.ReaderWriter( None, None )
-        self.rwo.readSock = MagicMock( side_effect = [ 'first','second' ] )
-        self.rwo.getLen = MagicMock( side_effect = [5,6,0] )
-
-
-    def test_calls_getLen_as_long_as_returns_0( self, decsnt_mock, log_mock ):
-        self.rwo.readSnt()
-        self.assertEqual( self.rwo.getLen.call_count, 3 )
-
-    def test_calls_readSock_for_every_returned_getLen(self, decsnt_mock, log_mock):
-        self.rwo.readSnt()
-        self.assertEqual( self.rwo.readSock.mock_calls, [ call(5), call(6) ] )
-
-    def test_calls_decode_sentence( self, decsnt_mock, log_mock ):
-        self.rwo.readSnt()
-        decsnt_mock.assert_called_once_with( [ 'first', 'second' ] )
-
-    def test_calls_log_sentence(self, decsnt_mock, log_mock):
-        decsnt_mock.return_value = 'string'
-        self.rwo.readSnt()
-        log_mock.assert_called_once_with( None, 'string', 'read' )
-
-
-class ClosingProcedures(unittest.TestCase):
-
-
-    def setUp(self):
-        sock = MagicMock( spec = socket )
-        self.rwo = connections.ReaderWriter( sock, None )
-
-
-    def test_does_not_call_close_if_socket_already_is_closed(self):
-        self.rwo.sock._closed = True
-        self.assertEqual( self.rwo.sock.close.call_count, 0 )
-
-    def test_does_not_call_shutdown_if_socket_already_is_closed(self):
-        self.rwo.sock._closed = True
-        self.assertEqual( self.rwo.sock.shutdown.call_count, 0 )
-
-    def test_call_close_if_socket_is_not_closed(self):
-        self.rwo.sock._closed = False
-        self.rwo.close()
-        self.rwo.sock.close.assert_called_once_with()
-
-    def test_call_shutdown_if_socket_is_not_closed(self):
-        self.rwo.sock._closed = False
-        self.rwo.close()
-        self.rwo.sock.shutdown.assert_called_once_with( SHUT_RDWR )
+    def test_calls_shutdown(self):
+        self.transport.close()
+        self.transport.sock.shutdown.assert_called_once_with(SHUT_RDWR)
 
     def test_calls_socket_close_even_if_shutdown_raises_socket_error(self):
-        self.rwo.sock._closed = False
-        self.rwo.sock.shutdown.side_effect = SOCKET_ERROR()
-        self.rwo.close()
-        self.rwo.sock.close.assert_called_once_with()
+        self.transport.sock.shutdown.side_effect = SOCKET_ERROR
+        self.transport.close()
+        self.transport.sock.close.assert_called_once_with()
+
+    def test_calls_sendall(self):
+        self.transport.write(b'some message')
+        self.transport.sock.sendall.assert_called_once_with(b'some message')
+
+    @pytest.mark.parametrize("exception", (SOCKET_ERROR, SOCKET_TIMEOUT))
+    def test_write_raises_socket_errors(self, exception):
+        self.transport.sock.sendall.side_effect = exception
+        with pytest.raises(ConnectionError):
+            self.transport.write(b'some data')
+
+    def test_does_not_call_sendall(self):
+        self.transport.write(b'')
+        assert self.transport.sock.send.call_count == 0
+
+    def test_returns_empty_byte_string(self):
+        assert self.transport.read(0) == b''
+
+    def test_loops_reading(self):
+        self.transport.sock.recv.side_effect = [b'wo', b'rd']
+        assert self.transport.read(4) == b'word'
+
+    def test_raises_when_no_bytes_received(self):
+        self.transport.sock.recv.side_effect = [b'']
+        with pytest.raises(ConnectionError):
+            self.transport.read(4)
+
+    @pytest.mark.parametrize("exception", (SOCKET_ERROR, SOCKET_TIMEOUT))
+    def test_read_raises_socket_errors(self, exception):
+        self.transport.sock.recv.side_effect = exception
+        with pytest.raises(ConnectionError):
+            self.transport.read(2)
+
+    def test_does_not_call_recv(self):
+        self.transport.read(0)
+        assert self.transport.sock.recv.call_count == 0
