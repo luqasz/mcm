@@ -46,9 +46,8 @@ class Test_Decoder:
 
     def test_non_ASCII_sentence_decoding(self):
         non_ascii = (b'first', b'\xc5\x82\xc4\x85')
-        with pytest.raises(ConnectionError) as error:
+        with pytest.raises(UnicodeDecodeError):
             connections.Decoder.decodeSentence(non_ascii)
-        assert str(non_ascii[1]) in str(error.value)
 
 
 class Test_Encoder:
@@ -77,9 +76,8 @@ class Test_Encoder:
         assert connections.Encoder.encodeWord('word') == b'len_word'
 
     def test_non_ASCII_word_encoding(self):
-        with pytest.raises(ConnectionError) as error:
+        with pytest.raises(UnicodeEncodeError):
             connections.Encoder.encodeWord('łą')
-        assert 'łą' in str(error.value)
 
     @patch.object(connections.Encoder, 'encodeWord', return_value=b'')
     def test_encodeSentence_calls_encodeWord(self, encodeWord_mock):

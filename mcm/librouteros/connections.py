@@ -16,10 +16,9 @@ class Encoder:
         :param sentence: Sentence to endoce.
         :returns: Encoded sentence.
         '''
-
         encoded = map(Encoder.encodeWord, sentence)
         encoded = b''.join(encoded)
-        # append EOS byte
+        # append EOS (end of sentence) byte
         encoded += b'\x00'
         return encoded
 
@@ -31,12 +30,7 @@ class Encoder:
         :param word: Word to encode.
         :returns: Encoded word.
         '''
-
-        try:
-            encoded_word = word.encode(encoding='ASCII', errors='strict')
-        except UnicodeEncodeError as error:
-            raise ConnectionError('Could not encode {!r}. Non ASCII characters'.format(error.object))
-
+        encoded_word = word.encode(encoding='ASCII', errors='strict')
         return Encoder.encodeLength(len(word)) + encoded_word
 
     @staticmethod
@@ -47,7 +41,6 @@ class Encoder:
         :param length: Integer < 268435456.
         :returns: Encoded length.
         '''
-
         if length < 128:
             ored_length = length
             offset = -1
@@ -77,7 +70,6 @@ class Decoder:
         :param length: First read byte.
         :return: How many bytes to read.
         '''
-
         integer = ord(length)
 
         if integer < 128:
@@ -99,7 +91,6 @@ class Decoder:
         :param length: Bytes string to decode.
         :return: Decoded length.
         '''
-
         bytes_length = len(length)
 
         if bytes_length < 2:
@@ -123,11 +114,7 @@ class Decoder:
 
     @staticmethod
     def decodeSentence(sentence: tuple) -> tuple:
-
-        try:
-            return tuple(word.decode(encoding='ASCII', errors='strict') for word in sentence)
-        except UnicodeDecodeError as error:
-            raise ConnectionError('Could not decode {!r}. Non ASCII characters'.format(error.object))
+        return tuple(word.decode(encoding='ASCII', errors='strict') for word in sentence)
 
 
 class ApiProtocol(Encoder, Decoder):
@@ -137,7 +124,6 @@ class ApiProtocol(Encoder, Decoder):
         self.logger = logger
 
     def log(self, sentence, direction_string):
-
         for word in sentence:
             self.logger.debug('{0} {1!r}'.format(direction_string, word))
 
@@ -150,7 +136,6 @@ class ApiProtocol(Encoder, Decoder):
         :param cmd: Command word.
         :param words: Aditional words.
         '''
-
         sentence = (cmd,) + words
         encoded = self.encodeSentence(sentence)
         self.log(sentence, '<---')
@@ -162,7 +147,6 @@ class ApiProtocol(Encoder, Decoder):
 
         :return: Reply word, tuple with read words.
         '''
-
         sentence = []
         for length in iter(self.readLength, 0):
             word = self.transport.read(length)
@@ -179,7 +163,6 @@ class ApiProtocol(Encoder, Decoder):
 
         :return: Length of next word.
         '''
-
         length = self.transport.read(1)
         to_read = self.determineLength(length)
         length += self.transport.read(to_read)
@@ -196,7 +179,6 @@ class SocketTransport:
         Write given bytes string to socket. Loop as long as every byte in
         string is written unless exception is raised.
         '''
-
         try:
             self.sock.sendall(string)
         except SOCKET_TIMEOUT as error:
@@ -209,9 +191,7 @@ class SocketTransport:
         Read as many bytes from socket as specified in length.
         Loop as long as every byte is read unless exception is raised.
         '''
-
         data = bytearray()
-
         try:
             while length:
                 read = self.sock.recv(length)
@@ -230,7 +210,6 @@ class SocketTransport:
         return data
 
     def close(self):
-
         try:
             # inform other end that we will not read and write any more
             self.sock.shutdown(SHUT_RDWR)
