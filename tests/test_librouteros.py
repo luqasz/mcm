@@ -1,17 +1,39 @@
-#-*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
 
-from socket import error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
-from mock import MagicMock, patch
 import pytest
+from mock import patch
+from socket import error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 
-from mcm.librouteros.exceptions import ConnectionError, LoginError, TrapError, FatalError
-from mcm.librouteros import connect, encode_password
-
+from mcm.librouteros import encode_password, create_transport, ConnectionError
 
 
 def test_password_encoding():
-    assert encode_password( '259e0bc05acd6f46926dc2f809ed1bba', 'test') == '00c7fd865183a43a772dde231f6d0bff13'
+    assert encode_password('259e0bc05acd6f46926dc2f809ed1bba', 'test') == '00c7fd865183a43a772dde231f6d0bff13'
 
 
+def test_non_ascii_password_encoding():
+    '''Only ascii characters are allowed in password.'''
+    with pytest.raises(UnicodeEncodeError):
+        encode_password(token='259e0bc05acd6f46926dc2f809ed1bba', password='ąć')
 
 
+@patch('mcm.librouteros.create_connection')
+def test_create_transport_calls_create_connection(create_conn_mock):
+    create_transport('host', timeout=10, port=111, saddr='saddr')
+    create_conn_mock.assert_called_once_with(('host', 111), 10, ('saddr', 0))
+
+
+@pytest.mark.parametrize('exception', (SOCKET_ERROR, SOCKET_TIMEOUT))
+@patch('mcm.librouteros.create_connection')
+def test_create_transport_raises_ConnectionError(create_conn_mock, exception):
+    create_conn_mock.side_effect = exception('error message')
+    with pytest.raises(ConnectionError) as error:
+        create_transport('host', timeout=10, port=111, saddr='saddr')
+    assert str(create_conn_mock.side_effect) in str(error.value)
+
+
+@patch('mcm.librouteros.SocketTransport')
+@patch('mcm.librouteros.create_connection')
+def test_create_transport_calls_SocketTransport(create_conn_mock, transport_mock):
+    create_transport('host', timeout=10, port=111, saddr='saddr')
+    transport_mock.assert_called_once_with(sock=create_conn_mock.return_value)

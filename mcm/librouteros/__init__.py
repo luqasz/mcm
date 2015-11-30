@@ -17,6 +17,13 @@ from mcm.librouteros.api import Api
 NULL_LOGGER = getLogger('api_null_logger')
 NULL_LOGGER.addHandler(NullHandler())
 
+defaults = {
+            'timeout': 10,
+            'port': 8728,
+            'saddr': '',
+            'logger': NULL_LOGGER,
+            }
+
 
 def connect(host: str, username: str, password: str, **kwargs):
     '''
@@ -25,29 +32,14 @@ def connect(host: str, username: str, password: str, **kwargs):
 
     :param host: Hostname to connecto to. May be ipv4,ipv6,FQDN.
     :param username: Username to login with.
-    :param password: Password to login with. Defaults to be empty. Only ASCII characters allowed.
+    :param password: Password to login with. Only ASCII characters allowed.
     :param timout: Socket timeout. Defaults to 10.
     :param port: Destination port to be used. Defaults to 8728.
     :param logger: Logger instance to be used. Defaults to an empty logging instance.
     :param saddr: Source address to bind to.
     '''
-
-    defaults = {
-                'timeout': 10,
-                'port': 8728,
-                'saddr': '',
-                'logger': NULL_LOGGER,
-                'api_class': Api
-                }
-
     arguments = ChainMap(kwargs, defaults)
-
-    try:
-        sock = create_connection((host, arguments['port']), arguments['timeout'], (arguments['saddr'], 0))
-    except (SOCKET_ERROR, SOCKET_TIMEOUT) as error:
-        raise ConnectionError(error)
-
-    transport = SocketTransport(sock=sock)
+    transport = create_transport(host, **arguments)
     protocol = ApiProtocol(transport=transport, logger=arguments['logger'])
     api = Api(protocol=protocol, transport=transport)
 
@@ -56,12 +48,20 @@ def connect(host: str, username: str, password: str, **kwargs):
         token = sentence[0]['ret']
         encoded = encode_password(token, password)
         api('/login', {'name': username, 'response': encoded})
-    except (ConnectionError, TrapError, FatalError) as error:
+    except (ConnectionError, TrapError, FatalError):
         raise
     finally:
         transport.close()
 
     return api
+
+
+def create_transport(host, **kwargs):
+    try:
+        sock = create_connection((host, kwargs['port']), kwargs['timeout'], (kwargs['saddr'], 0))
+    except (SOCKET_ERROR, SOCKET_TIMEOUT) as error:
+        raise ConnectionError(error)
+    return SocketTransport(sock=sock)
 
 
 def encode_password(token, password):
@@ -72,6 +72,4 @@ def encode_password(token, password):
     md = md5()
     md.update(b'\x00' + password + token)
     password = hexlify(md.digest())
-    password = '00' + password.decode('ascii', 'strict')
-
-    return password
+    return '00' + password.decode('ascii', 'strict')
