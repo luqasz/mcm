@@ -1,13 +1,15 @@
 import pytest
+from logging import getLogger, NullHandler
 
-# from mcm.adapters import MasterAdapter, SlaveAdapter
-# from mock import MagicMock, patch
-
-@pytest.fixture(scope='function')
-def masteradapter():
-    return MasterAdapter(device=MagicMock())
+NULL_LOGGER = getLogger('api_null_logger')
+NULL_LOGGER.addHandler(NullHandler())
 
 
 @pytest.fixture(scope='function')
-def path():
-    return MagicMock()
+def lib_default_kwargs():
+    return {
+            'timeout': 10,
+            'port': 8728,
+            'saddr': '',
+            'logger': NULL_LOGGER,
+            }

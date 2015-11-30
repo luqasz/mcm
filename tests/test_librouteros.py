@@ -4,7 +4,11 @@ import pytest
 from mock import patch
 from socket import error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 
-from mcm.librouteros import encode_password, create_transport, ConnectionError
+from mcm.librouteros import encode_password, create_transport, ConnectionError, defaults
+
+
+def test_lib_default_arguments(lib_default_kwargs):
+    assert lib_default_kwargs == defaults
 
 
 def test_password_encoding():
