@@ -52,13 +52,6 @@ class Test_Parser:
     def test_parseWord(self, word, expected):
         assert Parser.parseWord(word) == expected
 
-    @pytest.mark.parametrize("words, expected", (
-        (('session terminated on request',), 'session terminated on request'),
-        (('=message=cannot log in',), 'cannot log in'),
-    ))
-    def test_parseFatal(self, words, expected):
-        assert Parser.parseFatal(words) == expected
-
 
 class Test_Composer:
 
