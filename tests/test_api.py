@@ -69,9 +69,8 @@ class Test_Composer:
     def test_pythonCast(self, python_type, api_type):
         assert Composer.pythonCast(python_type) == api_type
 
-    @pytest.mark.parametrize("pair, expected", zip(attribute_pairs, attribute_words))
-    def test_composeAttributeWords(self, pair, expected):
-        assert Composer.composeAttributeWords((pair,)) == (expected,)
+    def test_composeAttributeWords(self):
+        assert Composer.composeAttributeWords(attribute_pairs) == attribute_words
 
 
 class Test_Api:
