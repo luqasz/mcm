@@ -1,10 +1,9 @@
 # -*- coding: UTF-8 -*-
 
 import pytest
-from mock import patch, MagicMock
+from mock import MagicMock
 
 from mcm.librouteros.api import Api, Composer, Parser
-from mcm.librouteros.exceptions import ConnectionError, FatalError, TrapError
 
 
 attribute_words = (
