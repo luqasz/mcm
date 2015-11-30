@@ -3,7 +3,7 @@
 from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from struct import pack, unpack
 
-from mcm.librouteros.exceptions import ConnectionError
+from mcm.librouteros.exceptions import ConnectionError, FatalError
 
 
 class Encoder:
@@ -155,7 +155,10 @@ class ApiProtocol(Encoder, Decoder):
         decoded = self.decodeSentence(sentence)
         self.log(decoded, '--->')
         reply_word, words = decoded[0], decoded[1:]
-        return reply_word, words
+        if reply_word == '!fatal':
+            raise FatalError(words[0])
+        else:
+            return reply_word, words
 
     def readLength(self) -> int:
         '''

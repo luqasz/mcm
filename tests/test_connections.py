@@ -5,7 +5,7 @@ from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT, 
 from mock import MagicMock, patch
 
 from mcm.librouteros import connections
-from mcm.librouteros.exceptions import ConnectionError
+from mcm.librouteros.exceptions import ConnectionError, FatalError
 
 
 integers = (0, 127, 130, 2097140, 268435440)
@@ -148,6 +148,16 @@ class Test_ApiProtocol:
         readLength_mock.side_effect = [1, 2, 0]
         self.protocol.readSentence()
         assert self.protocol.transport.read.call_count == 2
+
+    @patch.object(connections.Decoder, 'decodeSentence')
+    @patch.object(connections.ApiProtocol, 'readLength')
+    def test_readSentence_raises_FatalError(self, readLength_mock, decodeSentence_mock):
+        '''Assert that FatalError is raised with its reason.'''
+        decodeSentence_mock.return_value = ['!fatal', 'reason']
+        readLength_mock.side_effect = [1, 1, 0]
+        with pytest.raises(FatalError) as error:
+            self.protocol.readSentence()
+        assert str(error.value) == 'reason'
 
 
 class Test_SocketTransport:

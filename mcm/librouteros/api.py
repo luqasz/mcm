@@ -36,23 +36,6 @@ class Parser:
         value = Parser.apiCast(splited[index+1])
         return (splited[index], value)
 
-    @staticmethod
-    def parseFatal(words: tuple) -> str:
-        '''
-        Parse words from !fatal message.
-
-        :param words: Read words.
-        :returns: Joined by ',' error message/s.
-        '''
-        messages = []
-        for word in words:
-            if word[0] == '=':
-                key, value = Parser.parseWord(word)
-            else:
-                value = word
-            messages.append(value)
-        return ', '.join(messages)
-
 
 class Composer:
 
@@ -108,16 +91,6 @@ class Api(Composer, Parser):
         parsed = dict(self.parseWord(word) for word in words)
         raise TrapError(message=parsed['message'], category=parsed.get('category'))
 
-    def _handleFatal(self, words: tuple):
-        '''
-        When !fatal is received no further communication is allowed and connection is closed.
-
-        :throws FatalError:
-        '''
-        message = self.parseFatal(words)
-        self.transport.close()
-        raise FatalError(message)
-
     def _handleData(self, words: tuple) -> dict:
         return dict(self.parseWord(word) for word in words)
 
@@ -131,9 +104,8 @@ class Api(Composer, Parser):
 
         :returns: Reply_word, dict with attribute words.
         '''
-        handlers = {'!fatal': self._handleFatal, '!trap': self._handleTrap, '!re': self._handleData, '!done': self._handleData}
         reply_word, words = self.protocol.readSentence()
-        words = handlers[reply_word](words)
+        words = self._handleData(words)
         return reply_word, words
 
     def _readResponse(self) -> tuple:
