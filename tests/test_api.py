@@ -92,6 +92,3 @@ class Test_Api:
         ))
     def test_joinPath_multi_param(self, path, expected):
         assert self.api.joinPath(*path) == expected
-
-    # test dla case kiedy fatal error i ktos da pozniej close()
-    # test dla !done z danymi i bez
