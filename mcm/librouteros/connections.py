@@ -2,8 +2,12 @@
 
 from socket import SHUT_RDWR, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from struct import pack, unpack
+from logging import getLogger, NullHandler
 
 from mcm.librouteros.exceptions import ConnectionError, FatalError
+
+LOGGER = getLogger('librouteros')
+LOGGER.addHandler(NullHandler())
 
 
 class Encoder:
@@ -119,15 +123,14 @@ class Decoder:
 
 class ApiProtocol(Encoder, Decoder):
 
-    def __init__(self, transport, logger):
+    def __init__(self, transport):
         self.transport = transport
-        self.logger = logger
 
     def log(self, sentence, direction_string):
         for word in sentence:
-            self.logger.debug('{0} {1!r}'.format(direction_string, word))
+            LOGGER.debug('{0} {1!r}'.format(direction_string, word))
 
-        self.logger.debug('{0} EOS'.format(direction_string))
+        LOGGER.debug('{0} EOS'.format(direction_string))
 
     def writeSentence(self, cmd: str, words: tuple = tuple()) -> None:
         '''

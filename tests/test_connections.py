@@ -92,7 +92,7 @@ class Test_Encoder:
 class Test_ApiProtocol:
 
     def setup(self):
-        self.protocol = connections.ApiProtocol(transport=MagicMock(spec=connections.SocketTransport), logger=MagicMock())
+        self.protocol = connections.ApiProtocol(transport=MagicMock(spec=connections.SocketTransport))
 
     @patch.object(connections.Encoder, 'encodeSentence')
     def test_writeSentence_calls_encodeSentence(self, encodeSentence_mock):

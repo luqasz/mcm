@@ -1,7 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-
-from logging import getLogger, NullHandler
 from socket import create_connection, error as SOCKET_ERROR, timeout as SOCKET_TIMEOUT
 from binascii import unhexlify, hexlify
 from hashlib import md5
@@ -14,14 +12,11 @@ from mcm.librouteros.exceptions import TrapError, FatalError, ConnectionError
 from mcm.librouteros.connections import ApiProtocol, SocketTransport
 from mcm.librouteros.api import Api
 
-NULL_LOGGER = getLogger('api_null_logger')
-NULL_LOGGER.addHandler(NullHandler())
 
 defaults = {
             'timeout': 10,
             'port': 8728,
             'saddr': '',
-            'logger': NULL_LOGGER,
             }
 
 
@@ -35,12 +30,11 @@ def connect(host: str, username: str, password: str, **kwargs):
     :param password: Password to login with. Only ASCII characters allowed.
     :param timout: Socket timeout. Defaults to 10.
     :param port: Destination port to be used. Defaults to 8728.
-    :param logger: Logger instance to be used. Defaults to an empty logging instance.
     :param saddr: Source address to bind to.
     '''
     arguments = ChainMap(kwargs, defaults)
     transport = create_transport(host, **arguments)
-    protocol = ApiProtocol(transport=transport, logger=arguments['logger'])
+    protocol = ApiProtocol(transport=transport)
     api = Api(protocol=protocol, transport=transport)
 
     try:
@@ -49,9 +43,8 @@ def connect(host: str, username: str, password: str, **kwargs):
         encoded = encode_password(token, password)
         api('/login', {'name': username, 'response': encoded})
     except (ConnectionError, TrapError, FatalError):
-        raise
-    finally:
         transport.close()
+        raise
 
     return api
 
