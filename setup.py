@@ -10,7 +10,7 @@ install_pkgs=[
         ]
 
 tests_pkgs=[
-        'pytest==2.7.2',
+        'pytest==2.8.5',
         'mock==1.3.0'
         ]
 
