@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from mcm.configurators import CmdPathConfigurator, real_action, no_action, Configurator
 from mcm.exceptions import ReadError
-from mcm.librouteros.exceptions import ConnError
+from mcm.librouteros.exceptions import ConnectionError
 
 
 class CmdPathConfigurator_Tests(TestCase):
@@ -176,13 +176,13 @@ class Configurator_Tests(TestCase):
 
     @patch.object(Configurator, 'getPathConfigurator')
     def test_run_catches_ConnError(self, pathcfgmock):
-        pathcfgmock.return_value.run.side_effect = ConnError
+        pathcfgmock.return_value.run.side_effect = ConnectionError
         self.TestCls.run(paths=(self.path,))
 
     @patch.object(Configurator, 'getPathConfigurator')
     def test_run_breaks_loop_ConnError(self, pathcfgmock):
-        """After first ConnError, break the configuration loop."""
-        pathcfgmock.return_value.run.side_effect = ConnError
+        """After first ConnectionError, break the configuration loop."""
+        pathcfgmock.return_value.run.side_effect = ConnectionError
         self.TestCls.run(paths=(self.path,self.path))
         assert pathcfgmock.return_value.run.call_count == 1
 

@@ -7,7 +7,7 @@ import pytest
 
 
 from mcm.iodevices import RouterOsAPIDevice, StaticConfig, ReadOnlyRouterOS
-from mcm.librouteros import CmdError
+from mcm.librouteros import TrapError
 from mcm.exceptions import ReadError, WriteError
 
 
@@ -48,7 +48,7 @@ class RouterOsAPIDevice_Tests(TestCase):
 
     @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_read_raises_ReadError(self, joinmock):
-        self.TestCls.api.run.side_effect = CmdError
+        self.TestCls.api.run.side_effect = TrapError('message')
         with pytest.raises(ReadError):
             self.TestCls.read(path=MagicMock())
 
@@ -96,7 +96,7 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.api.run.assert_called_once_with(cmd='/ip/address/remove', args={'.id':'*1'})
 
     def test_DEL_raises_WriteError(self):
-        self.TestCls.api.run.side_effect = CmdError
+        self.TestCls.api.run.side_effect = TrapError('message')
         with self.assertRaises(WriteError):
             self.TestCls.DEL(command=MagicMock(), data=MagicMock())
 
@@ -106,7 +106,7 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
 
     def test_ADD_raises_WriteError(self):
-        self.TestCls.api.run.side_effect = CmdError
+        self.TestCls.api.run.side_effect = TrapError('message')
         with self.assertRaises(WriteError):
             self.TestCls.ADD(command=MagicMock(), data=MagicMock())
 
@@ -116,7 +116,7 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
 
     def test_SET_raises_WriteError(self):
-        self.TestCls.api.run.side_effect = CmdError
+        self.TestCls.api.run.side_effect = TrapError('message')
         with self.assertRaises(WriteError):
             self.TestCls.SET(command=MagicMock(), data=MagicMock())
 

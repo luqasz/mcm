@@ -2,7 +2,7 @@
 
 from posixpath import join as pjoin
 
-from mcm.librouteros import CmdError
+from mcm.librouteros import TrapError
 from mcm.exceptions import ReadError, WriteError
 
 
@@ -35,7 +35,7 @@ class ReadOnlyRouterOS:
         cmd = self.cmd_action_join(path=path, action='GET')
         try:
             data = self.api.run(cmd=cmd)
-        except CmdError as error:
+        except TrapError as error:
             raise ReadError(error)
         return self.filter_dynamic(data)
 
@@ -72,19 +72,19 @@ class RouterOsAPIDevice(ReadOnlyRouterOS):
         ID = {'.id':data['.id']}
         try:
             self.api.run(cmd=command, args=ID)
-        except CmdError as error:
+        except TrapError as error:
             raise WriteError(error)
 
 
     def SET(self, command, data):
         try:
             self.api.run(cmd=command, args=data)
-        except CmdError as error:
+        except TrapError as error:
             raise WriteError(error)
 
 
     def ADD(self, command, data):
         try:
             self.api.run(cmd=command, args=data)
-        except CmdError as error:
+        except TrapError as error:
             raise WriteError(error)
