@@ -12,13 +12,14 @@ except ImportError:
 
 from mcm.tools import StopWatch, timer, vcmp, ChainMap
 
+pyversion = version_info.major, version_info.minor
 
-@pytest.mark.skipif( version_info < (3,3), reason='Requires python >= 3.3' )
+@pytest.mark.skipif( pyversion < (3,3), reason='Requires python >= 3.3' )
 def test_module_uses_monotonic_as_timer():
     '''Assert that time.monotonic is used.'''
     assert timer == monotonic
 
-@pytest.mark.skipif( version_info > (3,2), reason='Using python >= 3.3' )
+@pytest.mark.skipif( pyversion > (3,2), reason='Using python >= 3.3' )
 def test_module_uses_time_as_timer():
     '''Assert that time.time is used when time.monotonic is not available.'''
     assert timer == time
