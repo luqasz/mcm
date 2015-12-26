@@ -116,10 +116,6 @@ class Decoder:
         decoded ^= XOR
         return decoded
 
-    @staticmethod
-    def decodeSentence(sentence: tuple) -> tuple:
-        return tuple(word.decode(encoding='ASCII', errors='strict') for word in sentence)
-
 
 class ApiProtocol(Encoder, Decoder):
 
@@ -144,20 +140,26 @@ class ApiProtocol(Encoder, Decoder):
         self.log(sentence, '<---')
         self.transport.write(encoded)
 
+    def readWord(self, length: int) -> str:
+        '''
+        Read single word.
+
+        :param length: Length of word.
+        :return: Decoded word.
+        '''
+        return self.transport \
+                   .read(length) \
+                   .decode(encoding='ASCII', errors='strict')
+
     def readSentence(self) -> tuple:
         '''
         Read every word untill empty word (NULL byte) is received.
 
         :return: Reply word, tuple with read words.
         '''
-        sentence = []
-        for length in iter(self.readLength, 0):
-            word = self.transport.read(length)
-            sentence.append(word)
-
-        decoded = self.decodeSentence(sentence)
-        self.log(decoded, '--->')
-        reply_word, words = decoded[0], decoded[1:]
+        sentence = tuple(self.readWord(length) for length in iter(self.readLength, 0))
+        self.log(sentence, '--->')
+        reply_word, words = sentence[0], sentence[1:]
         if reply_word == '!fatal':
             raise FatalError(words[0])
         else:

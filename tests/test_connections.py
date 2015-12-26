@@ -41,14 +41,6 @@ class Test_Decoder:
             connections.Decoder.decodeLength(bad_length)
         assert str(bad_length) in str(error.value)
 
-    def test_decodeSentence(self):
-        assert connections.Decoder.decodeSentence((b'first', b'second')) == ('first', 'second')
-
-    def test_non_ASCII_sentence_decoding(self):
-        non_ascii = (b'first', b'\xc5\x82\xc4\x85')
-        with pytest.raises(UnicodeDecodeError):
-            connections.Decoder.decodeSentence(non_ascii)
-
 
 class Test_Encoder:
 
@@ -127,33 +119,32 @@ class Test_ApiProtocol:
         self.protocol.readLength()
         self.protocol.transport.read.assert_any_call(determineLength_mock.return_value)
 
-    @patch.object(connections.Decoder, 'decodeSentence')
-    @patch.object(connections.ApiProtocol, 'readLength')
-    def test_readSentence_calls_transport_read_with_value_from_readLength(self, readLength_mock, decodeSentence_mock):
-        readLength_mock.side_effect = [1, 0]
-        self.protocol.readSentence()
-        self.protocol.transport.read.assert_any_call(1)
+    def test_readWord_calls_transport_read(self):
+        self.protocol.readWord(2)
+        self.protocol.transport.read.assert_called_once_with(2)
 
-    @patch.object(connections.Decoder, 'decodeSentence')
-    @patch.object(connections.ApiProtocol, 'readLength')
-    def test_readSentence_calls_decodeSentence(self, readLength_mock, decodeSentence_mock):
-        readLength_mock.side_effect = [1, 0]
-        self.protocol.readSentence()
-        decodeSentence_mock.assert_called_once_with([self.protocol.transport.read.return_value])
+    def test_readWord_raises_UnicodeDecodeError(self):
+        self.protocol.transport.read.side_effect = [b'\xc5\x82\xc4\x85']
+        with pytest.raises(UnicodeDecodeError):
+            self.protocol.readWord(2)
 
-    @patch.object(connections.Decoder, 'decodeSentence')
+    def test_readWord_decodes_bytes(self):
+        self.protocol.transport.read.side_effect = [b'word']
+        assert self.protocol.readWord(2) == 'word'
+
+    @patch.object(connections.ApiProtocol, 'readWord')
     @patch.object(connections.ApiProtocol, 'readLength')
-    def test_readSentence_calls_transport_read_with_non_0_value(self, readLength_mock, decodeSentence_mock):
+    def test_readSentence_calls_readWord(self, readLength_mock, readWord_mock):
         '''Assert that read is called as long as readLength does not return 0.'''
-        readLength_mock.side_effect = [1, 2, 0]
+        readLength_mock.side_effect = [1, 0]
         self.protocol.readSentence()
-        assert self.protocol.transport.read.call_count == 2
+        readWord_mock.assert_called_once_with(1)
 
-    @patch.object(connections.Decoder, 'decodeSentence')
+    @patch.object(connections.ApiProtocol, 'readWord')
     @patch.object(connections.ApiProtocol, 'readLength')
-    def test_readSentence_raises_FatalError(self, readLength_mock, decodeSentence_mock):
+    def test_readSentence_raises_FatalError(self, readLength_mock, readWord_mock):
         '''Assert that FatalError is raised with its reason.'''
-        decodeSentence_mock.return_value = ['!fatal', 'reason']
+        readWord_mock.side_effect = ['!fatal', 'reason']
         readLength_mock.side_effect = [1, 1, 0]
         with pytest.raises(FatalError) as error:
             self.protocol.readSentence()
