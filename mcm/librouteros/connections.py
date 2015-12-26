@@ -134,7 +134,7 @@ class ApiProtocol(Encoder, Decoder):
 
     def writeSentence(self, cmd: str, words: tuple = tuple()) -> None:
         '''
-        Encode and write sentence.
+        Write encoded sentence.
 
         :param cmd: Command word.
         :param words: Aditional words.
@@ -165,7 +165,7 @@ class ApiProtocol(Encoder, Decoder):
 
     def readLength(self) -> int:
         '''
-        Read length from transport. This method may return 0 with indicates end of sentence.
+        Read length from transport. This method may return 0 which indicates end of sentence.
 
         :return: Length of next word.
         '''
