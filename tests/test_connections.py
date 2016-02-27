@@ -149,6 +149,23 @@ class Test_ApiProtocol:
         with pytest.raises(FatalError) as error:
             self.protocol.readSentence()
         assert str(error.value) == 'reason'
+        assert self.protocol.transport.close.call_count == 1
+
+    @patch.object(connections.ApiProtocol, 'readSentence')
+    @patch.object(connections.ApiProtocol, 'writeSentence')
+    def test_close(self, writeSentence_mock, readSentence_mock):
+        self.protocol.close()
+        writeSentence_mock.assert_called_once_with('/quit')
+        readSentence_mock.assert_called_once_with()
+        self.protocol.transport.close.assert_called_once_with()
+
+    @pytest.mark.parametrize('exception', (FatalError, ConnectionError))
+    @patch.object(connections.ApiProtocol, 'readSentence')
+    @patch.object(connections.ApiProtocol, 'writeSentence')
+    def test_close_exceptions(self, writeSentence_mock, readSentence_mock, exception):
+        readSentence_mock.side_effect = exception
+        self.protocol.close()
+        self.protocol.transport.close.assert_called_once_with()
 
 
 class Test_SocketTransport:
