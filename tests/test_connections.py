@@ -8,8 +8,14 @@ from mcm.librouteros import connections
 from mcm.librouteros.exceptions import ConnectionError, FatalError
 
 
-integers = (0, 127, 130, 2097140, 268435440)
-encoded = (b'\x00', b'\x7f', b'\x80\x82', b'\xdf\xff\xf4', b'\xef\xff\xff\xf0')
+'''Length as integer, encoded value.'''
+length_pairs = (
+        (0, b'\x00'),
+        (127, b'\x7f'),
+        (130, b'\x80\x82'),
+        (2097140, b'\xdf\xff\xf4'),
+        (268435440, b'\xef\xff\xff\xf0'),
+        )
 
 
 class Test_Decoder:
@@ -30,7 +36,7 @@ class Test_Decoder:
             connections.Decoder.determineLength(bad_length)
         assert str(bad_length) in str(error.value)
 
-    @pytest.mark.parametrize("encoded,integer", zip(encoded, integers))
+    @pytest.mark.parametrize("integer,encoded", length_pairs)
     def test_decodeLength(self, encoded, integer):
         assert connections.Decoder.decodeLength(encoded) == integer
 
@@ -44,7 +50,7 @@ class Test_Decoder:
 
 class Test_Encoder:
 
-    @pytest.mark.parametrize("integer,encoded", zip(integers, encoded))
+    @pytest.mark.parametrize("integer,encoded", length_pairs)
     def test_encodeLength(self, integer, encoded):
         assert connections.Encoder.encodeLength(integer) == encoded
 
