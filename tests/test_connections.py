@@ -94,13 +94,13 @@ class Test_ApiProtocol:
 
     @patch.object(connections.Encoder, 'encodeSentence')
     def test_writeSentence_calls_encodeSentence(self, encodeSentence_mock):
-        self.protocol.writeSentence(cmd=b'/ip/address/print', words=(b'=key=value',))
-        encodeSentence_mock.assert_called_once_with((b'/ip/address/print', b'=key=value'))
+        self.protocol.writeSentence(cmd='/ip/address/print', words=('=key=value',))
+        encodeSentence_mock.assert_called_once_with(('/ip/address/print', '=key=value'))
 
     @patch.object(connections.Encoder, 'encodeSentence')
     def test_writeSentence_calls_transport_write(self, encodeSentence_mock):
         '''Assert that write is called with encoded sentence.'''
-        self.protocol.writeSentence(cmd=b'/ip/address/print', words=(b'=key=value',))
+        self.protocol.writeSentence(cmd='/ip/address/print', words=('=key=value',))
         self.protocol.transport.write.assert_called_once_with(encodeSentence_mock.return_value)
 
     @patch.object(connections.Decoder, 'decodeLength')
