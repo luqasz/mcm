@@ -161,6 +161,7 @@ class ApiProtocol(Encoder, Decoder):
         self.log(sentence, '--->')
         reply_word, words = sentence[0], sentence[1:]
         if reply_word == '!fatal':
+            self.transport.close()
             raise FatalError(words[0])
         else:
             return reply_word, words
@@ -175,6 +176,15 @@ class ApiProtocol(Encoder, Decoder):
         to_read = self.determineLength(length)
         length += self.transport.read(to_read)
         return self.decodeLength(length)
+
+    def close(self):
+        try:
+            self.writeSentence('/quit')
+            self.readSentence()
+        except (FatalError, ConnectionError):
+            pass
+        finally:
+            self.transport.close()
 
 
 class SocketTransport:
