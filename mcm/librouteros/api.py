@@ -2,7 +2,7 @@
 
 from posixpath import join as pjoin
 
-from mcm.librouteros.exceptions import FatalError, TrapError
+from mcm.librouteros.exceptions import TrapError
 
 
 class Parser:
@@ -35,6 +35,18 @@ class Parser:
         splited = word.split('=', index+1)
         value = Parser.apiCast(splited[index+1])
         return (splited[index], value)
+
+    @staticmethod
+    def parseWords(words: tuple) -> tuple:
+        '''
+        Parse each word.
+
+        :param sentence: Read sentence.
+        :returns: Tag, parsed words as dict.
+        '''
+        parsed = dict(Parser.parseWord(word) for word in words)
+        tag = parsed.pop('.tag', None)
+        return tag, parsed
 
 
 class Composer:
@@ -70,43 +82,30 @@ class Composer:
 
 class Api(Composer, Parser):
 
-    def __init__(self, protocol, transport):
+    def __init__(self, protocol):
         self.protocol = protocol
-        self.transport = transport
 
-    def __call__(self, cmd: str, args: dict) -> tuple:
+    def __call__(self, cmd: str, args: dict = None) -> tuple:
         '''
-        Call Api with any command.
+        Call Api with given command.
 
         :param cmd: Command word. eg. /ip/address/print
         :param args: Optional arguments.
         '''
-        self._writeSentence(cmd, args)
-        return self._readResponse()
-
-    def _handleTrap(self, words: tuple):
-        '''
-        :throws TrapError:
-        '''
-        parsed = dict(self.parseWord(word) for word in words)
-        raise TrapError(message=parsed['message'], category=parsed.get('category'))
-
-    def _handleData(self, words: tuple) -> dict:
-        return dict(self.parseWord(word) for word in words)
-
-    def _writeSentence(self, cmd: str, args: dict):
-        words = self.composeAttributeWords(args)
+        args = args or dict()
+        words = self.composeAttributeWords(args.items())
         self.protocol.writeSentence(cmd, words)
+        return self._readResponse()
 
     def _readSentence(self) -> tuple:
         '''
         Read one sentence and parse words.
 
-        :returns: Reply_word, dict with attribute words.
+        :returns: Reply word, tag, dict with attribute words.
         '''
         reply_word, words = self.protocol.readSentence()
-        words = self._handleData(words)
-        return reply_word, words
+        tag, words = self.parseWords(words)
+        return reply_word, tag, words
 
     def _readResponse(self) -> tuple:
         '''
@@ -116,23 +115,19 @@ class Api(Composer, Parser):
         :throws TrapError: If !trap is received.
         :returns: Full response
         '''
-        traps = []
         response = []
         while True:
-            try:
-                reply_word, words = self._readSentence()
-            except TrapError as error:
-                traps.append(error)
-            else:
-                response.append(words)
-                if reply_word == '!done':
-                    break
+            reply_word, tag, words = self._readSentence()
+            response.append((reply_word, words))
+            if reply_word == '!done':
+                break
 
+        traps = ', '.join(words['message'] for reply_word, words in response if reply_word == '!trap')
         if traps:
-            message = ', '.join(trap.message for trap in traps)
-            raise TrapError(message)
+            raise TrapError(traps)
 
-        return tuple(response)
+        # Remove empty sentences
+        return tuple(words for reply_word, words in response if words)
 
     def create(self, path: str, args: dict) -> str:
         '''
@@ -180,13 +175,7 @@ class Api(Composer, Parser):
         return self(cmd, args)
 
     def close(self):
-        try:
-            self.protocol.writeSentence(('/quit',))
-            self.protocol.readSentence()
-        except FatalError:
-            pass
-        finally:
-            self.transport.close()
+        self.protocol.close()
 
     @staticmethod
     def joinPath(*path: str) -> str:

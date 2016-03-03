@@ -35,7 +35,7 @@ def connect(host: str, username: str, password: str, **kwargs):
     arguments = ChainMap(kwargs, defaults)
     transport = create_transport(host, **arguments)
     protocol = ApiProtocol(transport=transport)
-    api = Api(protocol=protocol, transport=transport)
+    api = Api(protocol=protocol)
 
     try:
         sentence = api('/login')

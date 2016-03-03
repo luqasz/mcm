@@ -51,6 +51,15 @@ class Test_Parser:
     def test_parseWord(self, word, expected):
         assert Parser.parseWord(word) == expected
 
+    @pytest.mark.parametrize("read_sentence, expected_sentence, expected_tag", (
+            (attribute_words + ('.tag=1',), dict(attribute_pairs), 1),
+            (attribute_words, dict(attribute_pairs), None),
+            ))
+    def test_ParseWords(self, read_sentence, expected_sentence, expected_tag):
+        parsed_tag, parsed_sentence = Parser.parseWords(read_sentence)
+        assert expected_tag == parsed_tag
+        assert parsed_sentence == expected_sentence
+
 
 class Test_Composer:
 
@@ -75,7 +84,7 @@ class Test_Composer:
 class Test_Api:
 
     def setup(self):
-        self.api = Api(transport=MagicMock(), protocol=MagicMock())
+        self.api = Api(protocol=MagicMock())
 
     @pytest.mark.parametrize("path, expected", (
         ("/ip/address/", "/ip/address"),
