@@ -28,7 +28,7 @@ def connect(host: str, username: str, password: str, **kwargs):
     :param host: Hostname to connecto to. May be ipv4,ipv6,FQDN.
     :param username: Username to login with.
     :param password: Password to login with. Only ASCII characters allowed.
-    :param timout: Socket timeout. Defaults to 10.
+    :param timeout: Socket timeout. Defaults to 10.
     :param port: Destination port to be used. Defaults to 8728.
     :param saddr: Source address to bind to.
     '''
