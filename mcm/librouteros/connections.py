@@ -116,11 +116,29 @@ class Decoder:
         decoded ^= XOR
         return decoded
 
+    @staticmethod
+    def decodeSentence(sentence: bytes) -> tuple:
+        '''
+        Decode given sentence.
+
+        :param sentence: Bytes string with sentence (without ending \x00 EOS byte).
+        :return: Tuple with decoded words.
+        '''
+        words = []
+        start, end = 0, 1
+        while end < len(sentence):
+            end += Decoder.determineLength(sentence[start:end])
+            word_length = Decoder.decodeLength(sentence[start:end])
+            words.append(sentence[end:word_length+end])
+            start, end = end + word_length, end + word_length + 1
+        return tuple(word.decode(encoding='ASCII', errors='strict') for word in words)
+
 
 class ApiProtocol(Encoder, Decoder):
 
     def __init__(self, transport):
         self.transport = transport
+        self.read_buffer = bytearray()
 
     def log(self, sentence, direction_string):
         for word in sentence:
@@ -140,24 +158,19 @@ class ApiProtocol(Encoder, Decoder):
         self.log(sentence, '<---')
         self.transport.write(encoded)
 
-    def readWord(self, length: int) -> str:
-        '''
-        Read single word.
-
-        :param length: Length of word.
-        :return: Decoded word.
-        '''
-        return self.transport \
-                   .read(length) \
-                   .decode(encoding='ASCII', errors='strict')
-
     def readSentence(self) -> tuple:
         '''
         Read every word untill empty word (NULL byte) is received.
 
         :return: Reply word, tuple with read words.
         '''
-        sentence = tuple(self.readWord(length) for length in iter(self.readLength, 0))
+        sentence, separator, tail = self.read_buffer.partition(b'\x00')
+        while not separator:
+            self.read_buffer += self.transport.read(1024)
+            sentence, separator, tail = self.read_buffer.partition(b'\x00')
+
+        self.read_buffer = tail
+        sentence = self.decodeSentence(sentence)
         self.log(sentence, '--->')
         reply_word, words = sentence[0], sentence[1:]
         if reply_word == '!fatal':
@@ -165,17 +178,6 @@ class ApiProtocol(Encoder, Decoder):
             raise FatalError(words[0])
         else:
             return reply_word, words
-
-    def readLength(self) -> int:
-        '''
-        Read length from transport. This method may return 0 which indicates end of sentence.
-
-        :return: Length of next word.
-        '''
-        length = self.transport.read(1)
-        to_read = self.determineLength(length)
-        length += self.transport.read(to_read)
-        return self.decodeLength(length)
 
     def close(self):
         try:
@@ -209,23 +211,14 @@ class SocketTransport:
         Read as many bytes from socket as specified in length.
         Loop as long as every byte is read unless exception is raised.
         '''
-        data = bytearray()
         try:
-            while length:
-                read = self.sock.recv(length)
-                if not read:
-                    msg = 'Connection unexpectedly closed. Read {read}/{total} bytes.'.format
-                    raise ConnectionError(msg(read=len(data), total=(len(data) + length)))
-                data += read
-                length -= len(read)
-
-        except SOCKET_TIMEOUT:
-            msg = 'Socket timed out. Read {read}/{total} bytes.'.format
-            raise ConnectionError(msg(read=len(data), total=(len(data) + length)))
+            data = self.sock.recv(length)
+            if not data:
+                raise ConnectionError('Connection unexpectedly closed.')
+        except SOCKET_TIMEOUT as error:
+            raise ConnectionError('Socket timed out. ' + str(error))
         except SOCKET_ERROR as error:
             raise ConnectionError('Failed to read from socket. {reason}'.format(reason=error))
-
-        return data
 
     def close(self):
         try:
