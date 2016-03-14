@@ -34,17 +34,12 @@ api_pairs = (
 
 class Test_Parser:
 
-    @pytest.mark.parametrize("api_type,python_type", (
-            ('yes', True),
-            ('no', False),
-            ('true', True),
-            ('false', False),
-            ('', None),
-            ('string', 'string'),
-            ('22.2', '22.2'),
-            ('22', 22),
-            ))
-    def test_apiCast(self, api_type, python_type):
+    def test_apiCast(self, bidirectional_type_casts):
+        api_type, python_type = bidirectional_type_casts
+        assert Parser.apiCast(api_type) == python_type
+
+    def test_apiCast_api_values(self, api_type_casts):
+        api_type, python_type = api_type_casts
         assert Parser.apiCast(api_type) == python_type
 
     @pytest.mark.parametrize("word, expected", zip(attribute_words + api_words, attribute_pairs + api_pairs))
@@ -63,18 +58,8 @@ class Test_Parser:
 
 class Test_Composer:
 
-    @pytest.mark.parametrize("python_type,api_type", (
-            (True, 'yes'),
-            (False, 'no'),
-            (None, ''),
-            ('string', 'string'),
-            ('22.2', '22.2'),
-            (22.2, '22.2'),
-            (22, '22'),
-            (1, '1'),
-            (0, '0')
-            ))
-    def test_pythonCast(self, python_type, api_type):
+    def test_pythonCast(self, bidirectional_type_casts):
+        api_type, python_type = bidirectional_type_casts
         assert Composer.pythonCast(python_type) == api_type
 
     def test_composeAttributeWords(self):
