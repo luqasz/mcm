@@ -98,6 +98,7 @@ class Test_Api:
         (("/ip/address/", "print"), "/ip/address/print"),
         (("ip/address", "print"), "/ip/address/print"),
         (("/ip/address", "set"), "/ip/address/set"),
+        (("/", "/ip/address", "set"), "/ip/address/set"),
         ))
     def test_joinPath_multi_param(self, path, expected):
         assert self.api.joinPath(*path) == expected
