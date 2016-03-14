@@ -25,7 +25,8 @@ class Parser:
     @staticmethod
     def parseWord(word: str) -> tuple:
         '''
-        Values are automaticly casted to python equivalents.
+        Split given word to key, value pair.
+        Values are casted to python equivalents.
 
         :param word: API word.
         :returns: Key, value pair.
