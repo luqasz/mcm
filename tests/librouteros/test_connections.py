@@ -73,7 +73,7 @@ class Test_Encoder:
             \x00 is appended to the sentence
             encodeWord is called == len(sentence)
         '''
-        encoded = connections.Encoder.encodeSentence(('first', 'second'))
+        encoded = connections.Encoder.encodeSentence('first', 'second')
         assert encodeWord_mock.call_count == 2
         assert encoded[-1:] == b'\x00'
 
@@ -85,13 +85,13 @@ class Test_ApiProtocol:
 
     @patch.object(connections.Encoder, 'encodeSentence')
     def test_writeSentence_calls_encodeSentence(self, encodeSentence_mock):
-        self.protocol.writeSentence(cmd='/ip/address/print', words=('=key=value',))
-        encodeSentence_mock.assert_called_once_with(('/ip/address/print', '=key=value'))
+        self.protocol.writeSentence('/ip/address/print', '=key=value')
+        encodeSentence_mock.assert_called_once_with('/ip/address/print', '=key=value')
 
     @patch.object(connections.Encoder, 'encodeSentence')
     def test_writeSentence_calls_transport_write(self, encodeSentence_mock):
         '''Assert that write is called with encoded sentence.'''
-        self.protocol.writeSentence(cmd='/ip/address/print', words=('=key=value',))
+        self.protocol.writeSentence('/ip/address/print', '=key=value')
         self.protocol.transport.write.assert_called_once_with(encodeSentence_mock.return_value)
 
     @patch.object(connections.ApiProtocol, 'decodeSentence', return_value=('!fatal', 'reason'))

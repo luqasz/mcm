@@ -13,14 +13,14 @@ LOGGER.addHandler(NullHandler())
 class Encoder:
 
     @staticmethod
-    def encodeSentence(sentence: tuple) -> tuple:
+    def encodeSentence(*words: str) -> tuple:
         '''
         Encode given sentence in API format.
 
-        :param sentence: Sentence to endoce.
+        :param words: Words to endoce.
         :returns: Encoded sentence.
         '''
-        encoded = map(Encoder.encodeWord, sentence)
+        encoded = map(Encoder.encodeWord, words)
         encoded = b''.join(encoded)
         # append EOS (end of sentence) byte
         encoded += b'\x00'
@@ -117,7 +117,7 @@ class Decoder:
         return decoded
 
     @staticmethod
-    def decodeSentence(sentence: bytes) -> tuple:
+    def decodeSentence(sentence: bytearray) -> tuple:
         '''
         Decode given sentence.
 
@@ -140,22 +140,21 @@ class ApiProtocol(Encoder, Decoder):
         self.transport = transport
         self.read_buffer = bytearray()
 
-    def log(self, sentence, direction_string):
+    def log(self, direction_string, *sentence: str):
         for word in sentence:
             LOGGER.debug('{0} {1!r}'.format(direction_string, word))
 
         LOGGER.debug('{0} EOS'.format(direction_string))
 
-    def writeSentence(self, cmd: str, words: tuple = tuple()) -> None:
+    def writeSentence(self, cmd: str, *words: str) -> None:
         '''
         Write encoded sentence.
 
         :param cmd: Command word.
         :param words: Aditional words.
         '''
-        sentence = (cmd,) + words
-        encoded = self.encodeSentence(sentence)
-        self.log(sentence, '<---')
+        encoded = self.encodeSentence(cmd, *words)
+        self.log('<---', cmd, *words)
         self.transport.write(encoded)
 
     def readSentence(self) -> tuple:
@@ -171,7 +170,7 @@ class ApiProtocol(Encoder, Decoder):
 
         self.read_buffer = tail
         sentence = self.decodeSentence(sentence)
-        self.log(sentence, '--->')
+        self.log('--->', *sentence)
         reply_word, words = sentence[0], sentence[1:]
         if reply_word == '!fatal':
             self.transport.close()
