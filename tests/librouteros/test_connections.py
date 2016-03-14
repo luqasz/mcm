@@ -180,6 +180,10 @@ class Test_SocketTransport:
         with pytest.raises(ConnectionError):
             self.transport.read(length)
 
+    def test_read_returns_from_recv(self):
+        self.transport.sock.recv.return_value = b'returned'
+        assert self.transport.read(1024) == b'returned'
+
     @pytest.mark.parametrize("exception", (SOCKET_ERROR, SOCKET_TIMEOUT))
     def test_recv_raises_socket_errors(self, exception):
         self.transport.sock.recv.side_effect = exception

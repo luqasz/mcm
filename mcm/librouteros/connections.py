@@ -214,6 +214,7 @@ class SocketTransport:
             data = self.sock.recv(length)
             if not data:
                 raise ConnectionError('Connection unexpectedly closed.')
+            return data
         except SOCKET_TIMEOUT as error:
             raise ConnectionError('Socket timed out. ' + str(error))
         except SOCKET_ERROR as error:
