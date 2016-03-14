@@ -25,7 +25,7 @@ def bad_length_int():
 
 
 @pytest.fixture(scope='function', params=(i.to_bytes(1, 'big') for i in range(240, 256)))
-def bad_first_length_byte(request):
+def bad_first_length_bytes(request):
     '''First byte of length must be < 240.'''
     return request.param
 

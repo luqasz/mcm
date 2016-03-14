@@ -19,10 +19,10 @@ class Test_Decoder:
     def test_determineLength(self, length, expected):
         assert connections.Decoder.determineLength(length) == expected
 
-    def test_determineLength_raises(self, bad_first_length_byte):
+    def test_determineLength_raises(self, bad_first_length_bytes):
         with pytest.raises(ConnectionError) as error:
-            connections.Decoder.determineLength(bad_first_length_byte)
-        assert str(bad_first_length_byte) in str(error.value)
+            connections.Decoder.determineLength(bad_first_length_bytes)
+        assert str(bad_first_length_bytes) in str(error.value)
 
     def test_decodeLength(self, length_pairs):
         integer, encoded = length_pairs
