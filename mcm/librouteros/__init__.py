@@ -17,6 +17,7 @@ defaults = {
             'timeout': 10,
             'port': 8728,
             'saddr': '',
+            'subclass': Api,
             }
 
 
@@ -31,17 +32,18 @@ def connect(host: str, username: str, password: str, **kwargs):
     :param timeout: Socket timeout. Defaults to 10.
     :param port: Destination port to be used. Defaults to 8728.
     :param saddr: Source address to bind to.
+    :param subclass: Subclass of Api class. Defaults to Api class from library.
     '''
     arguments = ChainMap(kwargs, defaults)
     transport = create_transport(host, **arguments)
     protocol = ApiProtocol(transport=transport)
-    api = Api(protocol=protocol)
+    api = arguments['subclass'](protocol=protocol)
 
     try:
         sentence = api('/login')
         token = sentence[0]['ret']
         encoded = encode_password(token, password)
-        api('/login', {'name': username, 'response': encoded})
+        api('/login', **{'name': username, 'response': encoded})
     except (ConnectionError, TrapError, FatalError):
         transport.close()
         raise

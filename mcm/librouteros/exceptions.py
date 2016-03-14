@@ -39,3 +39,17 @@ class TrapError(LibError):
 
     def __str__(self):
         return str(self.message)
+
+
+class MultiTrapError(LibError):
+    '''
+    Exception raised when multiple !trap words have been received in one response.
+
+    :param traps: TrapError instances.
+    '''
+
+    def __init__(self, *traps):
+        self.traps = traps
+
+    def __str__(self):
+        return ', '.join(str(trap) for trap in self.traps)

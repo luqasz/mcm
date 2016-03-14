@@ -2,7 +2,7 @@
 
 from posixpath import join as pjoin
 
-from mcm.librouteros.exceptions import TrapError
+from mcm.librouteros.exceptions import TrapError, MultiTrapError
 
 
 class Parser:
@@ -85,16 +85,15 @@ class Api(Composer, Parser):
     def __init__(self, protocol):
         self.protocol = protocol
 
-    def __call__(self, cmd: str, args: dict = None) -> tuple:
+    def __call__(self, cmd: str, **kwargs) -> tuple:
         '''
         Call Api with given command.
 
         :param cmd: Command word. eg. /ip/address/print
-        :param args: Optional arguments.
+        :param kwargs: Optional arguments.
         '''
-        args = args or dict()
-        words = self.composeAttributeWords(args.items())
-        self.protocol.writeSentence(cmd, words)
+        words = self.composeAttributeWords(kwargs.items())
+        self.protocol.writeSentence(cmd, *words)
         return self._readResponse()
 
     def _readSentence(self) -> tuple:
@@ -109,73 +108,33 @@ class Api(Composer, Parser):
 
     def _readResponse(self) -> tuple:
         '''
-        Read untill !done is received. Unfortunatelly MikroTik may send
-        multiple !trap error messages. Those messages are combined into one if any.
+        Read untill !done is received.
 
-        :throws TrapError: If !trap is received.
+        :throws TrapError: If one !trap is received.
+        :throws MultiTrapError: If > 1 !trap is received.
         :returns: Full response
         '''
         response = []
-        while True:
+        reply_word = None
+        while reply_word != '!done':
             reply_word, tag, words = self._readSentence()
             response.append((reply_word, words))
-            if reply_word == '!done':
-                break
 
-        traps = ', '.join(words['message'] for reply_word, words in response if reply_word == '!trap')
-        if traps:
-            raise TrapError(traps)
-
+        self._trapCheck(response)
         # Remove empty sentences
         return tuple(words for reply_word, words in response if words)
 
-    def create(self, path: str, args: dict) -> str:
-        '''
-        Create new entry and return its '.id'.
-
-        :param path: Command path without action, eg. /ip/address
-        :param args: New entry's arguments.
-        :returns: Created '.id'.
-        '''
-        cmd = self.joinPath(path, 'add')
-        response = self(cmd, args)
-        return response[0]['ret']
-
-    def remove(self, path: str, ids: tuple):
-        '''
-        Remove specified ids from path.
-
-        :param path: Command path without action, eg. /ip/address
-        :param ids: Ids to remove.
-        '''
-        cmd = self.joinPath(path, 'remove')
-        ids = ','.join(ids)
-        self(cmd, {'.id': ids})
-
-    def update(self, path: str, args: dict):
-        '''
-        Update already exsisting entry.
-
-        :param path: Command path without action, eg. /ip/address
-        :param args: Parameters to update to.
-        '''
-        cmd = self.joinPath(path, 'set')
-        self(cmd, args)
-
-    def getall(self, path: str, args: dict = None):
-        '''
-        Get all entries from given path.
-
-        :param path: Command path without action, eg. /ip/address
-        :param args: Additional getall arguments.
-        :returns: Response.
-        '''
-        cmd = self.joinPath(path, 'getall')
-        args = args if args else dict()
-        return self(cmd, args)
-
     def close(self):
         self.protocol.close()
+
+    @staticmethod
+    def _trapCheck(response):
+        traps = tuple(words for reply_word, words in response if reply_word == '!trap')
+        if len(traps) > 1:
+            raise MultiTrapError(*traps)
+        elif len(traps) == 1:
+            trap = traps[0]
+            raise TrapError(message=trap['message'], category=trap.get('category'))
 
     @staticmethod
     def joinPath(*path: str) -> str:

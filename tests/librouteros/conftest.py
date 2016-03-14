@@ -1,4 +1,5 @@
 import pytest
+from mcm.librouteros import Api
 
 
 @pytest.fixture(scope='function')
@@ -7,6 +8,7 @@ def lib_default_kwargs():
             'timeout': 10,
             'port': 8728,
             'saddr': '',
+            'subclass': Api,
             }
 
 
