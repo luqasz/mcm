@@ -8,7 +8,7 @@ try:
 except ImportError:
     from mcm.tools import ChainMap
 
-from mcm.librouteros.exceptions import TrapError, FatalError, ConnectionError
+from mcm.librouteros.exceptions import TrapError, FatalError, ConnectionError, MultiTrapError
 from mcm.librouteros.connections import ApiProtocol, SocketTransport
 from mcm.librouteros.api import Api
 
@@ -44,7 +44,7 @@ def connect(host: str, username: str, password: str, **kwargs):
         token = sentence[0]['ret']
         encoded = encode_password(token, password)
         api('/login', **{'name': username, 'response': encoded})
-    except (ConnectionError, TrapError, FatalError):
+    except (ConnectionError, TrapError, FatalError, MultiTrapError):
         transport.close()
         raise
 
