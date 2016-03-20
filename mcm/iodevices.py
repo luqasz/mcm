@@ -49,22 +49,16 @@ class RouterOsAPIDevice(ReadOnlyRouterOS):
     def write(self, path, action, data):
         command = self.api.joinPath(path, self.actions[action])
         method = getattr(self, action)
-        method(command=command, data=data)
+        try:
+            method(command=command, data=data)
+        except (TrapError, MultiTrapError) as error:
+            raise WriteError(error)
 
     def DEL(self, command, data):
-        try:
-            self.api(cmd=command, **{'.id': data['.id']})
-        except (TrapError, MultiTrapError) as error:
-            raise WriteError(error)
+        self.api(cmd=command, **{'.id': data['.id']})
 
     def SET(self, command, data):
-        try:
-            self.api(cmd=command, **data)
-        except (TrapError, MultiTrapError) as error:
-            raise WriteError(error)
+        self.api(cmd=command, **data)
 
     def ADD(self, command, data):
-        try:
-            self.api(cmd=command, **data)
-        except (TrapError, MultiTrapError) as error:
-            raise WriteError(error)
+        self.api(cmd=command, **data)

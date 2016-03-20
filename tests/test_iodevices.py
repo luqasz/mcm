@@ -85,10 +85,10 @@ class Test_RouterOsAPIDevice:
 
     @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
     @pytest.mark.parametrize('action', ('ADD', 'SET', 'DEL'))
-    def test_action_method_raise_WriteError(self, exception, action):
-        self.TestCls.api.side_effect = exception('message')
+    def test_write_raises_WriteError(self, exception, action):
+        setattr(self.TestCls, action, MagicMock(side_effect=exception('message')))
         with pytest.raises(WriteError) as error:
-            getattr(self.TestCls, action)(command=MagicMock(), data=MagicMock())
+            self.TestCls.write(path=MagicMock(), action=action, data=MagicMock())
         assert str(error.value) == 'message'
 
     def test_close_calls_api_close(self):
