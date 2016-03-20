@@ -1,13 +1,12 @@
 # -*- coding: UTF-8 -*-
 
 from mock import MagicMock, patch
-from unittest import TestCase
 from inspect import ismethod
 import pytest
 
 
 from mcm.iodevices import RouterOsAPIDevice, StaticConfig, ReadOnlyRouterOS
-from mcm.librouteros import TrapError
+from mcm.librouteros import TrapError, MultiTrapError
 from mcm.exceptions import ReadError, WriteError
 
 
@@ -20,35 +19,35 @@ class StaticConfig_Tests:
 
     def setup(self):
         data = [
-                {'path':'test_path', 'strategy':'exact', 'rules':[ {'key':'value'} ]}
+                {'path': 'test_path', 'strategy': 'exact', 'rules': [{'key': 'value'}]}
                 ]
         self.TestCls = StaticConfig(data=data)
 
     def test_read_returns_valid_rules(self):
         returned = self.TestCls.read(path='test_path')
-        assert returned == [{'key':'value'}]
+        assert returned == [{'key': 'value'}]
 
     def test_has_close_method(self):
         assert ismethod(self.TestCls.close)
 
 
+class Test_RouterOsAPIDevice:
 
-class RouterOsAPIDevice_Tests(TestCase):
-
-    def setUp(self):
+    def setup(self):
         self.TestCls = RouterOsAPIDevice(api=MagicMock())
         self.pathmock = MagicMock()
         self.datamock = MagicMock()
 
     @patch.object(RouterOsAPIDevice, 'filter_dynamic')
     @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_read_calls_api_run_method(self, joinmock, filter_mock):
+    def test_read_calls_api(self, joinmock, filter_mock):
         self.TestCls.read(self.pathmock)
-        self.TestCls.api.run.assert_called_once_with(cmd=joinmock.return_value)
+        self.TestCls.api.assert_called_once_with(cmd=joinmock.return_value)
 
+    @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
     @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_read_raises_ReadError(self, joinmock):
-        self.TestCls.api.run.side_effect = TrapError('message')
+    def test_read_raises_ReadError(self, joinmock, exception):
+        self.TestCls.api.side_effect = exception('message')
         with pytest.raises(ReadError):
             self.TestCls.read(path=MagicMock())
 
@@ -62,14 +61,13 @@ class RouterOsAPIDevice_Tests(TestCase):
     @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_read_calls_filter_dynamic(self, joinmock, filter_mock):
         self.TestCls.read(self.pathmock)
-        filter_mock.assert_called_once_with(self.TestCls.api.run.return_value)
+        filter_mock.assert_called_once_with(self.TestCls.api.return_value)
 
     @patch.object(RouterOsAPIDevice, 'ADD')
     @patch.object(RouterOsAPIDevice, 'cmd_action_join')
     def test_write_calls_cmd_action_join(self, joinmock, addmock):
         self.TestCls.write(path=self.pathmock, action='ADD', data=None)
         joinmock.assert_called_once_with(path=self.pathmock, action='ADD')
-
 
     @patch.object(RouterOsAPIDevice, 'DEL')
     @patch.object(RouterOsAPIDevice, 'cmd_action_join')
@@ -89,35 +87,37 @@ class RouterOsAPIDevice_Tests(TestCase):
         self.TestCls.write(data='data', path=self.pathmock, action='SET')
         setmock.assert_called_once_with(command=joinmock.return_value, data='data')
 
-
-    def test_DEL_calls_api_run_only_with_ID(self):
-        data = {'.id':'*1', 'address':'1.1.1.1/24'}
+    def test_DEL_calls_api_only_with_ID(self):
+        data = {'.id': '*1', 'address': '1.1.1.1/24'}
         self.TestCls.DEL(command='/ip/address/remove', data=data)
-        self.TestCls.api.run.assert_called_once_with(cmd='/ip/address/remove', args={'.id':'*1'})
+        self.TestCls.api.assert_called_once_with(cmd='/ip/address/remove', **{'.id': '*1'})
 
-    def test_DEL_raises_WriteError(self):
-        self.TestCls.api.run.side_effect = TrapError('message')
-        with self.assertRaises(WriteError):
+    @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
+    def test_DEL_raises_WriteError(self, exception):
+        self.TestCls.api.side_effect = exception('message')
+        with pytest.raises(WriteError):
             self.TestCls.DEL(command=MagicMock(), data=MagicMock())
 
-    def test_ADD_calls_api_run(self):
+    def test_ADD_calls_api(self):
         data, command = MagicMock(), MagicMock()
         self.TestCls.ADD(command=command, data=data)
-        self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
+        self.TestCls.api.assert_called_once_with(cmd=command, **data)
 
-    def test_ADD_raises_WriteError(self):
-        self.TestCls.api.run.side_effect = TrapError('message')
-        with self.assertRaises(WriteError):
+    @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
+    def test_ADD_raises_WriteError(self, exception):
+        self.TestCls.api.side_effect = exception('message')
+        with pytest.raises(WriteError):
             self.TestCls.ADD(command=MagicMock(), data=MagicMock())
 
-    def test_SET_calls_api_run(self):
+    def test_SET_calls_api(self):
         data, command = MagicMock(), MagicMock()
         self.TestCls.SET(command=command, data=data)
-        self.TestCls.api.run.assert_called_once_with(cmd=command, args=data)
+        self.TestCls.api.assert_called_once_with(cmd=command, **data)
 
-    def test_SET_raises_WriteError(self):
-        self.TestCls.api.run.side_effect = TrapError('message')
-        with self.assertRaises(WriteError):
+    @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
+    def test_SET_raises_WriteError(self, exception):
+        self.TestCls.api.side_effect = exception('message')
+        with pytest.raises(WriteError):
             self.TestCls.SET(command=MagicMock(), data=MagicMock())
 
     def test_close_calls_api_close(self):
@@ -133,22 +133,19 @@ def test_DryRunRouterOS_write_passes(read_only_routeros, action):
     assert getattr(read_only_routeros, action).call_count == 0
 
 
-
-@pytest.mark.parametrize("path,action,expected",(
-    ('/ip/address','DEL','/ip/address/remove'),
-    ('/ip/address','ADD','/ip/address/add'),
-    ('/ip/address','SET','/ip/address/set'),
-    ('/ip/address','GET','/ip/address/getall'),
+@pytest.mark.parametrize("path,action,expected", (
+    ('/ip/address', 'DEL', '/ip/address/remove'),
+    ('/ip/address', 'ADD', '/ip/address/add'),
+    ('/ip/address', 'SET', '/ip/address/set'),
+    ('/ip/address', 'GET', '/ip/address/getall'),
     ))
-def test_cmd_action_join(path,action,expected):
-    assert RouterOsAPIDevice.cmd_action_join(path=path,action=action) == expected
+def test_cmd_action_join(path, action, expected):
+    assert RouterOsAPIDevice.cmd_action_join(path=path, action=action) == expected
 
 
-@pytest.mark.parametrize("response,expected",(
-    ( ({'dynamic':False},{'dynamic':True}), ({'dynamic':False},) ),
-    ( ({'dynamic':True},), () ),
+@pytest.mark.parametrize("response,expected", (
+    (({'dynamic': False}, {'dynamic': True}), ({'dynamic': False}, )),
+    (({'dynamic': True}, ), ()),
     ))
-def test_filter_dynamic(response,expected):
+def test_filter_dynamic(response, expected):
     assert RouterOsAPIDevice.filter_dynamic(response) == expected
-
-
