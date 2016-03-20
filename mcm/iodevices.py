@@ -18,7 +18,10 @@ class StaticConfig:
         pass
 
 
-class ReadOnlyRouterOS:
+class RO_RouterOs:
+    '''
+    Read only RouterOs.
+    '''
 
     actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
 
@@ -44,7 +47,10 @@ class ReadOnlyRouterOS:
         return tuple(row for row in data if not row.get('dynamic'))
 
 
-class RouterOsAPIDevice(ReadOnlyRouterOS):
+class RW_RouterOs(RO_RouterOs):
+    '''
+    Read, write RouterOs.
+    '''
 
     def write(self, path, action, data):
         command = self.api.joinPath(path, self.actions[action])

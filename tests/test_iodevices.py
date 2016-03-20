@@ -5,14 +5,9 @@ from inspect import ismethod
 import pytest
 
 
-from mcm.iodevices import RouterOsAPIDevice, StaticConfig, ReadOnlyRouterOS
+from mcm.iodevices import RW_RouterOs, StaticConfig, RO_RouterOs
 from mcm.librouteros import TrapError, MultiTrapError
 from mcm.exceptions import ReadError, WriteError
-
-
-@pytest.fixture
-def read_only_routeros():
-    return ReadOnlyRouterOS(api=MagicMock())
 
 
 class StaticConfig_Tests:
@@ -31,14 +26,14 @@ class StaticConfig_Tests:
         assert ismethod(self.TestCls.close)
 
 
-class Test_RouterOsAPIDevice:
+class Test_RO_RouterOs:
 
     def setup(self):
-        self.TestCls = RouterOsAPIDevice(api=MagicMock())
+        self.TestCls = RO_RouterOs(api=MagicMock())
         self.pathmock = MagicMock()
         self.datamock = MagicMock()
 
-    @patch.object(RouterOsAPIDevice, 'filter_dynamic')
+    @patch.object(RO_RouterOs, 'filter_dynamic')
     def test_read_calls_api(self, filter_mock):
         self.TestCls.read(self.pathmock)
         self.TestCls.api.assert_called_once_with(cmd=self.TestCls.api.joinPath.return_value)
@@ -50,15 +45,34 @@ class Test_RouterOsAPIDevice:
             self.TestCls.read(path=MagicMock())
         assert str(error.value) == 'message'
 
-    @patch.object(RouterOsAPIDevice, 'filter_dynamic')
+    @patch.object(RO_RouterOs, 'filter_dynamic')
     def test_read_calls_joinPath(self, filter_mock):
         self.TestCls.read(self.pathmock)
         self.TestCls.api.joinPath.assert_called_once_with(self.pathmock, self.TestCls.actions['GET'])
 
-    @patch.object(RouterOsAPIDevice, 'filter_dynamic')
+    @patch.object(RO_RouterOs, 'filter_dynamic')
     def test_read_calls_filter_dynamic(self, filter_mock):
         self.TestCls.read(self.pathmock)
         filter_mock.assert_called_once_with(self.TestCls.api.return_value)
+
+    @pytest.mark.parametrize("action", ('ADD', 'SET', 'DEL'))
+    def test_write_passes(self, action):
+        """Assert that DEL SET ADD methods are not called."""
+        setattr(self.TestCls, action, MagicMock())
+        self.TestCls.write(path='path', action=action, data=None)
+        assert getattr(self.TestCls, action).call_count == 0
+
+    def test_close_calls_api_close(self):
+        self.TestCls.close()
+        self.TestCls.api.close.assert_called_once_with()
+
+
+class Test_RW_RouterOs:
+
+    def setup(self):
+        self.TestCls = RW_RouterOs(api=MagicMock())
+        self.pathmock = MagicMock()
+        self.datamock = MagicMock()
 
     @pytest.mark.parametrize('action', ('ADD', 'SET', 'DEL'))
     def test_write_calls_joinPath(self, action):
@@ -91,22 +105,10 @@ class Test_RouterOsAPIDevice:
             self.TestCls.write(path=MagicMock(), action=action, data=MagicMock())
         assert str(error.value) == 'message'
 
-    def test_close_calls_api_close(self):
-        self.TestCls.close()
-        self.TestCls.api.close.assert_called_once_with()
-
-
-@pytest.mark.parametrize("action", ('ADD', 'SET', 'DEL'))
-def test_DryRunRouterOS_write_passes(read_only_routeros, action):
-    """Assert that DEL SET ADD methods are not called."""
-    setattr(read_only_routeros, action, MagicMock())
-    read_only_routeros.write(path='path', action=action, data=None)
-    assert getattr(read_only_routeros, action).call_count == 0
-
 
 @pytest.mark.parametrize("response,expected", (
     (({'dynamic': False}, {'dynamic': True}), ({'dynamic': False}, )),
     (({'dynamic': True}, ), ()),
     ))
 def test_filter_dynamic(response, expected):
-    assert RouterOsAPIDevice.filter_dynamic(response) == expected
+    assert RO_RouterOs.filter_dynamic(response) == expected
