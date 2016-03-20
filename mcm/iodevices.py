@@ -1,7 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-from posixpath import join as pjoin
-
 from mcm.librouteros import TrapError, MultiTrapError
 from mcm.exceptions import ReadError, WriteError
 
@@ -22,11 +20,13 @@ class StaticConfig:
 
 class ReadOnlyRouterOS:
 
+    actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
+
     def __init__(self, api):
         self.api = api
 
     def read(self, path):
-        cmd = self.cmd_action_join(path=path, action='GET')
+        cmd = self.api.joinPath(path, self.actions['GET'])
         try:
             data = self.api(cmd=cmd)
         except (TrapError, MultiTrapError) as error:
@@ -40,11 +40,6 @@ class ReadOnlyRouterOS:
         self.api.close()
 
     @staticmethod
-    def cmd_action_join(path, action):
-        actions = dict(ADD='add', SET='set', DEL='remove', GET='getall')
-        return pjoin(path, actions[action])
-
-    @staticmethod
     def filter_dynamic(data):
         return tuple(row for row in data if not row.get('dynamic'))
 
@@ -52,7 +47,7 @@ class ReadOnlyRouterOS:
 class RouterOsAPIDevice(ReadOnlyRouterOS):
 
     def write(self, path, action, data):
-        command = self.cmd_action_join(path=path, action=action)
+        command = self.api.joinPath(path, self.actions[action])
         method = getattr(self, action)
         method(command=command, data=data)
 

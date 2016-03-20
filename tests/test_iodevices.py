@@ -39,86 +39,57 @@ class Test_RouterOsAPIDevice:
         self.datamock = MagicMock()
 
     @patch.object(RouterOsAPIDevice, 'filter_dynamic')
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_read_calls_api(self, joinmock, filter_mock):
+    def test_read_calls_api(self, filter_mock):
         self.TestCls.read(self.pathmock)
-        self.TestCls.api.assert_called_once_with(cmd=joinmock.return_value)
+        self.TestCls.api.assert_called_once_with(cmd=self.TestCls.api.joinPath.return_value)
 
     @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_read_raises_ReadError(self, joinmock, exception):
+    def test_read_raises_ReadError(self, exception):
         self.TestCls.api.side_effect = exception('message')
-        with pytest.raises(ReadError):
+        with pytest.raises(ReadError) as error:
             self.TestCls.read(path=MagicMock())
+        assert str(error.value) == 'message'
 
     @patch.object(RouterOsAPIDevice, 'filter_dynamic')
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_read_calls_cmd_action_join(self, joinmock, filter_mock):
+    def test_read_calls_joinPath(self, filter_mock):
         self.TestCls.read(self.pathmock)
-        joinmock.assert_called_once_with(path=self.pathmock, action='GET')
+        self.TestCls.api.joinPath.assert_called_once_with(self.pathmock, self.TestCls.actions['GET'])
 
     @patch.object(RouterOsAPIDevice, 'filter_dynamic')
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_read_calls_filter_dynamic(self, joinmock, filter_mock):
+    def test_read_calls_filter_dynamic(self, filter_mock):
         self.TestCls.read(self.pathmock)
         filter_mock.assert_called_once_with(self.TestCls.api.return_value)
 
-    @patch.object(RouterOsAPIDevice, 'ADD')
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_write_calls_cmd_action_join(self, joinmock, addmock):
-        self.TestCls.write(path=self.pathmock, action='ADD', data=None)
-        joinmock.assert_called_once_with(path=self.pathmock, action='ADD')
+    @pytest.mark.parametrize('action', ('ADD', 'SET', 'DEL'))
+    def test_write_calls_joinPath(self, action):
+        setattr(self.TestCls, action, MagicMock())
+        self.TestCls.write(path=self.pathmock, action=action, data=None)
+        self.TestCls.api.joinPath.assert_called_once_with(self.pathmock, self.TestCls.actions[action])
 
-    @patch.object(RouterOsAPIDevice, 'DEL')
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_write_calls_DEL_when_cmd_is_DEL(self, joinmock, delmock):
-        self.TestCls.write(data='data', path=self.pathmock, action='DEL')
-        delmock.assert_called_once_with(command=joinmock.return_value, data='data')
-
-    @patch.object(RouterOsAPIDevice, 'ADD')
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_write_calls_ADD_when_cmd_is_ADD(self, joinmock, addmock):
-        self.TestCls.write(data='data', path=self.pathmock, action='ADD')
-        addmock.assert_called_once_with(command=joinmock.return_value, data='data')
-
-    @patch.object(RouterOsAPIDevice, 'SET')
-    @patch.object(RouterOsAPIDevice, 'cmd_action_join')
-    def test_write_calls_SET_when_cmd_is_SET(self, joinmock, setmock):
-        self.TestCls.write(data='data', path=self.pathmock, action='SET')
-        setmock.assert_called_once_with(command=joinmock.return_value, data='data')
+    @pytest.mark.parametrize('action', ('ADD', 'SET', 'DEL'))
+    def test_write_calls_action_method(self, action):
+        setattr(self.TestCls, action, MagicMock())
+        self.TestCls.write(data='data', path=self.pathmock, action=action)
+        getattr(self.TestCls, action).assert_called_once_with(command=self.TestCls.api.joinPath.return_value, data='data')
 
     def test_DEL_calls_api_only_with_ID(self):
         data = {'.id': '*1', 'address': '1.1.1.1/24'}
         self.TestCls.DEL(command='/ip/address/remove', data=data)
         self.TestCls.api.assert_called_once_with(cmd='/ip/address/remove', **{'.id': '*1'})
 
-    @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
-    def test_DEL_raises_WriteError(self, exception):
-        self.TestCls.api.side_effect = exception('message')
-        with pytest.raises(WriteError):
-            self.TestCls.DEL(command=MagicMock(), data=MagicMock())
-
-    def test_ADD_calls_api(self):
+    @pytest.mark.parametrize('action', ('ADD', 'SET'))
+    def test_action_methods_call_api(self, action):
         data, command = MagicMock(), MagicMock()
-        self.TestCls.ADD(command=command, data=data)
+        getattr(self.TestCls, action)(command=command, data=data)
         self.TestCls.api.assert_called_once_with(cmd=command, **data)
 
     @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
-    def test_ADD_raises_WriteError(self, exception):
+    @pytest.mark.parametrize('action', ('ADD', 'SET', 'DEL'))
+    def test_action_method_raise_WriteError(self, exception, action):
         self.TestCls.api.side_effect = exception('message')
-        with pytest.raises(WriteError):
-            self.TestCls.ADD(command=MagicMock(), data=MagicMock())
-
-    def test_SET_calls_api(self):
-        data, command = MagicMock(), MagicMock()
-        self.TestCls.SET(command=command, data=data)
-        self.TestCls.api.assert_called_once_with(cmd=command, **data)
-
-    @pytest.mark.parametrize('exception', (TrapError, MultiTrapError))
-    def test_SET_raises_WriteError(self, exception):
-        self.TestCls.api.side_effect = exception('message')
-        with pytest.raises(WriteError):
-            self.TestCls.SET(command=MagicMock(), data=MagicMock())
+        with pytest.raises(WriteError) as error:
+            getattr(self.TestCls, action)(command=MagicMock(), data=MagicMock())
+        assert str(error.value) == 'message'
 
     def test_close_calls_api_close(self):
         self.TestCls.close()
@@ -131,16 +102,6 @@ def test_DryRunRouterOS_write_passes(read_only_routeros, action):
     setattr(read_only_routeros, action, MagicMock())
     read_only_routeros.write(path='path', action=action, data=None)
     assert getattr(read_only_routeros, action).call_count == 0
-
-
-@pytest.mark.parametrize("path,action,expected", (
-    ('/ip/address', 'DEL', '/ip/address/remove'),
-    ('/ip/address', 'ADD', '/ip/address/add'),
-    ('/ip/address', 'SET', '/ip/address/set'),
-    ('/ip/address', 'GET', '/ip/address/getall'),
-    ))
-def test_cmd_action_join(path, action, expected):
-    assert RouterOsAPIDevice.cmd_action_join(path=path, action=action) == expected
 
 
 @pytest.mark.parametrize("response,expected", (
