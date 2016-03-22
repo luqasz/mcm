@@ -34,17 +34,14 @@ class RO_RouterOs:
             data = self.api(cmd=cmd)
         except (TrapError, MultiTrapError) as error:
             raise ReadError(error)
-        return self.filter_dynamic(data)
+        # Filter out rows which are dynamic.
+        return tuple(row for row in data if not row.get('dynamic'))
 
     def write(self, path, action, data):
         pass
 
     def close(self):
         self.api.close()
-
-    @staticmethod
-    def filter_dynamic(data):
-        return tuple(row for row in data if not row.get('dynamic'))
 
 
 class RW_RouterOs(RO_RouterOs):

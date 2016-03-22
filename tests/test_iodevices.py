@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from mock import MagicMock, patch
+from mock import MagicMock
 from inspect import ismethod
 import pytest
 
@@ -33,8 +33,7 @@ class Test_RO_RouterOs:
         self.pathmock = MagicMock()
         self.datamock = MagicMock()
 
-    @patch.object(RO_RouterOs, 'filter_dynamic')
-    def test_read_calls_api(self, filter_mock):
+    def test_read_calls_api(self):
         self.TestCls.read(self.pathmock)
         self.TestCls.api.assert_called_once_with(cmd=self.TestCls.api.joinPath.return_value)
 
@@ -45,15 +44,9 @@ class Test_RO_RouterOs:
             self.TestCls.read(path=MagicMock())
         assert str(error.value) == 'message'
 
-    @patch.object(RO_RouterOs, 'filter_dynamic')
-    def test_read_calls_joinPath(self, filter_mock):
+    def test_read_calls_joinPath(self):
         self.TestCls.read(self.pathmock)
         self.TestCls.api.joinPath.assert_called_once_with(self.pathmock, self.TestCls.actions['GET'])
-
-    @patch.object(RO_RouterOs, 'filter_dynamic')
-    def test_read_calls_filter_dynamic(self, filter_mock):
-        self.TestCls.read(self.pathmock)
-        filter_mock.assert_called_once_with(self.TestCls.api.return_value)
 
     @pytest.mark.parametrize("action", ('ADD', 'SET', 'DEL'))
     def test_write_passes(self, action):
@@ -61,6 +54,14 @@ class Test_RO_RouterOs:
         setattr(self.TestCls, action, MagicMock())
         self.TestCls.write(path='path', action=action, data=None)
         assert getattr(self.TestCls, action).call_count == 0
+
+    @pytest.mark.parametrize("response,expected", (
+        (({'dynamic': False}, {'dynamic': True}), ({'dynamic': False}, )),
+        (({'dynamic': True}, ), ()),
+        ))
+    def test_read_filters_dynamic(self, response, expected):
+        self.TestCls.api.return_value = response
+        assert self.TestCls.read(path=MagicMock()) == expected
 
     def test_close_calls_api_close(self):
         self.TestCls.close()
@@ -104,11 +105,3 @@ class Test_RW_RouterOs:
         with pytest.raises(WriteError) as error:
             self.TestCls.write(path=MagicMock(), action=action, data=MagicMock())
         assert str(error.value) == 'message'
-
-
-@pytest.mark.parametrize("response,expected", (
-    (({'dynamic': False}, {'dynamic': True}), ({'dynamic': False}, )),
-    (({'dynamic': True}, ), ()),
-    ))
-def test_filter_dynamic(response, expected):
-    assert RO_RouterOs.filter_dynamic(response) == expected
