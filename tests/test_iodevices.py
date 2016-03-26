@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from mock import MagicMock
+from mock import MagicMock, patch
 from inspect import ismethod
 import pytest
 
@@ -31,7 +31,8 @@ class Test_RO_RouterOs:
     def setup(self):
         self.TestCls = RO_RouterOs(api=MagicMock())
         self.pathmock = MagicMock()
-        self.datamock = MagicMock()
+        self.rowmock = MagicMock()
+        self.datamock = [self.rowmock]
 
     def test_read_calls_api(self):
         self.TestCls.read(self.pathmock)
@@ -46,13 +47,13 @@ class Test_RO_RouterOs:
 
     def test_read_calls_joinPath(self):
         self.TestCls.read(self.pathmock)
-        self.TestCls.api.joinPath.assert_called_once_with(self.pathmock, self.TestCls.actions['GET'])
+        self.TestCls.api.joinPath.assert_called_once_with(self.pathmock.absolute, self.TestCls.actions['GET'])
 
     @pytest.mark.parametrize("action", ('ADD', 'SET', 'DEL'))
     def test_write_passes(self, action):
         """Assert that DEL SET ADD methods are not called."""
         setattr(self.TestCls, action, MagicMock())
-        self.TestCls.write(path='path', action=action, data=None)
+        self.TestCls.write(path=self.pathmock, action=action, data=None)
         assert getattr(self.TestCls, action).call_count == 0
 
     @pytest.mark.parametrize("response,expected", (
@@ -62,6 +63,13 @@ class Test_RO_RouterOs:
     def test_read_filters_dynamic(self, response, expected):
         self.TestCls.api.return_value = response
         assert self.TestCls.read(path=MagicMock()) == expected
+
+    @patch('mcm.iodevices.CmdPathRow')
+    def test_read_calls_CmdPathRow(self, row_mock):
+        self.rowmock.get.return_value = False
+        self.TestCls.api.return_value = self.datamock
+        self.TestCls.read(self.pathmock)
+        row_mock.assert_called_once_with(self.rowmock)
 
     def test_close_calls_api_close(self):
         self.TestCls.close()
@@ -73,19 +81,20 @@ class Test_RW_RouterOs:
     def setup(self):
         self.TestCls = RW_RouterOs(api=MagicMock())
         self.pathmock = MagicMock()
-        self.datamock = MagicMock()
+        self.rowmock = MagicMock()
+        self.datamock = [self.rowmock]
 
     @pytest.mark.parametrize('action', ('ADD', 'SET', 'DEL'))
     def test_write_calls_joinPath(self, action):
         setattr(self.TestCls, action, MagicMock())
-        self.TestCls.write(path=self.pathmock, action=action, data=None)
-        self.TestCls.api.joinPath.assert_called_once_with(self.pathmock, self.TestCls.actions[action])
+        self.TestCls.write(path=self.pathmock, action=action, data=self.datamock)
+        self.TestCls.api.joinPath.assert_called_once_with(self.pathmock.absolute, self.TestCls.actions[action])
 
     @pytest.mark.parametrize('action', ('ADD', 'SET', 'DEL'))
     def test_write_calls_action_method(self, action):
         setattr(self.TestCls, action, MagicMock())
-        self.TestCls.write(data='data', path=self.pathmock, action=action)
-        getattr(self.TestCls, action).assert_called_once_with(command=self.TestCls.api.joinPath.return_value, data='data')
+        self.TestCls.write(data=self.datamock, path=self.pathmock, action=action)
+        getattr(self.TestCls, action).assert_called_once_with(command=self.TestCls.api.joinPath.return_value, data=self.rowmock)
 
     def test_DEL_calls_api_only_with_ID(self):
         data = {'.id': '*1', 'address': '1.1.1.1/24'}
@@ -103,5 +112,5 @@ class Test_RW_RouterOs:
     def test_write_raises_WriteError(self, exception, action):
         setattr(self.TestCls, action, MagicMock(side_effect=exception('message')))
         with pytest.raises(WriteError) as error:
-            self.TestCls.write(path=MagicMock(), action=action, data=MagicMock())
+            self.TestCls.write(path=self.pathmock, action=action, data=self.datamock)
         assert str(error.value) == 'message'

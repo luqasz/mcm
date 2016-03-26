@@ -3,7 +3,6 @@
 from mcm.librouteros import connect, ConnectionError, TrapError, MultiTrapError
 from mcm.args import get_arguments
 from mcm.iodevices import StaticConfig, RW_RouterOs, RO_RouterOs
-from mcm.adapters import SlaveAdapter, MasterAdapter
 from mcm.configurators import Configurator
 from mcm.loggers import setup as setup_logging
 from mcm.datastructures import make_cmdpath
@@ -11,15 +10,11 @@ from mcm.datastructures import make_cmdpath
 
 def mk_slave(user, host, password, dry_run):
     api = connect(host=host, username=user, password=password)
-    iodevice = RW_RouterOs(api=api) if not dry_run else RO_RouterOs(api=api)
-    slave = SlaveAdapter(device=iodevice)
-    return slave
+    return RW_RouterOs(api=api) if not dry_run else RO_RouterOs(api=api)
 
 
 def mk_master(config):
-    iodevice = StaticConfig(data=config)
-    master = MasterAdapter(device=iodevice)
-    return master
+    return StaticConfig(data=config)
 
 
 def mk_paths(data):

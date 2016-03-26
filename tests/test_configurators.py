@@ -4,7 +4,7 @@ from mock import MagicMock, patch
 from unittest import TestCase
 
 from mcm.configurators import CmdPathConfigurator, real_action, no_action, Configurator
-from mcm.exceptions import ReadError
+from mcm.exceptions import ReadError, WriteError
 from mcm.librouteros.exceptions import ConnectionError
 
 
@@ -172,6 +172,11 @@ class Configurator_Tests(TestCase):
     @patch.object(Configurator, 'getPathConfigurator')
     def test_run_catches_ReadError(self, pathcfgmock):
         pathcfgmock.return_value.run.side_effect = ReadError
+        self.TestCls.run(paths=(self.path,))
+
+    @patch.object(Configurator, 'getPathConfigurator')
+    def test_run_catches_WriteError(self, pathcfgmock):
+        pathcfgmock.return_value.run.side_effect = WriteError
         self.TestCls.run(paths=(self.path,))
 
     @patch.object(Configurator, 'getPathConfigurator')
