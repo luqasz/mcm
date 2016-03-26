@@ -14,35 +14,37 @@ from mcm.tools import StopWatch, timer, vcmp, ChainMap
 
 pyversion = version_info.major, version_info.minor
 
-@pytest.mark.skipif( pyversion < (3,3), reason='Requires python >= 3.3' )
+
+@pytest.mark.skipif(pyversion < (3, 3), reason='Requires python >= 3.3')
 def test_module_uses_monotonic_as_timer():
     '''Assert that time.monotonic is used.'''
     assert timer == monotonic
 
-@pytest.mark.skipif( pyversion > (3,2), reason='Using python >= 3.3' )
+
+@pytest.mark.skipif(pyversion > (3, 2), reason='Using python >= 3.3')
 def test_module_uses_time_as_timer():
     '''Assert that time.time is used when time.monotonic is not available.'''
     assert timer == time
 
 
 @pytest.mark.parametrize("v1,v2,oper,result", (
-        ('4.11','3.12',operator.gt,True),
-        ('4.11','5.12',operator.gt,False),
-        ('4.11','4.11',operator.ge,True),
-        ('4.14','4.11',operator.ge,True),
-        ('4.11','5.12',operator.ge,False),
-        ('4.11','5.12',operator.lt,True),
-        ('6.11','5.12',operator.lt,False),
-        ('4.11','4.11',operator.le,True),
-        ('4.1','4.11',operator.le,True),
-        ('6.11','5.12',operator.le,False),
-        ('4.11','4.11',operator.eq,True),
-        ('4.10','4.1',operator.eq,False),
-        ('4.10','4.1',operator.ne,True),
-        ('4.11','4.11',operator.ne,False),
+        ('4.11', '3.12', operator.gt, True),
+        ('4.11', '5.12', operator.gt, False),
+        ('4.11', '4.11', operator.ge, True),
+        ('4.14', '4.11', operator.ge, True),
+        ('4.11', '5.12', operator.ge, False),
+        ('4.11', '5.12', operator.lt, True),
+        ('6.11', '5.12', operator.lt, False),
+        ('4.11', '4.11', operator.le, True),
+        ('4.1', '4.11', operator.le, True),
+        ('6.11', '5.12', operator.le, False),
+        ('4.11', '4.11', operator.eq, True),
+        ('4.10', '4.1', operator.eq, False),
+        ('4.10', '4.1', operator.ne, True),
+        ('4.11', '4.11', operator.ne, False),
         ))
-def test_version_comparison(v1,v2,oper,result):
-    assert vcmp(v1=v1,v2=v2,op=oper) == result
+def test_version_comparison(v1, v2, oper, result):
+    assert vcmp(v1=v1, v2=v2, op=oper) == result
 
 
 @patch('mcm.tools.timer', side_effect=[14705.275287508, 14711.190629636])
@@ -79,4 +81,3 @@ class Test_ChainMap:
 
     def test_port_is_equal_to_key_value_from_overrided_dict(self):
         assert self.chained['port'] == self.override_dict['port']
-

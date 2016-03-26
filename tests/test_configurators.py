@@ -14,7 +14,10 @@ class CmdPathConfigurator_Tests(TestCase):
         self.addfunc = MagicMock()
         self.delfunc = MagicMock()
         self.setfunc = MagicMock()
-        self.TestCls = CmdPathConfigurator( path=MagicMock(), configurator=MagicMock(), comparator=MagicMock(), addfunc=self.addfunc, delfunc=self.delfunc, setfunc=self.setfunc )
+        self.TestCls = CmdPathConfigurator(
+                path=MagicMock(), configurator=MagicMock(),
+                comparator=MagicMock(), addfunc=self.addfunc,
+                delfunc=self.delfunc, setfunc=self.setfunc)
 
     @patch.object(CmdPathConfigurator, 'applyData')
     @patch.object(CmdPathConfigurator, 'compareData')
@@ -39,57 +42,54 @@ class CmdPathConfigurator_Tests(TestCase):
         self.TestCls.run()
         apply_mock.assert_called_once_with(data=data)
 
-
     def test_compareData_calls_slaves_compare_with_master_data(self):
         master_data = MagicMock()
         slave_data = MagicMock()
-        self.TestCls.compareData( (master_data, slave_data) )
-        self.TestCls.comparator.compare.assert_called_once_with( wanted=master_data, present=slave_data )
-
+        self.TestCls.compareData((master_data, slave_data))
+        self.TestCls.comparator.compare.assert_called_once_with(wanted=master_data, present=slave_data)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_calls_extractActionData_with_data_and_action(self, extractmock):
         data_mock = MagicMock()
         self.TestCls.path.modord = ('ADD',)
-        self.TestCls.applyData( data=data_mock )
-        extractmock.assert_called_once_with( data=data_mock, action='ADD' )
+        self.TestCls.applyData(data=data_mock)
+        extractmock.assert_called_once_with(data=data_mock, action='ADD')
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_calls_addfunc_if_ADD_in_modord(self, extractmock):
         self.TestCls.path.modord = ('ADD',)
-        self.TestCls.applyData( data=MagicMock() )
-        self.addfunc.assert_called_once_with( self.TestCls, 'ADD', extractmock.return_value )
+        self.TestCls.applyData(data=MagicMock())
+        self.addfunc.assert_called_once_with(self.TestCls, 'ADD', extractmock.return_value)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_does_not_call_addfunc_if_ADD_not_in_modord(self, extractmock):
         self.TestCls.path.modord = ()
-        self.TestCls.applyData( data=MagicMock() )
-        self.assertEqual( self.addfunc.call_count, 0 )
+        self.TestCls.applyData(data=MagicMock())
+        self.assertEqual(self.addfunc.call_count, 0)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_calls_setfunc_if_SET_in_modord(self, extractmock):
         self.TestCls.path.modord = ('SET',)
-        self.TestCls.applyData( data=MagicMock() )
-        self.setfunc.assert_called_once_with( self.TestCls, 'SET', extractmock.return_value )
+        self.TestCls.applyData(data=MagicMock())
+        self.setfunc.assert_called_once_with(self.TestCls, 'SET', extractmock.return_value)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_does_not_call_setfunc_if_SET_not_in_modord(self, extractmock):
         self.TestCls.path.modord = ()
-        self.TestCls.applyData( data=MagicMock() )
-        self.assertEqual( self.setfunc.call_count, 0 )
+        self.TestCls.applyData(data=MagicMock())
+        self.assertEqual(self.setfunc.call_count, 0)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_calls_delfunc_if_DEL_in_modord(self, extractmock):
         self.TestCls.path.modord = ('DEL',)
-        self.TestCls.applyData( data=MagicMock() )
-        self.delfunc.assert_called_once_with( self.TestCls, 'DEL', extractmock.return_value )
+        self.TestCls.applyData(data=MagicMock())
+        self.delfunc.assert_called_once_with(self.TestCls, 'DEL', extractmock.return_value)
 
     @patch.object(CmdPathConfigurator, 'extartActionData')
     def test_applyData_does_not_call_delfunc_if_DEL_not_in_modord(self, extractmock):
         self.TestCls.path.modord = ()
-        self.TestCls.applyData( data=MagicMock() )
-        self.assertEqual( self.delfunc.call_count, 0 )
-
+        self.TestCls.applyData(data=MagicMock())
+        self.assertEqual(self.delfunc.call_count, 0)
 
     def test_readData_calls_slave_read(self):
         self.TestCls.readData()
@@ -99,22 +99,20 @@ class CmdPathConfigurator_Tests(TestCase):
         self.TestCls.readData()
         self.TestCls.configurator.master.read.assert_called_once_with(path=self.TestCls.path)
 
-
     def test_extractActionData_returns_ADD_data_when_requested(self):
-        data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
+        data = ADD, SET, DEL = (MagicMock(), MagicMock(), MagicMock())
         returned = self.TestCls.extartActionData(data=data, action='ADD')
         self.assertEqual(returned, ADD)
 
     def test_extractActionData_returns_SET_data_when_requested(self):
-        data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
+        data = ADD, SET, DEL = (MagicMock(), MagicMock(), MagicMock())
         returned = self.TestCls.extartActionData(data=data, action='SET')
         self.assertEqual(returned, SET)
 
     def test_extractActionData_returns_DEL_data_when_requested(self):
-        data = ADD, SET, DEL = ( MagicMock(), MagicMock(), MagicMock() )
+        data = ADD, SET, DEL = (MagicMock(), MagicMock(), MagicMock())
         returned = self.TestCls.extartActionData(data=data, action='DEL')
         self.assertEqual(returned, DEL)
-
 
 
 @patch('mcm.configurators.get_comparator')
@@ -126,14 +124,19 @@ class Strategy_Factory_Tests(TestCase):
 
     def test_with_ensure_calls_init_with_appropriate_methods(self, initmock, cmpmock):
         CmdPathConfigurator.with_ensure(path=self.path, configurator=self.configurator)
-        initmock.assert_called_once_with(path=self.path, comparator=cmpmock.return_value, configurator=self.configurator,
-                addfunc=real_action, delfunc=no_action, setfunc=real_action)
+        initmock.assert_called_once_with(
+                path=self.path, comparator=cmpmock.return_value,
+                configurator=self.configurator, addfunc=real_action,
+                delfunc=no_action, setfunc=real_action
+                )
 
     def test_with_exact_calls_init_with_appropriate_methods(self, initmock, cmpmock):
         CmdPathConfigurator.with_exact(path=self.path, configurator=self.configurator)
-        initmock.assert_called_once_with(path=self.path, comparator=cmpmock.return_value, configurator=self.configurator,
-                addfunc=real_action, delfunc=real_action, setfunc=real_action)
-
+        initmock.assert_called_once_with(
+                path=self.path, comparator=cmpmock.return_value,
+                configurator=self.configurator, addfunc=real_action,
+                delfunc=real_action, setfunc=real_action
+                )
 
 
 class StrategyMethods_Tests(TestCase):
@@ -148,8 +151,7 @@ class StrategyMethods_Tests(TestCase):
 
     def test_no_action_does_not_call_masters_write(self):
         no_action(self.cls, 'ADD', self.data)
-        self.assertEqual( self.cls.configurator.master.write.call_count, 0 )
-
+        self.assertEqual(self.cls.configurator.master.write.call_count, 0)
 
 
 class Configurator_Tests(TestCase):
@@ -188,7 +190,7 @@ class Configurator_Tests(TestCase):
     def test_run_breaks_loop_ConnError(self, pathcfgmock):
         """After first ConnectionError, break the configuration loop."""
         pathcfgmock.return_value.run.side_effect = ConnectionError
-        self.TestCls.run(paths=(self.path,self.path))
+        self.TestCls.run(paths=(self.path, self.path))
         assert pathcfgmock.return_value.run.call_count == 1
 
     @patch.object(CmdPathConfigurator, 'with_ensure')
@@ -216,4 +218,3 @@ class Configurator_Tests(TestCase):
         '''After iterating over all paths close slave.'''
         self.TestCls.run(paths=(self.path,))
         self.TestCls.slave.close.assert_called_once_with()
-

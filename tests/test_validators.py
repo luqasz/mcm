@@ -8,7 +8,7 @@ from mcm.exceptions import ValidateError
 
 def test_validate_list_raises_ValidateError_when_list_passed_contains_forbidden_elements():
     with pytest.raises(ValidateError):
-        validate_list(lst=[1,2,3], allowed=[1,2] )
+        validate_list(lst=[1, 2, 3], allowed=[1, 2])
 
 
 def test_validate_val_raises_ValidateError_when_value_passed_is_not_in_allowed():

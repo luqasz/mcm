@@ -9,10 +9,12 @@ def validate_list(lst, allowed):
     if forbidden:
         raise ValidateError()
 
+
 def validate_value(val, allowed):
 
     if val not in allowed:
         raise ValidateError()
+
 
 def validate_type(val, allowed):
 

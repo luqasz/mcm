@@ -5,7 +5,6 @@ from itertools import zip_longest
 from mcm.datastructures import CmdPathRow
 
 
-
 def get_comparator(path):
     if path.type == 'single':
         return SingleElementComparator()
@@ -15,30 +14,23 @@ def get_comparator(path):
         return UniqueKeyComparator(keys=path.keys)
 
 
-
 class OrderedComparator:
 
-
     def __init__(self):
-
         self.DEL = []
-        self.SET= []
+        self.SET = []
         self.ADD = []
 
-
     def decide(self, wanted, difference, present):
-
         if wanted and difference and not present:
-            self.ADD.append( wanted )
+            self.ADD.append(wanted)
         elif not wanted and not difference and present:
-            self.DEL.append( present )
+            self.DEL.append(present)
         elif wanted and difference and present:
             difference['.id'] = present['.id']
-            self.SET.append( difference )
-
+            self.SET.append(difference)
 
     def compare(self, wanted, present):
-
         fillval = CmdPathRow(dict())
         for wanted_rule, present_rule in zip_longest(wanted, present, fillvalue=fillval):
             diff = wanted_rule - present_rule
@@ -47,9 +39,7 @@ class OrderedComparator:
         return tuple(self.ADD), tuple(self.SET), tuple(self.DEL)
 
 
-
 class SingleElementComparator:
-
 
     def compare(self, wanted, present):
         SET = tuple()
@@ -60,9 +50,7 @@ class SingleElementComparator:
         return tuple(), SET, tuple()
 
 
-
 class UniqueKeyComparator:
-
 
     def __init__(self, keys):
 
@@ -71,9 +59,7 @@ class UniqueKeyComparator:
         self.ADD = []
         self.NO_DELETE = []
 
-
     def compare(self, wanted, present):
-
         for wanted_rule in wanted:
             present_rule = self.findPair(searched=wanted_rule, present=present)
             diff = wanted_rule - present_rule
@@ -82,18 +68,15 @@ class UniqueKeyComparator:
         DEL = set(present) - set(self.NO_DELETE)
         return tuple(self.ADD), tuple(self.SET), tuple(DEL)
 
-
     def decide(self, wanted, difference, present):
-
         if wanted and difference and not present:
-            self.ADD.append( wanted )
+            self.ADD.append(wanted)
         elif wanted and difference and present:
             self.NO_DELETE.append(present)
             difference['.id'] = present['.id']
-            self.SET.append( difference )
+            self.SET.append(difference)
         elif wanted and not difference and present:
             self.NO_DELETE.append(present)
-
 
     def findPair(self, searched, present):
 

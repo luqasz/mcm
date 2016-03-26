@@ -10,7 +10,6 @@ from distutils.version import LooseVersion
 from collections import UserDict
 
 
-
 class StopWatch:
 
     def __enter__(self):
@@ -19,7 +18,7 @@ class StopWatch:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop = timer()
-        self.runtime = round( (self.stop - self.start), 2 )
+        self.runtime = round((self.stop - self.start), 2)
         return False
 
 

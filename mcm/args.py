@@ -7,6 +7,11 @@ from getpass import getpass
 
 from mcm import __version__
 
+EPILOG = '''
+By default program will issue a password prompt.
+If you don't want that, store it in MCM_HOST_PASSWORD environment variable.
+'''
+
 
 def get_password():
     try:
@@ -30,8 +35,7 @@ class JsonFile:
 
 
 def get_arguments():
-    argparser = ArgumentParser(prog='mcm', epilog='By default program will issue a password prompt. If you don\'t want that, store it in MCM_HOST_PASSWORD environment variable.',
-            description='Mikrotik Configuration Manager. Version ' + str(__version__))
+    argparser = ArgumentParser(prog='mcm', epilog=EPILOG, description='Mikrotik Configuration Manager. Version ' + str(__version__))
     argparser.add_argument('host', type=str, help='Host to connect to.')
     argparser.add_argument('config', type=JsonFile(), help='Configuration file.')
     argparser.add_argument('--username', '-u', type=str, help='Mikrotik API username.', required=True)
@@ -42,4 +46,3 @@ def get_arguments():
     args = argparser.parse_args()
     args.password = get_password()
     return args
-

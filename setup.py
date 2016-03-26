@@ -1,15 +1,15 @@
 from setuptools import setup
 
-dev_pkgs=[
+dev_pkgs = [
         'bumpversion==0.5.3',
         'pytest-xdist==1.13.1',
         ]
 
-install_pkgs=[
+install_pkgs = [
         '',
         ]
 
-tests_pkgs=[
+tests_pkgs = [
         'pytest==2.8.5',
         'mock==1.3.0'
         ]
