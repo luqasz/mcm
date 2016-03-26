@@ -38,7 +38,7 @@ class TrapError(LibError):
         self.message = message
 
     def __str__(self):
-        return str(self.message)
+        return str(self.message.replace('\r\n', ','))
 
 
 class MultiTrapError(LibError):
