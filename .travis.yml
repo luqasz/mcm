@@ -7,4 +7,6 @@ python:
 install:
   - "python setup.py develop"
   - "pip install -e '.[tests]'"
-script: py.test
+script:
+  - pylama
+  - py.test
