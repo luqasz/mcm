@@ -11,7 +11,8 @@ install_pkgs = [
 
 tests_pkgs = [
         'pytest==2.8.5',
-        'mock==1.3.0'
+        'mock==1.3.0',
+        'pylama==7.0.7',
         ]
 
 setup(
